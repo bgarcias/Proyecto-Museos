@@ -1,6 +1,6 @@
 import { Document, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import ExcelJS from "exceljs";
-import { formatearMonto } from "./formatos";
+import { formatearMonto } from "../formatos";
 
 /*
  * Exportación genérica de un reporte en forma de tabla, a PDF y a Excel. La usan los reportes de piezas, de

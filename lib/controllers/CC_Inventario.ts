@@ -16,7 +16,7 @@ import type {
   ResumenInventario,
   UsuarioPublico,
 } from "../tipos";
-import { museosActivosVisibles, museosVisibles } from "./utilidades";
+import { museosActivosVisibles, museosVisibles } from "./acceso";
 
 /* Realizar Inventario Físico (sin ECU en el informe, sección 7.8) */
 

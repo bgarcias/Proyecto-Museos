@@ -1,3 +1,52 @@
+## Estructura del proyecto
+
+```
+app/                  Rutas de la aplicación. Cada carpeta es una dirección web y cada page.tsx es una pantalla
+  layout.tsx          Layout raíz: fuentes, barra de navegación y alertas
+  globals.css         Variables de diseño y estilos base
+  not-found.tsx       Página 404 propia
+components/
+  CI_*/               Las vistas: una carpeta por pantalla, con su .tsx y su .module.css
+  ui/                 Piezas compartidas: botones, campos, tablas, ventanas, alertas y la barra de navegación (Navbar)
+lib/
+  controllers/        Controladores CC_*: reglas de negocio y permisos. acceso.ts filtra por museo
+  data/               Contratos de la capa de datos, implementación en memoria con la semilla y carpeta reservada para Prisma
+  auth/               Sesión
+  config/             Variables de entorno
+  exportacion/        PDF y Excel de los reportes y de la ficha técnica
+  importacion/        Importación de piezas desde Excel y sus límites
+  (sueltos)           tipos, constantes, validaciones, fechas, codigos, formatos, navegacion, reporteParametros, resultadoBusqueda
+prisma/               Esquema de la futura base de datos, solo como archivo
+public/               Archivos estáticos: el marcador de las piezas sin imagen
+docs/                 Guías y documentos técnicos
+```
+
+Las carpetas de `app/` son las direcciones web del sistema, y cada `page.tsx` solo llama al controlador y a la vista.
+
+### Dónde busco
+
+| Elemento | Vista | Estilos | Lógica |
+|-|-|-|-|
+| Login | `components/CI_Login/CI_Login.tsx` | `CI_Login.module.css`, `components/ui/PantallaAcceso.module.css` | `lib/controllers/CC_Usuario.ts` y `lib/auth/session.ts` |
+| Barra de navegación | `components/ui/Navbar.tsx` | `components/ui/Navbar.module.css` | Opciones en `lib/navegacion.ts` |
+| Inicio | `components/CI_Inicio/CI_Inicio.tsx` | `CI_Inicio.module.css` | `lib/controllers/CC_Usuario.ts` y `lib/navegacion.ts` |
+| Catálogo de piezas | `components/CI_Catalogo_Piezas/CI_Catalogo_Piezas.tsx` y `components/ui/BuscadorPiezas.tsx` | `CI_Catalogo_Piezas.module.css`, `components/ui/Buscador.module.css` | `lib/controllers/CC_Pieza.ts` |
+| Formulario de pieza | `components/CI_Formulario_Pieza/CI_Formulario_Pieza.tsx` | `CI_Formulario_Pieza.module.css` | `lib/controllers/CC_Pieza.ts` y `lib/codigos.ts` |
+| Reporte por categoría y estado | `components/CI_Reporte_Categoria_Estado/CI_Reporte_Categoria_Estado.tsx` | `CI_Reporte_Categoria_Estado.module.css` | `lib/controllers/CC_Reporte.ts` |
+| Reporte de piezas | `components/CI_Reporte_Piezas/CI_Reporte_Piezas.tsx` | `CI_Reporte_Piezas.module.css` | `lib/controllers/CC_Reporte.ts` |
+| Reporte de exposiciones | `components/CI_Reporte_Exposiciones/CI_Reporte_Exposiciones.tsx` | `CI_Reporte_Exposiciones.module.css` | `lib/controllers/CC_Reporte.ts` |
+| Reporte de préstamos | `components/CI_Reporte_Prestamos/CI_Reporte_Prestamos.tsx` | `CI_Reporte_Prestamos.module.css` | `lib/controllers/CC_Reporte.ts` |
+| Página 404 | `app/not-found.tsx` | `app/not-found.module.css` | Sin controlador, textos en `lib/constantes.ts` |
+| Estilos globales | `app/layout.tsx` | `app/globals.css` | No aplica |
+| Valores y mensajes fijos | No aplica | No aplica | `lib/constantes.ts` y cada `CC_*` |
+| Validaciones | No aplica | No aplica | `lib/validaciones.ts` y cada `CC_*` |
+| Fechas | No aplica | No aplica | `lib/fechas.ts` |
+| Sesión | No aplica | No aplica | `lib/auth/session.ts` |
+| Permisos de acceso por museo | No aplica | No aplica | `lib/controllers/acceso.ts` |
+| Exportación a PDF y Excel | Botones en `components/ui/BotonesReporte.tsx` | `components/ui/BotonesReporte.module.css` | `lib/exportacion/` y rutas `pdf` y `excel` de `app/reportes/` |
+| Importación de Excel | `components/CI_Importar_Piezas/CI_Importar_Piezas.tsx` | `CI_Importar_Piezas.module.css` | `lib/importacion/` y `lib/controllers/CC_Importacion.ts` |
+| Capa de datos | No aplica | No aplica | `lib/data/contratos.ts`, `lib/data/index.ts` y `lib/data/memoria/` |
+
 # Gestión de colecciones y exposiciones para museos
 
 Prototipo del sistema de gestión de colecciones y exposiciones para museos. Todas las pantallas funcionan con datos de demostración guardados en la memoria del servidor. No hay base de datos ni login real: la sesión es una cookie de demostración.

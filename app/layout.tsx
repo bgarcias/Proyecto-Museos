@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Anton, Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import ContenedorAlertas from "@/components/ui/ContenedorAlertas";
-import Menu from "@/components/ui/Menu";
+import Navbar from "@/components/ui/Navbar";
 import { obtenerUsuarioActual } from "@/lib/controllers/CC_Usuario";
 import "./globals.css";
 
@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="es" className={`${anton.variable} ${inter.variable}`}>
       <body>
-        {mostrarMenu && <Menu nombre={usuario.nombre} esAdministrador={usuario.rol === "administrador"} />}
+        {mostrarMenu && <Navbar nombre={usuario.nombre} esAdministrador={usuario.rol === "administrador"} />}
         <main className="contenedor">{children}</main>
         <ContenedorAlertas />
       </body>

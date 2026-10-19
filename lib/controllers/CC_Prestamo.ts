@@ -23,7 +23,7 @@ import { fechaLimite, hoyISO, rangoExposicion, rangosSeCruzan } from "../fechas"
 import { validarValorAsegurado } from "../validaciones";
 import type { Categoria, EstadoConservacion, Museo, PrestamoListado, Resultado, UsuarioPublico } from "../tipos";
 import type { Datos } from "../data/contratos";
-import { exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./utilidades";
+import { exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./acceso";
 
 /* ECUS06: Registrar Préstamo de una Pieza */
 

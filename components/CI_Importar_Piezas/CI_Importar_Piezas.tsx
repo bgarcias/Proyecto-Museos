@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { importarPiezas, validarArchivo } from "@/lib/controllers/CC_Importacion";
 import { ETIQUETAS_ESTADO_CONSERVACION } from "@/lib/constantes";
-import type { VistaPreviaImportacion } from "@/lib/importacion";
-import { MAXIMO_BYTES_ARCHIVO, MAXIMO_FILAS, MAXIMO_MEGABYTES_ARCHIVO } from "@/lib/limitesImportacion";
+import type { VistaPreviaImportacion } from "@/lib/importacion/importacion";
+import { MAXIMO_BYTES_ARCHIVO, MAXIMO_FILAS, MAXIMO_MEGABYTES_ARCHIVO } from "@/lib/importacion/limitesImportacion";
 import type { Museo } from "@/lib/tipos";
 import { alertaError, alertaExito } from "@/components/ui/alertas";
 import Boton, { BotonEnlace } from "@/components/ui/Boton";

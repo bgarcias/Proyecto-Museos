@@ -1,5 +1,5 @@
 import { exportarReportePiezas } from "@/lib/controllers/CC_Reporte";
-import { respuestaPdf } from "@/lib/respuestaPdf";
+import { respuestaPdf } from "@/lib/exportacion/respuestaPdf";
 import { parametrosAMapa } from "@/lib/reporteParametros";
 
 const CLAVES = ["museoId", "disponibilidad", "desde", "hasta"] as const;

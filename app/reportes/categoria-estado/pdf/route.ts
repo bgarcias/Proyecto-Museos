@@ -1,5 +1,5 @@
 import { exportarReporte } from "@/lib/controllers/CC_Reporte";
-import { respuestaPdf } from "@/lib/respuestaPdf";
+import { respuestaPdf } from "@/lib/exportacion/respuestaPdf";
 import { parametrosAFiltros } from "@/lib/reporteParametros";
 
 /** Reporte por categoría y estado en PDF, en el visor del navegador. Requiere sesión y recalcula el reporte con los filtros recibidos. */

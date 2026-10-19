@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { exigirSesion } from "../auth/session";
 import { obtenerDatos } from "../data";
 import type { HistorialCambio, Pieza } from "../tipos";
-import { puedeAccederAlMuseo } from "./utilidades";
+import { puedeAccederAlMuseo } from "./acceso";
 
 export type RegistroHistorial = HistorialCambio & { usuarioNombre: string };
 

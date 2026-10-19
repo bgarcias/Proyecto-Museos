@@ -17,7 +17,7 @@ import {
 } from "../codigos";
 import { obtenerDatos } from "../data";
 import { formatearFecha, formatearFechaHora } from "../fechas";
-import { renderizarFicha } from "../ficha";
+import { renderizarFicha } from "../exportacion/ficha";
 import type {
   Categoria,
   EstadoConservacion,
@@ -27,7 +27,7 @@ import type {
   Resultado,
 } from "../tipos";
 import { anioActual, validarAnio } from "../validaciones";
-import { coincideTexto, museosActivosVisibles, museosVisibles, piezasVisibles, puedeAccederAlMuseo } from "./utilidades";
+import { coincideTexto, museosActivosVisibles, museosVisibles, piezasVisibles, puedeAccederAlMuseo } from "./acceso";
 
 const MENSAJE_IMAGEN = "La imagen debe ser PNG o JPG de máximo 1 MB";
 const MAXIMO_IMAGEN_BYTES = 1024 * 1024;

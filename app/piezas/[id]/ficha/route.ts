@@ -1,5 +1,5 @@
 import { generarFichaTecnica } from "@/lib/controllers/CC_Pieza";
-import { respuestaPdf } from "@/lib/respuestaPdf";
+import { respuestaPdf } from "@/lib/exportacion/respuestaPdf";
 
 /** Ficha técnica de una pieza en PDF. Requiere sesión y acceso al museo de la pieza. */
 export async function GET(_solicitud: Request, { params }: { params: Promise<{ id: string }> }) {

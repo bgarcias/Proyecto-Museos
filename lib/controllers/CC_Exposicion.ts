@@ -24,7 +24,7 @@ import {
   museosActivosVisibles,
   museosVisibles,
   piezasVisibles,
-} from "./utilidades";
+} from "./acceso";
 
 /* ECUS05: Gestionar Exposición (registrar, modificar y cancelar) */
 

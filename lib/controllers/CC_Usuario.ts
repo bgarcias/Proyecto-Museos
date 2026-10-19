@@ -21,7 +21,7 @@ import {
   errorDeLongitudContrasena,
   esCorreoValido,
 } from "../validaciones";
-import { museosActivosVisibles, museosVisibles } from "./utilidades";
+import { museosActivosVisibles, museosVisibles } from "./acceso";
 
 /** Sin caracteres ambiguos: faltan 0, O, 1, l e I. */
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";

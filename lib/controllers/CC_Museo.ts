@@ -6,7 +6,7 @@ import { TIPOS_COLECCION } from "../constantes";
 import { obtenerDatos } from "../data";
 import type { Museo, Resultado, TipoColeccion, UsuarioPublico } from "../tipos";
 import type { Datos } from "../data/contratos";
-import { museosVisibles } from "./utilidades";
+import { museosVisibles } from "./acceso";
 
 /* Gestionar Museos (sin ECU en el informe). Solo el administrador. */
 

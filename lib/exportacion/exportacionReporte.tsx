@@ -1,7 +1,7 @@
 import { Document, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import ExcelJS from "exceljs";
-import { ETIQUETAS_ESTADO_CONSERVACION, TITULO_REPORTE } from "./constantes";
-import type { Reporte } from "./tipos";
+import { ETIQUETAS_ESTADO_CONSERVACION, TITULO_REPORTE } from "../constantes";
+import type { Reporte } from "../tipos";
 
 /*
  * Archivos del reporte por categoría y estado, en PDF y en Excel. No usan sesión ni datos:

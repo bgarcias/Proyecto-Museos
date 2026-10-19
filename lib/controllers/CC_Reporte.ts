@@ -30,8 +30,8 @@ import {
 } from "../constantes";
 import { compararCodigos } from "../codigos";
 import { obtenerDatos } from "../data";
-import { generarExcelReporte, generarPdfReporte } from "../exportacionReporte";
-import { generarExcelTabla, generarPdfTabla, type DatosTabla } from "../exportacionTabla";
+import { generarExcelReporte, generarPdfReporte } from "../exportacion/exportacionReporte";
+import { generarExcelTabla, generarPdfTabla, type DatosTabla } from "../exportacion/exportacionTabla";
 import { diaLocal, diaSiguiente, formatearFecha, formatearFechaHora, hoyISO, rangoExposicion, rangosSeCruzan } from "../fechas";
 import type { Datos } from "../data/contratos";
 import type {
@@ -52,7 +52,7 @@ import type {
   Resultado,
   UsuarioPublico,
 } from "../tipos";
-import { coincideTexto, exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./utilidades";
+import { coincideTexto, exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./acceso";
 
 /* ECUS02: Generar Reporte de Inventario por Categoría y Estado */
 

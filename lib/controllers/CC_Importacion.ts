@@ -13,10 +13,10 @@ import {
   validarFilasPiezas,
   type FilaImportacion,
   type VistaPreviaImportacion,
-} from "../importacion";
+} from "../importacion/importacion";
 import type { Museo, Resultado, UsuarioPublico } from "../tipos";
 import type { Datos } from "../data/contratos";
-import { museosActivosVisibles } from "./utilidades";
+import { museosActivosVisibles } from "./acceso";
 
 /* ECUS04: Importar Piezas desde Excel */
 

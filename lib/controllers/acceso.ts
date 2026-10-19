@@ -1,6 +1,5 @@
 import type { Datos } from "../data/contratos";
 import { estadoExposicion, hoyISO, situacionPrestamo } from "../fechas";
-import { puedeAccederMuseo } from "../permisos";
 import type { ExposicionListado, Museo, PiezaListado, PrestamoListado, UsuarioPublico } from "../tipos";
 
 /*
@@ -8,6 +7,15 @@ import type { ExposicionListado, Museo, PiezaListado, PrestamoListado, UsuarioPu
  * Toda lectura se filtra por la organización de la persona en sesión. El administrador ve todos los
  * museos de su organización y el colaborador, solo los que tiene asignados.
  */
+
+/**
+ * Acceso a un museo. Siempre dentro de la organización de la persona.
+ * El administrador accede a todos los museos de su organización. El colaborador, solo a los asignados.
+ */
+export function puedeAccederMuseo(usuario: UsuarioPublico, museo: Pick<Museo, "id" | "organizacionId">): boolean {
+  if (museo.organizacionId !== usuario.organizacionId) return false;
+  return usuario.rol === "administrador" || usuario.museoIds.includes(museo.id);
+}
 
 /** Museos a los que la persona tiene acceso, activos o no. */
 export async function museosVisibles(datos: Datos, usuario: UsuarioPublico): Promise<Museo[]> {

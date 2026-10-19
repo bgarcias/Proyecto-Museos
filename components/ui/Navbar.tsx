@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cerrarSesionAccion } from "@/lib/controllers/CC_Usuario";
 import { opcionesDeNavegacion } from "@/lib/navegacion";
-import estilos from "./Menu.module.css";
+import estilos from "./Navbar.module.css";
 
 /** Menú de navegación fijo: celdas separadas por bordes, con la opción activa en amarillo. */
-export default function Menu({ nombre, esAdministrador }: { nombre: string; esAdministrador: boolean }) {
+export default function Navbar({ nombre, esAdministrador }: { nombre: string; esAdministrador: boolean }) {
   const ruta = usePathname();
   const enlaces = opcionesDeNavegacion(esAdministrador);
 

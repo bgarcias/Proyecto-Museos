@@ -1,9 +1,9 @@
 import ExcelJS from "exceljs";
-import { MAXIMO_CODIGO_ANTERIOR, MENSAJE_CODIGO_ANTERIOR_LARGO, claveCodigoAnterior } from "./codigos";
-import { ESTADOS_CONSERVACION, ETIQUETAS_ESTADO_CONSERVACION } from "./constantes";
+import { MAXIMO_CODIGO_ANTERIOR, MENSAJE_CODIGO_ANTERIOR_LARGO, claveCodigoAnterior } from "../codigos";
+import { ESTADOS_CONSERVACION, ETIQUETAS_ESTADO_CONSERVACION } from "../constantes";
 import { MAXIMO_FILAS, MAXIMO_MEGABYTES_ARCHIVO } from "./limitesImportacion";
-import { ANIO_MINIMO, anioEnRango, validarAnio } from "./validaciones";
-import type { Categoria, EstadoConservacion } from "./tipos";
+import { ANIO_MINIMO, anioEnRango, validarAnio } from "../validaciones";
+import type { Categoria, EstadoConservacion } from "../tipos";
 
 /*
  * Lectura, escritura y validación del Excel de importación de piezas.
