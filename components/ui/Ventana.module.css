@@ -1,0 +1,83 @@
+.velo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espacio-4);
+  background: var(--color-velo);
+}
+
+.ventana {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--ancho-ventana);
+  max-height: 100%;
+  border: var(--borde);
+  background: var(--color-fondo);
+}
+
+.dialogo {
+  max-width: var(--ancho-dialogo);
+}
+
+.ancha {
+  max-width: var(--ancho-maximo);
+}
+
+.seleccion {
+  max-width: var(--ancho-ventana-seleccion);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4);
+  border-bottom: var(--borde);
+  background: var(--color-acento);
+}
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  overflow-y: auto;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3) var(--espacio-4);
+  border-top: var(--borde);
+}
+
+/* tablet */
+@media (max-width: 1025px) {
+  .velo {
+    padding: var(--espacio-3);
+  }
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  .velo {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .ventana {
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .pie > * {
+    flex: 1 1 100%;
+  }
+}

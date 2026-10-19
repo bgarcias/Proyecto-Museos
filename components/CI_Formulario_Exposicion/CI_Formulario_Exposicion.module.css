@@ -1,0 +1,32 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.piezas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+.pieza {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  padding: var(--espacio-2);
+  border: var(--borde-fino);
+}
+
+.pieza span {
+  flex: 1;
+}
+
+.vacio {
+  font-size: var(--texto-pequeno);
+}
+
+.conflictos {
+  margin: 0;
+  padding-left: var(--espacio-4);
+}

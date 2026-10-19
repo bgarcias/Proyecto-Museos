@@ -1,0 +1,44 @@
+/* El campo y el botón comparten un mismo marco: el botón queda dentro del campo, a la derecha */
+.contenedor {
+  display: flex;
+  align-items: stretch;
+  border: var(--borde);
+  background: var(--color-fondo);
+}
+
+.contenedor:focus-within {
+  background: var(--color-resalte-fila);
+}
+
+.contenedor input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.boton {
+  flex: none;
+  padding: 0 var(--espacio-3);
+  border: 0;
+  border-left: var(--borde);
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--tipografia-texto);
+  font-size: var(--texto-etiqueta);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+  cursor: pointer;
+}
+
+.boton:hover {
+  background: var(--color-acento);
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  .boton {
+    min-height: 3rem;
+  }
+}

@@ -1,0 +1,29 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+/* Pieza y museo con más ancho; institución y responsable más angostos, y sus textos largos se parten en varias líneas */
+.pieza {
+  width: 16%;
+}
+
+.museo {
+  width: 16%;
+}
+
+.texto {
+  width: 11%;
+}
+
+/* Tabla densa de once columnas: letra de etiqueta para que quepa en escritorio sin desplazamiento */
+table.compacta {
+  font-size: var(--texto-etiqueta);
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}

@@ -1,0 +1,190 @@
+/*
+ * Estilos globales y variables de diseño.
+ * Todos los valores de diseño (colores, bordes, espaciados, tipografías) viven aquí.
+ * Enfoque desktop first: los valores base son de escritorio y se adaptan hacia abajo
+ * con dos media queries: tablet (max-width: 1025px) y mobile (max-width: 768px).
+ */
+
+:root {
+  /* colores: fondo blanco, texto negro, un acento amarillo, un rojo de error y un verde de éxito, todos planos */
+  --color-fondo: #f6f0e1;
+  --color-texto: #000000;
+  --color-acento: #ffe600;
+  --color-error: #e10600;
+  --color-sobre-error: #ffffff;
+  --color-exito: #1a7f37;
+  --color-sobre-exito: #ffffff;
+  --color-gris: #d9d9d9;
+  --color-gris-claro: #f2f2f2;
+  --color-resalte-fila: #fff7a8;
+  --color-velo: rgba(0, 0, 0, 0.6);
+
+  /* tipografías: las variables --fuente-anton y --fuente-sans las define next/font en el layout */
+  --tipografia-titulos: var(--fuente-anton), Impact, "Arial Narrow", sans-serif;
+  --tipografia-texto: var(--fuente-sans), Arial, Helvetica, sans-serif;
+
+  /* tamaños de texto */
+  --texto-destacado: 1.125rem;
+  --texto-base: 1rem;
+  --texto-pequeno: 0.875rem;
+  --texto-etiqueta: 0.75rem;
+  --texto-titulo-pagina: 3rem;
+  --texto-titulo-celda: 1.5rem;
+  --texto-titulo-menu: 1.5rem;
+  --texto-codigo-error: 10rem;
+  --interlineado: 1.5;
+  --espaciado-letras-etiqueta: 0.08em;
+
+  /* bordes: gruesos, rectos, sin sombras ni esquinas redondeadas */
+  --borde-grosor: 3px;
+  --borde-grosor-fino: 2px;
+  --borde: var(--borde-grosor) solid var(--color-texto);
+  --borde-fino: var(--borde-grosor-fino) solid var(--color-texto);
+  --radio: 0;
+
+  /* espaciados */
+  --espacio-1: 0.25rem;
+  --espacio-2: 0.5rem;
+  --espacio-3: 1rem;
+  --espacio-4: 1.5rem;
+  --espacio-5: 2rem;
+  --espacio-6: 3rem;
+
+  /* medidas */
+  --ancho-maximo: 1400px;
+  --ancho-formulario: 560px;
+  --ancho-formulario-doble: 1040px;
+  --alto-control: 2.75rem;
+  --ancho-miniatura: 3rem;
+  --ancho-miniatura-seleccion: 5rem;
+  --ancho-columna-imagen: 15rem;
+  --ancho-columna-acciones: 12.5rem;
+  --ancho-filtro-amplio: 22rem;
+  --ancho-filtro-medio: 15rem;
+  --ancho-filtro-corto: 10rem;
+  --ancho-filtro-museo-piezas: 22.5rem;
+  --ancho-filtro-disponibilidad-piezas: 16.5rem;
+  --crecimiento-filtro-principal: 3;
+  --crecimiento-filtro-fecha: 1;
+  --alto-boton-compacto: 2.5rem;
+  --ancho-imagen-detalle: 20rem;
+  --ancho-ventana: 960px;
+  --ancho-ventana-seleccion: 960px;
+  --ancho-dialogo: 480px;
+
+  /* alertas de Sonner: medidas base y escala (20 por ciento más grandes que el tamaño por defecto) */
+  --escala-alertas: 1.2;
+  --alerta-ancho: 356px;
+  --alerta-texto: 13px;
+  --alerta-icono: 20px;
+  --alerta-separacion: 6px;
+}
+
+/* tablet */
+@media (max-width: 1025px) {
+  :root {
+    --texto-titulo-pagina: 2.5rem;
+    --texto-titulo-celda: 1.375rem;
+    --texto-codigo-error: 8rem;
+    --espacio-4: 1.25rem;
+    --espacio-5: 1.5rem;
+    --espacio-6: 2rem;
+    --ancho-ventana: 90vw;
+  }
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  :root {
+    --texto-titulo-pagina: 2rem;
+    --texto-titulo-celda: 1.25rem;
+    --texto-titulo-menu: 1.25rem;
+    --texto-codigo-error: 6rem;
+    --borde-grosor: 2px;
+    --espacio-3: 0.75rem;
+    --espacio-4: 1rem;
+    --espacio-5: 1.25rem;
+    --espacio-6: 1.5rem;
+    --ancho-ventana: 100vw;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-radius: var(--radio);
+  box-shadow: none;
+}
+
+html {
+  background: var(--color-fondo);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--tipografia-texto);
+  font-size: var(--texto-base);
+  line-height: var(--interlineado);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--tipografia-titulos);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+}
+
+h1 {
+  font-size: var(--texto-titulo-pagina);
+}
+
+h2 {
+  font-size: var(--texto-titulo-celda);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-texto);
+  text-underline-offset: 3px;
+  text-decoration-thickness: var(--borde-grosor-fino);
+}
+
+a:hover {
+  background: var(--color-acento);
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: var(--borde-grosor) solid var(--color-texto);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 calc(var(--borde-grosor) + 2px) var(--color-acento);
+}
+
+.contenedor {
+  flex: 1;
+  width: 100%;
+  max-width: var(--ancho-maximo);
+  margin: 0 auto;
+  padding: var(--espacio-5) var(--espacio-4) var(--espacio-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}

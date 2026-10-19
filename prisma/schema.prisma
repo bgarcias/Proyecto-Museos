@@ -1,0 +1,189 @@
+model Organizacion {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre     String
+  usuarios   Usuario[]
+  museos     Museo[]
+  categorias Categoria[]
+
+  @@map("organizacion")
+}
+
+model Usuario {
+  // Mismo id de la cuenta de inicio de sesión (Supabase Auth), por eso no lleva valor por defecto.
+  // No guarda contraseña.
+  id             String            @id @db.Uuid
+  organizacionId String            @map("organizacion_id") @db.Uuid
+  nombre         String
+  email          String            @unique
+  rol            String
+  activo         Boolean           @default(true)
+  organizacion   Organizacion      @relation(fields: [organizacionId], references: [id])
+  museos         UsuarioMuseo[]
+  cambios        HistorialCambio[]
+  prestamos      Prestamo[]
+  // Inventarios que inició y que cerró
+  inventariosIniciados Inventario[] @relation("InventarioIniciadoPor")
+  inventariosCerrados  Inventario[] @relation("InventarioCerradoPor")
+
+  @@map("usuario")
+}
+
+model Museo {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizacionId String         @map("organizacion_id") @db.Uuid
+  nombre         String
+  // Lo calcula la aplicación al registrar el museo y no cambia nunca. Único por organización.
+  prefijo        String
+  // Tipo de colección: arqueologia, historico, arte, ciencias_naturales u otro
+  tipo           String
+  direccion      String?
+  activo         Boolean        @default(true)
+  organizacion   Organizacion   @relation(fields: [organizacionId], references: [id])
+  usuarios       UsuarioMuseo[]
+  piezas         Pieza[]
+  exposiciones   Exposicion[]
+  inventarios    Inventario[]
+
+  @@unique([organizacionId, prefijo])
+  @@map("museo")
+}
+
+model UsuarioMuseo {
+  usuarioId String  @map("usuario_id") @db.Uuid
+  museoId   String  @map("museo_id") @db.Uuid
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  museo     Museo   @relation(fields: [museoId], references: [id])
+
+  @@id([usuarioId, museoId])
+  @@map("usuario_museo")
+}
+
+model Categoria {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizacionId String       @map("organizacion_id") @db.Uuid
+  nombre         String
+  organizacion   Organizacion @relation(fields: [organizacionId], references: [id])
+  piezas         Pieza[]
+
+  @@unique([organizacionId, nombre])
+  @@map("categoria")
+}
+
+model Pieza {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  museoId            String              @map("museo_id") @db.Uuid
+  categoriaId        String              @map("categoria_id") @db.Uuid
+  // Lo asigna la aplicación al guardar: prefijo del museo, guion y correlativo. No cambia nunca.
+  codigo             String
+  // Código que tenía antes, opcional. Único por museo cuando existe.
+  codigoAnterior     String?             @map("codigo_anterior")
+  nombre             String
+  descripcion        String?
+  anio               Int?
+  material           String?
+  estadoConservacion String              @map("estado_conservacion")
+  ubicacionFisica    String?             @map("ubicacion_fisica")
+  imagenUrl          String?             @map("imagen_url")
+  disponibilidad     String
+  fechaRegistro      DateTime            @default(now()) @map("fecha_registro")
+  museo              Museo               @relation(fields: [museoId], references: [id])
+  categoria          Categoria           @relation(fields: [categoriaId], references: [id])
+  exposiciones       PiezaExposicion[]
+  cambios            HistorialCambio[]
+  prestamos          Prestamo[]
+  detallesInventario DetalleInventario[]
+
+  @@unique([museoId, codigo])
+  @@unique([museoId, codigoAnterior])
+  @@map("pieza")
+}
+
+model HistorialCambio {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  piezaId         String   @map("pieza_id") @db.Uuid
+  usuarioId       String   @map("usuario_id") @db.Uuid
+  campoModificado String   @map("campo_modificado")
+  valorAnterior   String?  @map("valor_anterior")
+  valorNuevo      String?  @map("valor_nuevo")
+  fecha           DateTime @default(now())
+  pieza           Pieza    @relation(fields: [piezaId], references: [id])
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@map("historial_cambio")
+}
+
+model Exposicion {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  museoId     String            @map("museo_id") @db.Uuid
+  nombre      String
+  descripcion String?
+  fechaInicio DateTime          @map("fecha_inicio") @db.Date
+  fechaFin    DateTime          @map("fecha_fin") @db.Date
+  cancelada   Boolean           @default(false)
+  museo       Museo             @relation(fields: [museoId], references: [id])
+  piezas      PiezaExposicion[]
+
+  @@map("exposicion")
+}
+
+model PiezaExposicion {
+  piezaId      String     @map("pieza_id") @db.Uuid
+  exposicionId String     @map("exposicion_id") @db.Uuid
+  pieza        Pieza      @relation(fields: [piezaId], references: [id])
+  exposicion   Exposicion @relation(fields: [exposicionId], references: [id])
+
+  @@id([piezaId, exposicionId])
+  @@map("pieza_exposicion")
+}
+
+model Prestamo {
+  // Regla que Prisma no puede expresar: una pieza solo puede tener un préstamo abierto
+  // (con fecha_devolucion_real nula). Se valida en la aplicación.
+  id                           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  piezaId                      String    @map("pieza_id") @db.Uuid
+  usuarioId                    String    @map("usuario_id") @db.Uuid
+  institucionDestino           String    @map("institucion_destino")
+  responsableReceptor          String    @map("responsable_receptor")
+  numeroConvenio               String    @map("numero_convenio")
+  numeroPoliza                 String    @map("numero_poliza")
+  valorAsegurado               Decimal   @map("valor_asegurado") @db.Decimal(12, 2)
+  fechaSalida                  DateTime  @map("fecha_salida") @db.Date
+  fechaDevolucionPrevista      DateTime  @map("fecha_devolucion_prevista") @db.Date
+  fechaDevolucionReal          DateTime? @map("fecha_devolucion_real") @db.Date
+  estadoConservacionSalida     String    @map("estado_conservacion_salida")
+  estadoConservacionDevolucion String?   @map("estado_conservacion_devolucion")
+  pieza                        Pieza     @relation(fields: [piezaId], references: [id])
+  usuario                      Usuario   @relation(fields: [usuarioId], references: [id])
+
+  @@map("prestamo")
+}
+
+model Inventario {
+  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  museoId     String              @map("museo_id") @db.Uuid
+  usuarioId   String              @map("usuario_id") @db.Uuid
+  // Quien cerró el inventario: vacío mientras está en curso
+  usuarioCierreId String?         @map("usuario_cierre_id") @db.Uuid
+  fechaInicio DateTime            @map("fecha_inicio")
+  fechaCierre DateTime?           @map("fecha_cierre")
+  estado      String
+  museo       Museo               @relation(fields: [museoId], references: [id])
+  usuario     Usuario             @relation("InventarioIniciadoPor", fields: [usuarioId], references: [id])
+  usuarioCierre Usuario?          @relation("InventarioCerradoPor", fields: [usuarioCierreId], references: [id])
+  detalles    DetalleInventario[]
+
+  @@map("inventario")
+}
+
+model DetalleInventario {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inventarioId String     @map("inventario_id") @db.Uuid
+  piezaId      String     @map("pieza_id") @db.Uuid
+  resultado    String
+  observacion  String?
+  inventario   Inventario @relation(fields: [inventarioId], references: [id])
+  pieza        Pieza      @relation(fields: [piezaId], references: [id])
+
+  @@unique([inventarioId, piezaId])
+  @@map("detalle_inventario")
+}

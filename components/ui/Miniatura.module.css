@@ -1,0 +1,39 @@
+.imagen {
+  border: var(--borde-fino);
+  background: var(--color-gris);
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+  flex: none;
+}
+
+.pequena {
+  width: var(--ancho-miniatura);
+}
+
+.seleccion {
+  width: var(--ancho-miniatura-seleccion);
+}
+
+/* Catálogo: llena la celda de la columna Imagen, cuadrada y con recorte centrado */
+.lista {
+  width: 100%;
+}
+
+.grande {
+  width: 10rem;
+}
+
+.detalle {
+  width: var(--ancho-imagen-detalle);
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  .detalle {
+    width: 100%;
+  }
+
+  .grande {
+    width: 7rem;
+  }
+}

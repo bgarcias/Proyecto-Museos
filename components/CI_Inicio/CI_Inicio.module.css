@@ -1,0 +1,82 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+/*
+ * Cuadrícula de 12 columnas. Cada tarjeta tiene su borde completo y se extiende un grosor de borde sobre la
+ * celda vecina (margen negativo), así dos tarjetas contiguas comparten una sola línea del grosor normal.
+ * El relleno derecho e inferior de la cuadrícula aloja esa extensión en la última columna y la última fila,
+ * de modo que el marco exterior mide lo mismo que los bordes internos.
+ * Administrador: 7 tarjetas, una fila de 4 y otra de 3. Colaborador: 5 tarjetas, una fila de 3 y otra de 2.
+ * Las tarjetas de una misma fila tienen el mismo ancho y la fila ocupa todo el ancho.
+ */
+.accesos {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  padding-right: var(--borde-grosor);
+  padding-bottom: var(--borde-grosor);
+}
+
+.administrador > :nth-child(-n + 4) {
+  grid-column: span 3;
+}
+
+.administrador > :nth-child(n + 5) {
+  grid-column: span 4;
+}
+
+.colaborador > :nth-child(-n + 3) {
+  grid-column: span 4;
+}
+
+.colaborador > :nth-child(n + 4) {
+  grid-column: span 6;
+}
+
+.acceso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  padding: var(--espacio-4);
+  margin-right: calc(var(--borde-grosor) * -1);
+  margin-bottom: calc(var(--borde-grosor) * -1);
+  border: var(--borde);
+  color: var(--color-texto);
+  text-decoration: none;
+  background: var(--color-fondo);
+}
+
+.acceso:hover {
+  background: var(--color-acento);
+}
+
+.tituloAcceso {
+  font-family: var(--tipografia-titulos);
+  font-size: var(--texto-titulo-celda);
+  text-transform: uppercase;
+}
+
+/* tablet: dos columnas, y la última tarjeta ocupa todo el ancho si queda sola */
+@media (max-width: 1025px) {
+  .accesos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .administrador > .acceso,
+  .colaborador > .acceso {
+    grid-column: auto;
+  }
+
+  .accesos > .acceso:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* mobile: una columna */
+@media (max-width: 768px) {
+  .accesos {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,40 @@
+.insignia {
+  display: inline-block;
+  /* El texto largo salta a dos líneas, así que la insignia no ensancha su columna */
+  width: max-content;
+  max-width: 12em;
+  padding: var(--espacio-1) var(--espacio-2);
+  border: var(--borde);
+  font-size: var(--texto-etiqueta);
+  font-weight: 800;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+  text-align: center;
+}
+
+.verde {
+  background: var(--color-exito);
+  color: var(--color-sobre-exito);
+}
+
+.amarillo {
+  background: var(--color-acento);
+  color: var(--color-texto);
+}
+
+.rojo {
+  background: var(--color-error);
+  color: var(--color-sobre-error);
+}
+
+.gris {
+  background: var(--color-gris);
+  color: var(--color-texto);
+}
+
+/* Solo borde, sin relleno: el fondo es el de la página */
+.borde {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}

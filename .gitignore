@@ -1,0 +1,18 @@
+# dependencias
+node_modules
+
+# Next.js
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+
+# variables de entorno: nunca se suben
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# sistema y registros
+.DS_Store
+npm-debug.log*

@@ -1,0 +1,35 @@
+/*
+ * Fila de filtros de los reportes: cada filtro tiene el ancho que necesita su contenido, en lugar de columnas iguales.
+ * Los selectores de museo y los campos de texto son los más anchos, las listas cortas tienen un ancho medio o corto
+ * y las fechas, el ancho de un campo de fecha. Los anchos salen de variables globales.
+ */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--espacio-3);
+}
+
+.amplio {
+  flex: 1 1 var(--ancho-filtro-amplio);
+  min-width: 0;
+}
+
+.medio {
+  flex: 0 1 var(--ancho-filtro-medio);
+  min-width: 0;
+}
+
+.corto {
+  flex: 0 1 var(--ancho-filtro-corto);
+  min-width: 0;
+}
+
+/* mobile: cada filtro ocupa todo el ancho */
+@media (max-width: 768px) {
+  .amplio,
+  .medio,
+  .corto {
+    flex: 1 1 100%;
+  }
+}

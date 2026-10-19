@@ -1,0 +1,8 @@
+.enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2) var(--espacio-4);
+  justify-content: space-between;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+}

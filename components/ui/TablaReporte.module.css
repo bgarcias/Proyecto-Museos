@@ -1,0 +1,35 @@
+/*
+ * Reglas comunes de las tablas de los reportes de piezas, exposiciones y préstamos. Se aplican con la propiedad `clase`
+ * de `Tabla`, así que no afectan a las tablas de otras pantallas. El selector con `table` gana en especificidad a los
+ * estilos base de `Tabla`.
+ */
+
+/* El relleno lateral menor deja más ancho al contenido, para que la tabla quepa en escritorio */
+table.tabla th,
+table.tabla td {
+  padding-inline: var(--espacio-2);
+}
+
+/* Los encabezados pueden partirse en dos líneas: el ancho de la columna lo define su contenido */
+table.tabla th {
+  white-space: normal;
+}
+
+/* Columna del ancho de su contenido */
+table.tabla .ajustada {
+  width: 1%;
+}
+
+/* Contenido que nunca se parte en varias líneas: códigos, convenios, pólizas y fechas */
+table.tabla .linea {
+  white-space: nowrap;
+}
+
+table.tabla .centrada {
+  text-align: center;
+}
+
+/* Texto secundario bajo un dato principal, por ejemplo el nombre de la pieza bajo su código */
+.debajo {
+  display: block;
+}

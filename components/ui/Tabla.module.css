@@ -1,0 +1,63 @@
+.contenedor {
+  width: 100%;
+  overflow-x: auto;
+  border: var(--borde);
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--texto-pequeno);
+}
+
+.tabla th,
+.tabla td {
+  padding: var(--espacio-2) var(--espacio-3);
+  border: var(--borde-fino);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tabla th {
+  background: var(--color-texto);
+  color: var(--color-fondo);
+  font-size: var(--texto-etiqueta);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+  white-space: nowrap;
+}
+
+.tabla tbody tr:hover td {
+  background: var(--color-resalte-fila);
+}
+
+.tabla tr[data-seleccionada="true"] td {
+  background: var(--color-acento);
+}
+
+.tabla td[data-numero="true"],
+.tabla th[data-numero="true"] {
+  text-align: right;
+}
+
+.tabla tfoot td {
+  background: var(--color-gris);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+/* tablet */
+@media (max-width: 1025px) {
+  .tabla {
+    min-width: 720px;
+  }
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  .tabla th,
+  .tabla td {
+    padding: var(--espacio-2);
+  }
+}

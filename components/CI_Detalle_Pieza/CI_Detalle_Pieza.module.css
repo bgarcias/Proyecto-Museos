@@ -1,0 +1,33 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+/* Imagen a un lado y los datos al otro */
+.cuerpo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--espacio-4);
+  align-items: start;
+}
+
+.datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3);
+}
+
+/* tablet */
+@media (max-width: 1025px) {
+  .cuerpo {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  .datos {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,27 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+/* Nombre y piezas, las columnas de texto: las piezas con más ancho para que cada una quede en una línea */
+.nombre {
+  width: 18%;
+}
+
+.piezasColumna {
+  width: 45%;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+/* Una pieza por línea */
+.piezas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

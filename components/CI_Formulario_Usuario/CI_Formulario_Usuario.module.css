@@ -1,0 +1,10 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.accionMuseo,
+.accionCopiar {
+  align-self: flex-start;
+}

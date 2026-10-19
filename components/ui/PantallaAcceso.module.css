@@ -1,0 +1,23 @@
+/* Ocupa el alto visible que deja el contenedor de la página, para centrar el bloque en vertical */
+.pantalla {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100dvh - var(--espacio-5) - var(--espacio-6));
+}
+
+.bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  width: 100%;
+  max-width: var(--ancho-formulario);
+}
+
+.marca {
+  padding: var(--espacio-2) var(--espacio-4);
+  background: var(--color-acento);
+  border: var(--borde);
+  font-size: calc(var(--texto-titulo-pagina) * 1.4);
+  text-align: center;
+}

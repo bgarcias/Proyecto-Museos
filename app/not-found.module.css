@@ -1,0 +1,25 @@
+/* Ocupa todo el alto que deja el contenedor de la página, para centrar el recuadro en vertical */
+.pantalla {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espacio-4);
+  text-align: center;
+}
+
+.codigo {
+  font-size: var(--texto-codigo-error);
+  line-height: 1;
+}
+
+.mensaje {
+  font-size: var(--texto-destacado);
+  font-weight: 800;
+}

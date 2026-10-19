@@ -1,0 +1,53 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+/*
+ * Filtros propios del reporte de piezas. Los anchos son mínimos: museo para su nombre más largo, disponibilidad para su
+ * opción más larga y las fechas para un campo de fecha. El espacio sobrante de la fila se reparte en proporción:
+ * museo y disponibilidad reciben la mayor parte y las fechas crecen menos.
+ */
+.filtroMuseo {
+  flex: var(--crecimiento-filtro-principal) 1 var(--ancho-filtro-museo-piezas);
+  min-width: 0;
+}
+
+.filtroDisponibilidad {
+  flex: var(--crecimiento-filtro-principal) 1 var(--ancho-filtro-disponibilidad-piezas);
+  min-width: 0;
+}
+
+.filtroFecha {
+  flex: var(--crecimiento-filtro-fecha) 1 var(--ancho-filtro-corto);
+  min-width: 0;
+}
+
+/* mobile: cada filtro ocupa todo el ancho */
+@media (max-width: 768px) {
+  .filtroMuseo,
+  .filtroDisponibilidad,
+  .filtroFecha {
+    flex: 1 1 100%;
+  }
+}
+
+/* Nombre y ubicación con más ancho para que la mayoría de las filas queden en una línea, y el museo con ancho para su nombre */
+.nombre {
+  width: 24%;
+}
+
+.ubicacion {
+  width: 20%;
+}
+
+.museo {
+  width: 17%;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}

@@ -1,0 +1,17 @@
+import { exportarReporteExposiciones } from "@/lib/controllers/CC_Reporte";
+import { parametrosAMapa } from "@/lib/reporteParametros";
+
+const CLAVES = ["museoId", "estado", "desde", "hasta"] as const;
+
+/** Reporte de exposiciones en EXCEL, como descarga. Requiere sesión y recalcula el reporte con los filtros recibidos. */
+export async function GET(solicitud: Request) {
+  const filtros = parametrosAMapa(new URL(solicitud.url).searchParams, CLAVES);
+  const archivo = await exportarReporteExposiciones("excel", filtros);
+  if (!archivo.ok) return new Response(archivo.error, { status: 400, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  return new Response(archivo.contenido as BodyInit, {
+    headers: {
+      "Content-Type": archivo.tipoContenido,
+      "Content-Disposition": `attachment; filename="${archivo.nombreArchivo}"`,
+    },
+  });
+}

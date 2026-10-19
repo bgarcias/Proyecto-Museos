@@ -1,0 +1,157 @@
+.barra {
+  display: flex;
+  align-items: stretch;
+  border-bottom: var(--borde);
+  background: var(--color-fondo);
+}
+
+.celda {
+  display: flex;
+  align-items: center;
+  padding: var(--espacio-3) var(--espacio-4);
+  border: 0;
+  border-right: var(--borde);
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--tipografia-texto);
+  font-size: var(--texto-pequeno);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+  text-decoration: none;
+}
+
+/* El logotipo siempre es amarillo con texto negro, como el del login, y nunca se marca como opción activa */
+.marca {
+  background: var(--color-acento);
+  color: var(--color-texto);
+  font-family: var(--tipografia-titulos);
+  font-size: var(--texto-titulo-menu);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* El logotipo es un bloque de marca aparte: un espacio con bordes a ambos lados lo separa de la primera opción */
+.marca {
+  margin-right: var(--espacio-3);
+}
+
+.marca + .enlace {
+  border-left: var(--borde);
+}
+
+/* Al pasar el cursor, el logotipo se invierte */
+.marca:hover {
+  background: var(--color-texto);
+  color: var(--color-acento);
+}
+
+.enlace:hover {
+  background: var(--color-resalte-fila);
+}
+
+/* Cerrar sesión pasa a rojo al pasar el cursor */
+.boton:hover {
+  background: var(--color-error);
+  color: var(--color-sobre-error);
+}
+
+.activo,
+.activo:hover {
+  background: var(--color-acento);
+}
+
+.usuario {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin-left: auto;
+  border-left: var(--borde);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.etiqueta {
+  font-size: var(--texto-etiqueta);
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+}
+
+.nombre {
+  font-weight: 600;
+}
+
+.salir {
+  display: flex;
+  margin: 0;
+}
+
+.boton {
+  cursor: pointer;
+  border-right: 0;
+}
+
+/* tablet */
+@media (max-width: 1025px) {
+  .barra {
+    flex-wrap: wrap;
+  }
+
+  .celda {
+    padding: var(--espacio-3);
+  }
+
+  .usuario {
+    margin-left: auto;
+  }
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  .barra {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 0;
+  }
+
+  .celda {
+    border-bottom: var(--borde);
+    min-height: 3rem;
+  }
+
+  .marca,
+  .usuario,
+  .salir {
+    grid-column: 1 / -1;
+  }
+
+  .marca {
+    margin-right: 0;
+  }
+
+  .marca + .enlace {
+    border-left: 0;
+  }
+
+  .usuario {
+    margin-left: 0;
+    border-left: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--espacio-2);
+  }
+
+  .salir .celda {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .celda {
+    border-right: 0;
+  }
+
+  .enlace:nth-of-type(even) {
+    border-right: var(--borde);
+  }
+}

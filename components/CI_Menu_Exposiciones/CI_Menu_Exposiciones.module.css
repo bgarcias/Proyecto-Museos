@@ -1,0 +1,38 @@
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.piezas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pieza {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin: 0;
+}
+
+.resumen dt {
+  font-size: var(--texto-etiqueta);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+}
+
+.resumen dd {
+  margin: 0;
+}

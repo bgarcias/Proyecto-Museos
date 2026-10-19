@@ -1,0 +1,36 @@
+/*
+ * Estilo de las alertas de Sonner. Mismo borde grueso y recto que el resto del proyecto, éxito en verde,
+ * error en rojo, y todas las medidas multiplicadas por la escala global de alertas.
+ * El ancho se asigna en ContenedorAlertas.tsx, porque Sonner lo define en línea.
+ */
+.alertas :global([data-sonner-toast][data-styled="true"]) {
+  gap: calc(var(--alerta-separacion) * var(--escala-alertas));
+  padding: calc(var(--espacio-3) * var(--escala-alertas));
+  border: var(--borde);
+  border-radius: var(--radio);
+  box-shadow: none;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--tipografia-texto);
+  font-size: calc(var(--alerta-texto) * var(--escala-alertas));
+}
+
+.alertas :global([data-sonner-toast][data-styled="true"][data-type="success"]) {
+  background: var(--color-exito);
+  color: var(--color-sobre-exito);
+}
+
+.alertas :global([data-sonner-toast][data-styled="true"][data-type="error"]) {
+  background: var(--color-error);
+  color: var(--color-sobre-error);
+}
+
+.alertas :global([data-sonner-toast][data-styled="true"] [data-icon]) {
+  width: calc(var(--alerta-icono) * var(--escala-alertas));
+  height: calc(var(--alerta-icono) * var(--escala-alertas));
+}
+
+.alertas :global([data-sonner-toast][data-styled="true"] [data-icon] svg) {
+  width: calc(var(--alerta-icono) * var(--escala-alertas));
+  height: calc(var(--alerta-icono) * var(--escala-alertas));
+}

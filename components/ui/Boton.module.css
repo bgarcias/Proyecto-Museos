@@ -1,0 +1,94 @@
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--alto-control);
+  padding: 0 var(--espacio-4);
+  border: var(--borde);
+  font-family: var(--tipografia-texto);
+  font-size: var(--texto-pequeno);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pequeno {
+  min-height: 2.25rem;
+  padding: 0 var(--espacio-3);
+  font-size: var(--texto-etiqueta);
+}
+
+.boton.bloque {
+  width: 100%;
+  min-height: 3rem;
+  padding: var(--espacio-1) var(--espacio-2);
+}
+
+/* Altura fija, la de un texto de dos líneas: los botones de una línea quedan con espacio arriba y abajo */
+.boton.compacto {
+  height: var(--alto-boton-compacto);
+  min-height: 0;
+  padding: 0 var(--espacio-2);
+  font-size: var(--texto-etiqueta);
+  letter-spacing: 0.04em;
+}
+
+.principal {
+  background: var(--color-texto);
+  color: var(--color-fondo);
+}
+
+.secundario {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+.principal:hover:not(:disabled),
+.secundario:hover:not(:disabled) {
+  background: var(--color-acento);
+  color: var(--color-texto);
+}
+
+.peligro {
+  background: transparent;
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.peligro:hover:not(:disabled) {
+  background: var(--color-error);
+  color: var(--color-sobre-error);
+}
+
+.boton:disabled {
+  background: var(--color-gris);
+  color: var(--color-texto);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+/* tablet */
+@media (max-width: 1025px) {
+  .boton {
+    padding: 0 var(--espacio-3);
+  }
+}
+
+/* mobile */
+@media (max-width: 768px) {
+  .boton {
+    min-height: 3rem;
+  }
+
+  .pequeno {
+    min-height: 2.75rem;
+  }
+
+  .boton.compacto {
+    min-height: 0;
+  }
+}
