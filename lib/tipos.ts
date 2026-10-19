@@ -1,6 +1,6 @@
 /*
- * Todos los ids son texto con formato uuid.
- * Los valores fijos se guardan en minúscula. La interfaz los muestra con sus etiquetas (lib/constantes.ts).
+ * Todos los ids son texto con formato uuid. Los valores fijos se guardan en minúscula;
+ * la interfaz los muestra con sus etiquetas (lib/constantes.ts).
  */
 
 export type Rol = "administrador" | "colaborador";

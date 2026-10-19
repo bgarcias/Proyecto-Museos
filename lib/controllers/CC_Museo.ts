@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { exigirAdministrador } from "../auth/session";
+import { MENSAJE_MUSEO_NOMBRE_SIN_CARACTERES, nombreTienePrefijo } from "../codigos";
 import { TIPOS_COLECCION } from "../constantes";
 import { obtenerDatos } from "../data";
 import type { Museo, Resultado, TipoColeccion, UsuarioPublico } from "../tipos";
@@ -37,6 +38,8 @@ async function validarEntrada(
 ): Promise<{ error: string } | { nombre: string; tipo: TipoColeccion; direccion?: string }> {
   const nombre = entrada.nombre.trim();
   if (!nombre) return { error: "Ingresa el nombre del museo" };
+  // El prefijo se saca del nombre: sin ninguna letra ni cifra no se podría calcular
+  if (!nombreTienePrefijo(nombre)) return { error: MENSAJE_MUSEO_NOMBRE_SIN_CARACTERES };
   if (!(TIPOS_COLECCION as readonly string[]).includes(entrada.tipo)) return { error: "Selecciona el tipo de museo" };
 
   // El nombre es único dentro de la organización

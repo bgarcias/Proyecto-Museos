@@ -17,7 +17,7 @@
   width: 11%;
 }
 
-/* Tabla densa de once columnas: letra de etiqueta para que quepa en escritorio sin desplazamiento */
+/* Once columnas: letra de etiqueta para que quepa en escritorio sin desplazamiento */
 table.compacta {
   font-size: var(--texto-etiqueta);
 }

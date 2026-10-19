@@ -5,9 +5,8 @@
 }
 
 /*
- * Filtros propios del reporte de piezas. Los anchos son mínimos: museo para su nombre más largo, disponibilidad para su
- * opción más larga y las fechas para un campo de fecha. El espacio sobrante de la fila se reparte en proporción:
- * museo y disponibilidad reciben la mayor parte y las fechas crecen menos.
+ * Filtros propios del reporte. Los anchos son mínimos (nombre de museo más largo, opción de disponibilidad más
+ * larga, campo de fecha); el sobrante de la fila va sobre todo a museo y disponibilidad.
  */
 .filtroMuseo {
   flex: var(--crecimiento-filtro-principal) 1 var(--ancho-filtro-museo-piezas);
@@ -33,7 +32,7 @@
   }
 }
 
-/* Nombre y ubicación con más ancho para que la mayoría de las filas queden en una línea, y el museo con ancho para su nombre */
+/* Nombre y ubicación más anchos para que casi todas las filas queden en una línea; el museo con ancho para su nombre */
 .nombre {
   width: 24%;
 }

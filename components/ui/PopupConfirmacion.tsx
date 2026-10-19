@@ -2,10 +2,10 @@
 
 import type { ReactNode } from "react";
 import Boton from "./Boton";
-import Ventana from "./Ventana";
+import Popup from "./Popup";
 
-/** Ventana angosta de confirmación, con los botones Confirmar y Cancelar. */
-export default function DialogoConfirmacion({
+/** Popup angosto de confirmación, con los botones Confirmar y Cancelar. */
+export default function PopupConfirmacion({
   titulo,
   children,
   procesando,
@@ -19,9 +19,9 @@ export default function DialogoConfirmacion({
   onCancelar: () => void;
 }) {
   return (
-    <Ventana
+    <Popup
       titulo={titulo}
-      dialogo
+      angosto
       onCerrar={onCancelar}
       pie={
         <>
@@ -35,6 +35,6 @@ export default function DialogoConfirmacion({
       }
     >
       <p>{children}</p>
-    </Ventana>
+    </Popup>
   );
 }

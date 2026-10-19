@@ -1,6 +1,6 @@
 /**
- * Línea de resultado de los buscadores: "N piezas" sin filtros aplicados, o "X de N piezas" con filtros.
- * N es el total visible para la persona. Con N igual a 1 se usa el singular.
+ * Línea de resultado de los buscadores: "N piezas" sin filtros, "X de N piezas" con filtros.
+ * N es el total visible para la persona; con N igual a 1 va en singular.
  */
 export function textoResultadoBusqueda(
   mostradas: number,

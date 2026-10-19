@@ -29,7 +29,7 @@ export default function CI_Devolucion_Prestamo({ prestamos }: { prestamos: Prest
 
   function elegir(prestamo: PrestamoListado) {
     setElegido(prestamo);
-    // El selector vuelve a quedar vacío: el estado al regresar se elige siempre
+    // El estado al regresar se elige siempre: el selector vuelve a quedar vacío
     setEstado("");
   }
 

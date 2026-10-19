@@ -1,7 +1,6 @@
 /*
- * Estilo de las alertas de Sonner. Mismo borde grueso y recto que el resto del proyecto, éxito en verde,
- * error en rojo, y todas las medidas multiplicadas por la escala global de alertas.
- * El ancho se asigna en ContenedorAlertas.tsx, porque Sonner lo define en línea.
+ * Alertas de Sonner: mismo borde grueso y recto del proyecto, éxito en verde, error en rojo y medidas por la escala
+ * global de alertas. El ancho se asigna en ContenedorAlertas.tsx porque Sonner lo define en línea.
  */
 .alertas :global([data-sonner-toast][data-styled="true"]) {
   gap: calc(var(--alerta-separacion) * var(--escala-alertas));

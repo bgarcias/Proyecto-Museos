@@ -1,6 +1,6 @@
 import { generarPlantilla } from "@/lib/controllers/CC_Importacion";
 
-/** Descarga de la plantilla de Excel. Requiere sesión. */
+/** Plantilla de Excel para importar. Requiere sesión. */
 export async function GET() {
   const { nombreArchivo, contenido } = await generarPlantilla();
   return new Response(contenido as BodyInit, {

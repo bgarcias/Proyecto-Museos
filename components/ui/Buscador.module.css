@@ -5,8 +5,8 @@
 }
 
 .casilla {
-  width: 1.375rem;
-  height: 1.375rem;
+  width: var(--tamano-casilla);
+  height: var(--tamano-casilla);
   margin: 0;
   accent-color: var(--color-texto);
   cursor: pointer;
@@ -34,10 +34,10 @@
 }
 
 /*
- * Anchos de la tabla de piezas. Imagen y acciones tienen ancho fijo, y código, estado y disponibilidad se ajustan a su contenido.
+ * Anchos de la tabla de piezas. Imagen y acciones, fijos; código, estado y disponibilidad se ajustan a su contenido.
  * Nombre y museo no tienen ancho propio: ceden espacio antes que la imagen.
- * La imagen no puede usar un ancho en porcentaje: el estilo global de img (ancho máximo del 100 por ciento) hace que
- * una columna de ancho automático la comprima hasta el relleno de la celda.
+ * La imagen no puede ir en porcentaje: el img global (ancho máximo del 100 por ciento) hace que una columna
+ * automática la comprima hasta el relleno de la celda.
  */
 .colAjustada {
   width: 1%;
@@ -48,7 +48,7 @@
   min-width: var(--ancho-columna-imagen);
 }
 
-/* Ventanas de selección: columna de ancho fijo, la miniatura con el relleno de la celda */
+/* Popups de selección: columna de ancho fijo, la miniatura con el relleno de la celda */
 .colMiniatura {
   width: calc(var(--ancho-miniatura-seleccion) + var(--espacio-3) * 2 + var(--borde-grosor-fino));
   min-width: calc(var(--ancho-miniatura-seleccion) + var(--espacio-3) * 2 + var(--borde-grosor-fino));

@@ -1,6 +1,9 @@
 # dependencias
 node_modules
 
+# cliente de Prisma generado: se vuelve a crear con npm run db:generar
+/lib/data/prisma/generado
+
 # Next.js
 .next
 out

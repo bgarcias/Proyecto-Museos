@@ -1,10 +1,15 @@
 import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import {
+  ETIQUETA_CATEGORIA,
+  ETIQUETA_DISPONIBILIDAD,
+  ETIQUETA_ESTADO_CONSERVACION,
+  ETIQUETA_FECHA_REGISTRO,
+  ETIQUETA_UBICACION_FISICA,
+} from "../constantes";
 
 /*
- * Ficha técnica de una pieza en PDF (una página). Usa la fuente por defecto de la librería,
- * así que no se necesitan archivos de fuentes.
- * La librería solo admite imágenes PNG y JPG: con otro formato (por ejemplo los marcadores SVG)
- * o sin imagen, se dibuja un recuadro neutro con el texto "Sin imagen".
+ * Ficha técnica de una pieza en PDF, una página, con la fuente por defecto de la librería.
+ * La librería solo admite PNG y JPG: con otro formato (p. ej. marcadores SVG) o sin imagen se dibuja un recuadro "Sin imagen".
  */
 
 export type DatosFicha = {
@@ -96,14 +101,14 @@ function FichaTecnica({ datos }: { datos: DatosFicha }) {
             )}
           </View>
           <View style={estilos.columnaDatos}>
-            <Dato etiqueta="Categoría" valor={datos.categoria} />
+            <Dato etiqueta={ETIQUETA_CATEGORIA} valor={datos.categoria} />
             <Dato etiqueta="Descripción" valor={datos.descripcion} />
             <Dato etiqueta="Año" valor={datos.anio} />
             <Dato etiqueta="Material" valor={datos.material} />
-            <Dato etiqueta="Estado de conservación" valor={datos.estadoConservacion} />
-            <Dato etiqueta="Ubicación física" valor={datos.ubicacionFisica} />
-            <Dato etiqueta="Disponibilidad" valor={datos.disponibilidad} />
-            <Dato etiqueta="Fecha de registro" valor={datos.fechaRegistro} />
+            <Dato etiqueta={ETIQUETA_ESTADO_CONSERVACION} valor={datos.estadoConservacion} />
+            <Dato etiqueta={ETIQUETA_UBICACION_FISICA} valor={datos.ubicacionFisica} />
+            <Dato etiqueta={ETIQUETA_DISPONIBILIDAD} valor={datos.disponibilidad} />
+            <Dato etiqueta={ETIQUETA_FECHA_REGISTRO} valor={datos.fechaRegistro} />
           </View>
         </View>
 

@@ -102,11 +102,7 @@ export async function crearInventario(museoId: string): Promise<Resultado<{ id: 
 
 /* Conteo y cierre */
 
-/**
- * Datos de un inventario. En curso: las piezas esperadas con las marcas ya guardadas.
- * Cerrado: las piezas que se contaron, en solo lectura, con su resumen.
- * Devuelve null si no existe o la persona no tiene acceso a su museo.
- */
+/** Si sigue en curso trae las esperadas con sus marcas; si no, lo contado en solo lectura con su resumen. Null si no existe o no hay acceso al museo. */
 export async function cargarInventario(
   id: string,
 ): Promise<{ inventario: InventarioListado; filas: FilaInventario[]; resumen: ResumenInventario | null } | null> {
@@ -154,11 +150,9 @@ export async function marcarPieza(
 }
 
 /**
- * Cierra el inventario. No se puede cerrar hasta que todas las piezas esperadas estén marcadas.
- * Al cerrar: las no encontradas pasan a pendiente de verificación; toda pieza encontrada (Encontrada o Con daño)
- * que estaba pendiente de verificación vuelve a disponible; las marcadas Con daño pasan a estado malo si no
- * lo estaban. Cada cambio se registra en el historial. Puede cerrarlo cualquier persona con acceso al museo del
- * inventario, y queda registrada como quien lo cerró.
+ * Exige todas las esperadas marcadas. Las no encontradas pasan a pendiente de verificación; las encontradas (Encontrada o Con daño)
+ * que estaban pendientes vuelven a disponible; las Con daño pasan a estado malo si no lo estaban. Cada cambio va al historial.
+ * Lo puede cerrar cualquiera con acceso al museo y queda como quien cerró.
  */
 export async function cerrarInventario(id: string): Promise<Resultado> {
   const usuario = await exigirSesion();

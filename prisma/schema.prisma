@@ -1,6 +1,26 @@
+// Los scripts de prisma/sql son la fuente de verdad de la base de datos. Este archivo solo refleja las 12 tablas
+// para generar el cliente. Lo que Prisma no puede expresar vive en esos scripts: los valores fijos con check,
+// los check de fechas, valores y longitudes, el inventario en curso único por museo, el préstamo abierto único
+// por pieza, el correo y el nombre de museo únicos sin importar mayúsculas, el código anterior normalizado,
+// la seguridad por fila y los permisos de anon y authenticated.
+//
+// No se usan prisma migrate, prisma db push ni prisma db pull: cualquiera de ellos podría modificar la base
+// sin pasar por los scripts de prisma/sql. Prisma solo genera el cliente y valida este archivo (db:generar y db:validar).
+// La cadena directa de la conexión se lee en prisma.config.ts y la de la aplicación, en lib/config/env.ts.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/data/prisma/generado"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
 model Organizacion {
   id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   nombre     String
+  creadoEn   DateTime    @default(now()) @map("creado_en") @db.Timestamptz
   usuarios   Usuario[]
   museos     Museo[]
   categorias Categoria[]
@@ -10,14 +30,16 @@ model Organizacion {
 
 model Usuario {
   // Mismo id de la cuenta de inicio de sesión (Supabase Auth), por eso no lleva valor por defecto.
-  // No guarda contraseña.
-  id             String            @id @db.Uuid
-  organizacionId String            @map("organizacion_id") @db.Uuid
+  // No guarda contraseña. El correo es único sin importar mayúsculas: índice en 02_reglas_y_seguridad.sql.
+  id             String         @id @db.Uuid
+  organizacionId String         @map("organizacion_id") @db.Uuid
   nombre         String
-  email          String            @unique
+  email          String
+  // administrador o colaborador
   rol            String
-  activo         Boolean           @default(true)
-  organizacion   Organizacion      @relation(fields: [organizacionId], references: [id])
+  activo         Boolean        @default(true)
+  creadoEn       DateTime       @default(now()) @map("creado_en") @db.Timestamptz
+  organizacion   Organizacion   @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
   museos         UsuarioMuseo[]
   cambios        HistorialCambio[]
   prestamos      Prestamo[]
@@ -25,36 +47,42 @@ model Usuario {
   inventariosIniciados Inventario[] @relation("InventarioIniciadoPor")
   inventariosCerrados  Inventario[] @relation("InventarioCerradoPor")
 
+  @@index([organizacionId])
   @@map("usuario")
 }
 
 model Museo {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizacionId String         @map("organizacion_id") @db.Uuid
-  nombre         String
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizacionId     String         @map("organizacion_id") @db.Uuid
+  // El nombre es único por organización sin importar mayúsculas: índice en 02_reglas_y_seguridad.sql.
+  nombre             String
   // Lo calcula la aplicación al registrar el museo y no cambia nunca. Único por organización.
-  prefijo        String
+  prefijo            String
+  // Uso interno: último número usado en el código de las piezas del museo. No va en los tipos de la aplicación.
+  ultimoCorrelativo  Int            @default(0) @map("ultimo_correlativo")
   // Tipo de colección: arqueologia, historico, arte, ciencias_naturales u otro
-  tipo           String
-  direccion      String?
-  activo         Boolean        @default(true)
-  organizacion   Organizacion   @relation(fields: [organizacionId], references: [id])
-  usuarios       UsuarioMuseo[]
-  piezas         Pieza[]
-  exposiciones   Exposicion[]
-  inventarios    Inventario[]
+  tipo               String
+  direccion          String?
+  activo             Boolean        @default(true)
+  organizacion       Organizacion   @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
+  usuarios           UsuarioMuseo[]
+  piezas             Pieza[]
+  exposiciones       Exposicion[]
+  inventarios        Inventario[]
 
   @@unique([organizacionId, prefijo])
+  @@index([organizacionId])
   @@map("museo")
 }
 
 model UsuarioMuseo {
   usuarioId String  @map("usuario_id") @db.Uuid
   museoId   String  @map("museo_id") @db.Uuid
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-  museo     Museo   @relation(fields: [museoId], references: [id])
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  museo     Museo   @relation(fields: [museoId], references: [id], onDelete: Cascade)
 
   @@id([usuarioId, museoId])
+  @@index([museoId])
   @@map("usuario_museo")
 }
 
@@ -62,10 +90,11 @@ model Categoria {
   id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizacionId String       @map("organizacion_id") @db.Uuid
   nombre         String
-  organizacion   Organizacion @relation(fields: [organizacionId], references: [id])
+  organizacion   Organizacion @relation(fields: [organizacionId], references: [id], onDelete: Restrict)
   piezas         Pieza[]
 
   @@unique([organizacionId, nombre])
+  @@index([organizacionId])
   @@map("categoria")
 }
 
@@ -75,26 +104,31 @@ model Pieza {
   categoriaId        String              @map("categoria_id") @db.Uuid
   // Lo asigna la aplicación al guardar: prefijo del museo, guion y correlativo. No cambia nunca.
   codigo             String
-  // Código que tenía antes, opcional. Único por museo cuando existe.
+  // Código que tenía antes, opcional y de máximo 40 caracteres. Único por museo cuando existe,
+  // con la comparación normalizada de 02_reglas_y_seguridad.sql.
   codigoAnterior     String?             @map("codigo_anterior")
   nombre             String
   descripcion        String?
   anio               Int?
   material           String?
+  // bueno, regular o malo
   estadoConservacion String              @map("estado_conservacion")
   ubicacionFisica    String?             @map("ubicacion_fisica")
+  // Vacío cuando la pieza no tiene imagen
   imagenUrl          String?             @map("imagen_url")
-  disponibilidad     String
-  fechaRegistro      DateTime            @default(now()) @map("fecha_registro")
-  museo              Museo               @relation(fields: [museoId], references: [id])
-  categoria          Categoria           @relation(fields: [categoriaId], references: [id])
+  // disponible, en_prestamo o pendiente_verificacion
+  disponibilidad     String              @default("disponible")
+  fechaRegistro      DateTime            @default(now()) @map("fecha_registro") @db.Timestamptz
+  museo              Museo               @relation(fields: [museoId], references: [id], onDelete: Restrict)
+  categoria          Categoria           @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
   exposiciones       PiezaExposicion[]
   cambios            HistorialCambio[]
   prestamos          Prestamo[]
   detallesInventario DetalleInventario[]
 
   @@unique([museoId, codigo])
-  @@unique([museoId, codigoAnterior])
+  @@index([museoId])
+  @@index([categoriaId])
   @@map("pieza")
 }
 
@@ -105,10 +139,12 @@ model HistorialCambio {
   campoModificado String   @map("campo_modificado")
   valorAnterior   String?  @map("valor_anterior")
   valorNuevo      String?  @map("valor_nuevo")
-  fecha           DateTime @default(now())
-  pieza           Pieza    @relation(fields: [piezaId], references: [id])
-  usuario         Usuario  @relation(fields: [usuarioId], references: [id])
+  fecha           DateTime @default(now()) @db.Timestamptz
+  pieza           Pieza    @relation(fields: [piezaId], references: [id], onDelete: Cascade)
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
 
+  @@index([piezaId, fecha(sort: Desc)])
+  @@index([usuarioId])
   @@map("historial_cambio")
 }
 
@@ -118,60 +154,78 @@ model Exposicion {
   nombre      String
   descripcion String?
   fechaInicio DateTime          @map("fecha_inicio") @db.Date
+  // Posterior a fecha_inicio
   fechaFin    DateTime          @map("fecha_fin") @db.Date
   cancelada   Boolean           @default(false)
-  museo       Museo             @relation(fields: [museoId], references: [id])
+  museo       Museo             @relation(fields: [museoId], references: [id], onDelete: Restrict)
   piezas      PiezaExposicion[]
 
+  @@index([museoId])
   @@map("exposicion")
 }
 
 model PiezaExposicion {
   piezaId      String     @map("pieza_id") @db.Uuid
   exposicionId String     @map("exposicion_id") @db.Uuid
-  pieza        Pieza      @relation(fields: [piezaId], references: [id])
-  exposicion   Exposicion @relation(fields: [exposicionId], references: [id])
+  pieza        Pieza      @relation(fields: [piezaId], references: [id], onDelete: Cascade)
+  exposicion   Exposicion @relation(fields: [exposicionId], references: [id], onDelete: Cascade)
 
   @@id([piezaId, exposicionId])
+  @@index([exposicionId])
   @@map("pieza_exposicion")
 }
 
 model Prestamo {
-  // Regla que Prisma no puede expresar: una pieza solo puede tener un préstamo abierto
-  // (con fecha_devolucion_real nula). Se valida en la aplicación.
+  // Una pieza solo puede tener un préstamo abierto (con fecha_devolucion_real nula): índice único parcial
+  // en 02_reglas_y_seguridad.sql. La fecha y el estado de la devolución van juntos.
   id                           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   piezaId                      String    @map("pieza_id") @db.Uuid
   usuarioId                    String    @map("usuario_id") @db.Uuid
+  // Máximo 100 caracteres
   institucionDestino           String    @map("institucion_destino")
+  // Máximo 100 caracteres
   responsableReceptor          String    @map("responsable_receptor")
+  // Máximo 40 caracteres
   numeroConvenio               String    @map("numero_convenio")
+  // Máximo 40 caracteres
   numeroPoliza                 String    @map("numero_poliza")
+  // Mayor que 0 y no mayor que 100000000
   valorAsegurado               Decimal   @map("valor_asegurado") @db.Decimal(12, 2)
   fechaSalida                  DateTime  @map("fecha_salida") @db.Date
+  // Posterior a fecha_salida
   fechaDevolucionPrevista      DateTime  @map("fecha_devolucion_prevista") @db.Date
   fechaDevolucionReal          DateTime? @map("fecha_devolucion_real") @db.Date
   estadoConservacionSalida     String    @map("estado_conservacion_salida")
   estadoConservacionDevolucion String?   @map("estado_conservacion_devolucion")
-  pieza                        Pieza     @relation(fields: [piezaId], references: [id])
-  usuario                      Usuario   @relation(fields: [usuarioId], references: [id])
+  pieza                        Pieza     @relation(fields: [piezaId], references: [id], onDelete: Restrict)
+  usuario                      Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
 
+  @@index([piezaId])
+  @@index([usuarioId])
   @@map("prestamo")
 }
 
 model Inventario {
-  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  museoId     String              @map("museo_id") @db.Uuid
-  usuarioId   String              @map("usuario_id") @db.Uuid
-  // Quien cerró el inventario: vacío mientras está en curso
-  usuarioCierreId String?         @map("usuario_cierre_id") @db.Uuid
-  fechaInicio DateTime            @map("fecha_inicio")
-  fechaCierre DateTime?           @map("fecha_cierre")
-  estado      String
-  museo       Museo               @relation(fields: [museoId], references: [id])
-  usuario     Usuario             @relation("InventarioIniciadoPor", fields: [usuarioId], references: [id])
-  usuarioCierre Usuario?          @relation("InventarioCerradoPor", fields: [usuarioCierreId], references: [id])
-  detalles    DetalleInventario[]
+  // Un solo inventario en curso por museo: índice único parcial en 02_reglas_y_seguridad.sql.
+  // En curso no tiene fecha ni persona de cierre; cerrado exige las dos.
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  museoId         String              @map("museo_id") @db.Uuid
+  // Quien inició el inventario
+  usuarioId       String              @map("usuario_id") @db.Uuid
+  // Quien lo cerró: vacío mientras está en curso
+  usuarioCierreId String?             @map("usuario_cierre_id") @db.Uuid
+  fechaInicio     DateTime            @default(now()) @map("fecha_inicio") @db.Timestamptz
+  fechaCierre     DateTime?           @map("fecha_cierre") @db.Timestamptz
+  // en_curso o cerrado
+  estado          String
+  museo           Museo               @relation(fields: [museoId], references: [id], onDelete: Restrict)
+  usuario         Usuario             @relation("InventarioIniciadoPor", fields: [usuarioId], references: [id], onDelete: Restrict)
+  usuarioCierre   Usuario?            @relation("InventarioCerradoPor", fields: [usuarioCierreId], references: [id], onDelete: Restrict)
+  detalles        DetalleInventario[]
 
+  @@index([museoId])
+  @@index([usuarioId])
+  @@index([usuarioCierreId])
   @@map("inventario")
 }
 
@@ -179,11 +233,13 @@ model DetalleInventario {
   id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   inventarioId String     @map("inventario_id") @db.Uuid
   piezaId      String     @map("pieza_id") @db.Uuid
+  // encontrada, no_encontrada o con_dano
   resultado    String
   observacion  String?
-  inventario   Inventario @relation(fields: [inventarioId], references: [id])
-  pieza        Pieza      @relation(fields: [piezaId], references: [id])
+  inventario   Inventario @relation(fields: [inventarioId], references: [id], onDelete: Cascade)
+  pieza        Pieza      @relation(fields: [piezaId], references: [id], onDelete: Restrict)
 
   @@unique([inventarioId, piezaId])
+  @@index([piezaId])
   @@map("detalle_inventario")
 }

@@ -7,7 +7,7 @@ app/                  Rutas de la aplicación. Cada carpeta es una dirección we
   not-found.tsx       Página 404 propia
 components/
   CI_*/               Las vistas: una carpeta por pantalla, con su .tsx y su .module.css
-  ui/                 Piezas compartidas: botones, campos, tablas, ventanas, alertas y la barra de navegación (Navbar)
+  ui/                 Piezas compartidas: botones, campos, tablas, popups, alertas y la barra de navegación (Navbar)
 lib/
   controllers/        Controladores CC_*: reglas de negocio y permisos. acceso.ts filtra por museo
   data/               Contratos de la capa de datos, implementación en memoria con la semilla y carpeta reservada para Prisma
@@ -52,6 +52,24 @@ Las carpetas de `app/` son las direcciones web del sistema, y cada `page.tsx` so
 Prototipo del sistema de gestión de colecciones y exposiciones para museos. Todas las pantallas funcionan con datos de demostración guardados en la memoria del servidor. No hay base de datos ni login real: la sesión es una cookie de demostración.
 
 Para el detalle de la estructura, las rutas, las clases y las reglas de negocio, ver `MAPA.md`. Para conectar base de datos, login e imágenes, ver `docs/CONEXION.md`.
+
+### Librerías utilizadas
+
+| Librería | Versión | Para qué se usa |
+|-|-|-|
+| Next.js | 16.3.8 | Framework y rutas: el App Router, las Server Actions de los controladores y las rutas de servidor de PDF y Excel |
+| React | 19.3.0 | Las vistas y los componentes de cada pantalla |
+| React DOM | 19.3.0 | Renderizado de React en el navegador |
+| TypeScript | 5.9.3 | Tipado de todo el código |
+| Sonner | 2.0.8 | Alertas de éxito y de error (`components/ui/ContenedorAlertas.tsx` y `components/ui/alertas.ts`) |
+| ExcelJS | 4.4.0 | Plantilla de importación de piezas, lectura del Excel importado y exportación de los reportes a Excel |
+| @react-pdf/renderer | 4.9.0 | Ficha técnica de la pieza y exportación de los reportes a PDF |
+| Anton e Inter | Sin paquete propio | Tipografías de títulos y de texto, cargadas con `next/font/google` en `app/layout.tsx` |
+| @types/node, @types/react, @types/react-dom | 24.19.2, 19.3.0, 19.3.0 | Tipos de TypeScript, solo para desarrollo |
+
+No se usan Tailwind, Bootstrap ni librerías de estilos: todo es CSS propio con CSS Modules y variables globales.
+
+Prisma y Supabase aún no están instalados y se conectarán más adelante (ver `docs/CONEXION.md`).
 
 ## Requisitos
 

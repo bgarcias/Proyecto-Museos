@@ -7,6 +7,8 @@ import {
   ESTADOS_CONSERVACION,
   ETIQUETAS_DISPONIBILIDAD,
   ETIQUETAS_ESTADO_CONSERVACION,
+  ETIQUETA_CATEGORIA,
+  ETIQUETA_DISPONIBILIDAD,
 } from "@/lib/constantes";
 import { textoResultadoBusqueda } from "@/lib/resultadoBusqueda";
 import type { Categoria, FiltrosPiezas, Museo, PiezaListado } from "@/lib/tipos";
@@ -22,20 +24,16 @@ type Props = {
   categorias: Categoria[];
   /** Lista inicial ya cargada por la página, sin filtros. Si no se da, se carga al abrir. */
   piezasIniciales?: PiezaListado[];
-  /** En las ventanas de selección solo se muestran piezas de este museo. */
+  /** En los popups de selección solo se muestran piezas de este museo. */
   museoIdFijo?: string;
-  /**
-   * "catalogo": acciones por fila.
-   * "seleccion": casillas de selección múltiple.
-   * "seleccion-unica": botones de opción de selección única.
-   */
+  /** "catalogo": acciones por fila. "seleccion": casillas múltiples. "seleccion-unica": botones de opción. */
   modo: "catalogo" | "seleccion" | "seleccion-unica";
   seleccionadas?: string[];
   /** En selección múltiple alterna la pieza. En selección única la elige. */
   onAlternar?: (pieza: PiezaListado) => void;
 };
 
-/** Buscador de piezas: se construye una sola vez y se usa como página y como ventana emergente. */
+/** Un solo buscador, como página y como popup. */
 export default function BuscadorPiezas({
   museos,
   categorias,
@@ -48,7 +46,7 @@ export default function BuscadorPiezas({
   // La selección única (préstamos) solo ofrece piezas disponibles, filtradas en el servidor, y solo filtra por código y nombre.
   const soloDisponibles = modo === "seleccion-unica";
   const base: FiltrosPiezas = { museoId: museoIdFijo, soloDisponibles: soloDisponibles || undefined };
-  // Lo que la persona escribe y lo que se aplicó con Buscar o Enter son cosas distintas.
+  // Lo escrito y lo aplicado con Buscar o Enter son cosas distintas.
   const [filtros, setFiltros] = useState<FiltrosPiezas>(base);
   const [aplicados, setAplicados] = useState<FiltrosPiezas>(base);
   const [piezas, setPiezas] = useState<PiezaListado[] | null>(piezasIniciales ?? null);
@@ -69,14 +67,14 @@ export default function BuscadorPiezas({
     if (!hayFiltros(f)) setTotal(resultado.length);
   }
 
-  // Las ventanas de selección consultan al abrir. El catálogo parte de la lista que cargó la página.
+  // Los popups de selección consultan al abrir. El catálogo parte de la lista que cargó la página.
   useEffect(() => {
     if (piezasIniciales === undefined) void consultar(base);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Si la página entrega una lista inicial nueva (por ejemplo tras refrescar la ruta), el estado local ya no la
-  // refleja: se actualiza el total y se vuelve a consultar con los filtros aplicados.
+  // Si la página entrega una lista nueva (por ejemplo tras refrescar la ruta), el estado local queda viejo:
+  // se actualiza el total y se vuelve a consultar con los filtros aplicados.
   const inicialesAnteriores = useRef(piezasIniciales);
   useEffect(() => {
     if (piezasIniciales === inicialesAnteriores.current) return;
@@ -126,7 +124,7 @@ export default function BuscadorPiezas({
         </Campo>
         {!soloDisponibles && (
           <>
-            <Campo etiqueta="Categoría" htmlFor={`${prefijo}-categoria`}>
+            <Campo etiqueta={ETIQUETA_CATEGORIA} htmlFor={`${prefijo}-categoria`}>
               <Seleccion id={`${prefijo}-categoria`} value={filtros.categoriaId ?? ""} onChange={(e) => cambiar("categoriaId", e.target.value)}>
                 <option value="">Todas</option>
                 {categorias.map((c) => (
@@ -146,7 +144,7 @@ export default function BuscadorPiezas({
                 ))}
               </Seleccion>
             </Campo>
-            <Campo etiqueta="Disponibilidad" htmlFor={`${prefijo}-disponibilidad`}>
+            <Campo etiqueta={ETIQUETA_DISPONIBILIDAD} htmlFor={`${prefijo}-disponibilidad`}>
               <Seleccion id={`${prefijo}-disponibilidad`} value={filtros.disponibilidad ?? ""} onChange={(e) => cambiar("disponibilidad", e.target.value)}>
                 <option value="">Todas</option>
                 {DISPONIBILIDADES.map((d) => (

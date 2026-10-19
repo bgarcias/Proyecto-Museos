@@ -12,7 +12,7 @@ import { Campo, Seleccion } from "@/components/ui/Campo";
 import Celda, { EncabezadoPagina } from "@/components/ui/Celda";
 import Insignia from "@/components/ui/Insignia";
 import Tabla from "@/components/ui/Tabla";
-import Ventana from "@/components/ui/Ventana";
+import Popup from "@/components/ui/Popup";
 import estilos from "./CI_Menu_Inventarios.module.css";
 
 /** Lista de inventarios y el botón "Nuevo inventario". */
@@ -24,7 +24,7 @@ export default function CI_Menu_Inventarios({
   museos: Museo[];
 }) {
   const router = useRouter();
-  const [ventana, setVentana] = useState(false);
+  const [popupAbierto, setPopupAbierto] = useState(false);
   const [museoId, setMuseoId] = useState("");
   const [procesando, setProcesando] = useState(false);
 
@@ -50,7 +50,7 @@ export default function CI_Menu_Inventarios({
           <Boton
             onClick={() => {
               setMuseoId(museos.length === 1 ? museos[0].id : "");
-              setVentana(true);
+              setPopupAbierto(true);
             }}
           >
             Nuevo inventario
@@ -93,14 +93,14 @@ export default function CI_Menu_Inventarios({
         </Tabla>
       </Celda>
 
-      {ventana && (
-        <Ventana
+      {popupAbierto && (
+        <Popup
           titulo="Nuevo inventario"
-          dialogo
-          onCerrar={() => setVentana(false)}
+          angosto
+          onCerrar={() => setPopupAbierto(false)}
           pie={
             <>
-              <Boton variante="secundario" onClick={() => setVentana(false)} disabled={procesando}>
+              <Boton variante="secundario" onClick={() => setPopupAbierto(false)} disabled={procesando}>
                 Cancelar
               </Boton>
               <Boton onClick={crear} disabled={!museoId || procesando}>
@@ -119,7 +119,7 @@ export default function CI_Menu_Inventarios({
               ))}
             </Seleccion>
           </Campo>
-        </Ventana>
+        </Popup>
       )}
     </div>
   );

@@ -17,12 +17,12 @@ import {
   MENSAJE_PRESTAMO_DEVOLUCION_LIMITE,
   MENSAJE_PRESTAMO_SALIDA_FUTURA,
   MENSAJE_RESPONSABLE_LARGO,
+  MENSAJE_PIEZA_NO_ENCONTRADA,
 } from "../constantes";
 import { obtenerDatos } from "../data";
 import { fechaLimite, hoyISO, rangoExposicion, rangosSeCruzan } from "../fechas";
 import { validarValorAsegurado } from "../validaciones";
-import type { Categoria, EstadoConservacion, Museo, PrestamoListado, Resultado, UsuarioPublico } from "../tipos";
-import type { Datos } from "../data/contratos";
+import type { Categoria, EstadoConservacion, Museo, PrestamoListado, Resultado } from "../tipos";
 import { exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./acceso";
 
 /* ECUS06: Registrar Préstamo de una Pieza */
@@ -41,7 +41,7 @@ export async function cargarPrestamos(): Promise<PrestamoListado[]> {
 
 /* Nuevo préstamo */
 
-/** Datos del formulario: museos y categorías para la ventana de buscar piezas, y la fecha de hoy del servidor para la fecha de salida. */
+/** Datos del formulario: museos y categorías para el popup de buscar piezas, y la fecha de hoy del servidor para la fecha de salida. */
 export async function cargarFormularioPrestamo(): Promise<{ museos: Museo[]; categorias: Categoria[]; hoy: string; limite: string }> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
@@ -103,7 +103,7 @@ export async function registrarPrestamo(entrada: {
   const valorAsegurado = validacionValor.valor;
 
   const pieza = (await piezasVisibles(datos, usuario)).find((p) => p.id === entrada.piezaId);
-  if (!pieza) return { ok: false, error: "No se encontró la pieza" };
+  if (!pieza) return { ok: false, error: MENSAJE_PIEZA_NO_ENCONTRADA };
 
   // Paso 9: la pieza debe estar disponible y sin exposiciones activas con fechas que se crucen con el préstamo
   const rango = { inicio: entrada.fechaSalida, fin: entrada.fechaDevolucionPrevista };
@@ -164,7 +164,7 @@ export async function registrarDevolucionPrestamo(prestamoId: string, estado: st
   const estadoDevolucion = estado as EstadoConservacion;
 
   const pieza = await datos.obtenerPieza(prestamo.piezaId);
-  if (!pieza) return { ok: false, error: "No se encontró la pieza" };
+  if (!pieza) return { ok: false, error: MENSAJE_PIEZA_NO_ENCONTRADA };
 
   // Paso 5: fecha real de devolución (hoy), estado de devolución, estado de la pieza y disponibilidad
   await datos.registrarDevolucion(prestamo.id, {

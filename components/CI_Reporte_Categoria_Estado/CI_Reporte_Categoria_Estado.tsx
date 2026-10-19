@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { generarReporte } from "@/lib/controllers/CC_Reporte";
-import { ESTADOS_CONSERVACION, ETIQUETAS_ESTADO_CONSERVACION, TITULO_REPORTE, TITULO_RESULTADOS_REPORTE } from "@/lib/constantes";
+import { ESTADOS_CONSERVACION, ETIQUETAS_ESTADO_CONSERVACION, TITULO_REPORTE, TITULO_RESULTADOS_REPORTE, ETIQUETA_CATEGORIA, ETIQUETA_ESTADO_CONSERVACION } from "@/lib/constantes";
 import { filtrosAParametros } from "@/lib/reporteParametros";
 import type { Categoria, FiltrosReporte, Reporte } from "@/lib/tipos";
-import Boton, { BotonEnlace } from "@/components/ui/Boton";
+import BotonesReporte from "@/components/ui/BotonesReporte";
 import { Campo, Entrada, Filtros, Seleccion } from "@/components/ui/Campo";
-import Celda, { Acciones, EncabezadoPagina } from "@/components/ui/Celda";
+import Celda, { EncabezadoPagina } from "@/components/ui/Celda";
 import Tabla from "@/components/ui/Tabla";
 import estilos from "./CI_Reporte_Categoria_Estado.module.css";
 import { alertaError } from "@/components/ui/alertas";
@@ -15,7 +15,7 @@ import { alertaError } from "@/components/ui/alertas";
 export default function CI_Reporte_Categoria_Estado({ categorias }: { categorias: Categoria[] }) {
   const [filtros, setFiltros] = useState<FiltrosReporte>({});
   const [reporte, setReporte] = useState<Reporte | null>(null);
-  // Filtros con los que se generó el reporte mostrado: las exportaciones usan estos, no los valores actuales de los campos.
+  // Filtros con los que se generó el reporte mostrado: las exportaciones usan estos, no los campos actuales.
   const [filtrosDelReporte, setFiltrosDelReporte] = useState<FiltrosReporte>({});
   const [enviando, setEnviando] = useState(false);
 
@@ -48,7 +48,7 @@ export default function CI_Reporte_Categoria_Estado({ categorias }: { categorias
       <Celda titulo="Filtros">
         <form onSubmit={alEnviar} className={estilos.formulario} noValidate>
           <Filtros>
-            <Campo etiqueta="Categoría" htmlFor="categoria">
+            <Campo etiqueta={ETIQUETA_CATEGORIA} htmlFor="categoria">
               <Seleccion id="categoria" value={filtros.categoriaId ?? ""} onChange={(e) => cambiar("categoriaId", e.target.value)}>
                 <option value="">Todas</option>
                 {categorias.map((c) => (
@@ -58,7 +58,7 @@ export default function CI_Reporte_Categoria_Estado({ categorias }: { categorias
                 ))}
               </Seleccion>
             </Campo>
-            <Campo etiqueta="Estado de conservación" htmlFor="estado">
+            <Campo etiqueta={ETIQUETA_ESTADO_CONSERVACION} htmlFor="estado">
               <Seleccion id="estado" value={filtros.estado ?? ""} onChange={(e) => cambiar("estado", e.target.value)}>
                 <option value="">Todos</option>
                 {ESTADOS_CONSERVACION.map((s) => (
@@ -75,27 +75,12 @@ export default function CI_Reporte_Categoria_Estado({ categorias }: { categorias
               <Entrada id="hasta" type="date" value={filtros.hasta ?? ""} onChange={(e) => cambiar("hasta", e.target.value)} />
             </Campo>
           </Filtros>
-          <div className={estilos.filaBotones}>
-            <Acciones>
-              <Boton type="submit" disabled={enviando}>
-                Generar Reporte
-              </Boton>
-              <Boton variante="secundario" onClick={limpiar}>
-                Limpiar
-              </Boton>
-              <BotonEnlace href="/reportes">Volver</BotonEnlace>
-            </Acciones>
-            {reporte && (
-              <Acciones>
-                <BotonEnlace href={`/reportes/categoria-estado/pdf?${filtrosAParametros(filtrosDelReporte)}`} nuevaPestana>
-                  Exportar a PDF
-                </BotonEnlace>
-                <BotonEnlace href={`/reportes/categoria-estado/excel?${filtrosAParametros(filtrosDelReporte)}`} descarga>
-                  Exportar a Excel
-                </BotonEnlace>
-              </Acciones>
-            )}
-          </div>
+          <BotonesReporte
+            enviando={enviando}
+            onLimpiar={limpiar}
+            hrefPdf={reporte ? `/reportes/categoria-estado/pdf?${filtrosAParametros(filtrosDelReporte)}` : undefined}
+            hrefExcel={reporte ? `/reportes/categoria-estado/excel?${filtrosAParametros(filtrosDelReporte)}` : undefined}
+          />
         </form>
       </Celda>
 

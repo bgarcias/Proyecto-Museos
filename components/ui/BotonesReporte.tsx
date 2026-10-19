@@ -3,8 +3,8 @@ import { Acciones } from "./Celda";
 import estilos from "./BotonesReporte.module.css";
 
 /**
- * Fila de botones de los reportes: Generar Reporte, Limpiar y Volver a la izquierda, y las exportaciones a la derecha.
- * El PDF se abre en una pestaña nueva con el visor del navegador y el Excel se descarga. Las exportaciones solo se muestran cuando hay un reporte en pantalla (con sus enlaces ya armados).
+ * Fila de botones de los reportes: Generar Reporte, Limpiar y Volver a la izquierda, exportaciones a la derecha.
+ * El PDF abre en pestaña nueva y el Excel se descarga. Las exportaciones solo salen si hay un reporte en pantalla (con sus enlaces ya armados).
  */
 export default function BotonesReporte({
   enviando,

@@ -4,8 +4,7 @@ import { obtenerDatos } from "../data";
 import type { UsuarioPublico } from "../tipos";
 
 /**
- * Toda la lógica de sesión vive aquí y nadie más toca la cookie.
- * Hoy la sesión es una cookie httpOnly con el id del usuario.
+ * Toda la lógica de sesión vive aquí y nadie más toca la cookie (httpOnly, con el id del usuario).
  * Al conectar Supabase Auth se reemplaza esta implementación manteniendo las mismas funciones.
  */
 
@@ -23,7 +22,7 @@ export async function obtenerSesion(): Promise<UsuarioPublico | null> {
   if (!valor) return null;
   const datos = await obtenerDatos();
   const usuario = await datos.obtenerUsuario(valor);
-  // Una cuenta desactivada no tiene sesión: su siguiente petición queda sin sesión y vuelve al login.
+  // Cuenta desactivada: queda sin sesión en su siguiente petición y vuelve al login.
   return usuario && usuario.activo ? aPublico(usuario) : null;
 }
 
@@ -37,10 +36,7 @@ export async function cerrarSesion(): Promise<void> {
   almacen.delete(COOKIE);
 }
 
-/**
- * Exige sesión iniciada. Si la cuenta tiene contraseña temporal, solo permite
- * la pantalla de cambio de contraseña (opción permitirCambioPendiente).
- */
+/** Exige sesión. Con contraseña temporal solo deja entrar a cambiarla (permitirCambioPendiente). */
 export async function exigirSesion(opciones?: { permitirCambioPendiente?: boolean }): Promise<UsuarioPublico> {
   const usuario = await obtenerSesion();
   if (!usuario) redirect("/login");

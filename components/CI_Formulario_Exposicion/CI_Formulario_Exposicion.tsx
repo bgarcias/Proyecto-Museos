@@ -13,7 +13,7 @@ import Celda, { Acciones, EncabezadoPagina } from "@/components/ui/Celda";
 import Insignia from "@/components/ui/Insignia";
 import Mensaje from "@/components/ui/Mensaje";
 import Miniatura from "@/components/ui/Miniatura";
-import Ventana from "@/components/ui/Ventana";
+import PopupSeleccion from "@/components/ui/PopupSeleccion";
 import estilos from "./CI_Formulario_Exposicion.module.css";
 
 /** Nueva exposición (sin datos) o modificar una existente (con la exposición y sus piezas actuales). */
@@ -40,7 +40,7 @@ export default function CI_Formulario_Exposicion({
   const [piezas, setPiezas] = useState<PiezaListado[]>(piezasActuales);
   const [conflictos, setConflictos] = useState<ConflictoPieza[]>([]);
   const [errorConflictos, setErrorConflictos] = useState("");
-  const [ventana, setVentana] = useState(false);
+  const [popupAbierto, setPopupAbierto] = useState(false);
   const [temporales, setTemporales] = useState<PiezaListado[]>([]);
   const [enviando, setEnviando] = useState(false);
 
@@ -51,7 +51,7 @@ export default function CI_Formulario_Exposicion({
       return;
     }
     setTemporales(piezas.filter((p) => p.museoId === museoId));
-    setVentana(true);
+    setPopupAbierto(true);
   }
 
   function alternarTemporal(pieza: PiezaListado) {
@@ -65,7 +65,7 @@ export default function CI_Formulario_Exposicion({
     setPiezas(temporales);
     setConflictos([]);
     setErrorConflictos("");
-    setVentana(false);
+    setPopupAbierto(false);
   }
 
   function quitarPieza(id: string) {
@@ -175,14 +175,13 @@ export default function CI_Formulario_Exposicion({
         </Formulario>
       </Celda>
 
-      {ventana && (
-        <Ventana
-          seleccion
+      {popupAbierto && (
+        <PopupSeleccion
           titulo="Buscar piezas"
-          onCerrar={() => setVentana(false)}
+          onCerrar={() => setPopupAbierto(false)}
           pie={
             <>
-              <Boton variante="secundario" onClick={() => setVentana(false)}>
+              <Boton variante="secundario" onClick={() => setPopupAbierto(false)}>
                 Cancelar
               </Boton>
               <Boton onClick={confirmarSeleccion}>Confirmar selección</Boton>
@@ -201,7 +200,7 @@ export default function CI_Formulario_Exposicion({
             seleccionadas={temporales.map((p) => p.id)}
             onAlternar={alternarTemporal}
           />
-        </Ventana>
+        </PopupSeleccion>
       )}
     </div>
   );

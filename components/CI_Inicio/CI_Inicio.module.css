@@ -5,12 +5,9 @@
 }
 
 /*
- * Cuadrícula de 12 columnas. Cada tarjeta tiene su borde completo y se extiende un grosor de borde sobre la
- * celda vecina (margen negativo), así dos tarjetas contiguas comparten una sola línea del grosor normal.
- * El relleno derecho e inferior de la cuadrícula aloja esa extensión en la última columna y la última fila,
- * de modo que el marco exterior mide lo mismo que los bordes internos.
- * Administrador: 7 tarjetas, una fila de 4 y otra de 3. Colaborador: 5 tarjetas, una fila de 3 y otra de 2.
- * Las tarjetas de una misma fila tienen el mismo ancho y la fila ocupa todo el ancho.
+ * Cuadrícula de 12 columnas. Cada tarjeta se extiende un borde sobre la vecina (margen negativo) para que
+ * dos contiguas compartan una sola línea; el relleno derecho e inferior de la cuadrícula aloja esa extensión
+ * en la última columna y fila. Administrador: 7 tarjetas (4 + 3). Colaborador: 5 (3 + 2).
  */
 .accesos {
   display: grid;
@@ -46,6 +43,9 @@
   color: var(--color-texto);
   text-decoration: none;
   background: var(--color-fondo);
+  transition:
+    background-color var(--duracion-transicion) var(--curva-transicion),
+    box-shadow var(--duracion-transicion) var(--curva-transicion);
 }
 
 .acceso:hover {

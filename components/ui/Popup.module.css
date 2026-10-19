@@ -7,28 +7,40 @@
   justify-content: center;
   padding: var(--espacio-4);
   background: var(--color-velo);
+  animation: entradaVelo var(--duracion-entrada) var(--curva-transicion) backwards;
 }
 
-.ventana {
+.popup {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: var(--ancho-ventana);
+  max-width: var(--ancho-popup);
   max-height: 100%;
   border: var(--borde);
   background: var(--color-fondo);
+  animation: entradaPopup var(--duracion-entrada) var(--curva-transicion) backwards;
 }
 
-.dialogo {
-  max-width: var(--ancho-dialogo);
+/* Solo el estado inicial, para no dejar opacity ni transform al terminar. El centrado es con flex, así que el ascenso no lo pisa */
+@keyframes entradaVelo {
+  from {
+    opacity: 0;
+  }
 }
 
-.ancha {
-  max-width: var(--ancho-maximo);
+@keyframes entradaPopup {
+  from {
+    opacity: 0;
+    transform: translateY(var(--desplazamiento-entrada));
+  }
+}
+
+.angosto {
+  max-width: var(--ancho-popup-angosto);
 }
 
 .seleccion {
-  max-width: var(--ancho-ventana-seleccion);
+  max-width: var(--ancho-popup-seleccion);
 }
 
 .cabecera {
@@ -72,7 +84,7 @@
     align-items: stretch;
   }
 
-  .ventana {
+  .popup {
     border-left: 0;
     border-right: 0;
   }

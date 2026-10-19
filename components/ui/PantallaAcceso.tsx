@@ -3,8 +3,8 @@ import Celda from "./Celda";
 import estilos from "./PantallaAcceso.module.css";
 
 /**
- * Pantalla pública de acceso (inicio de sesión y recuperación de contraseña): el logotipo y la tarjeta
- * forman un bloque centrado en horizontal y en vertical, con el logotipo del mismo ancho que la tarjeta.
+ * Pantalla pública de acceso (login y recuperación de contraseña): logotipo y tarjeta forman un bloque
+ * centrado en horizontal y en vertical, con el logotipo del ancho de la tarjeta.
  */
 export default function PantallaAcceso({
   etiqueta,

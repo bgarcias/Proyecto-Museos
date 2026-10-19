@@ -32,5 +32,5 @@
   font-family: var(--tipografia-titulos);
   font-weight: 400;
   font-size: var(--texto-titulo-celda);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--espaciado-letras-etiqueta);
 }

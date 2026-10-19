@@ -5,7 +5,7 @@ import { Entrada } from "./Campo";
 import estilos from "./CampoContrasena.module.css";
 
 /**
- * Campo de contraseña con un botón dentro del campo que alterna entre ocultar y mostrar el texto.
+ * Campo de contraseña con un botón interno que alterna entre ocultar y mostrar.
  * Recibe las mismas propiedades que un campo de texto, salvo el tipo.
  */
 export default function CampoContrasena(props: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {

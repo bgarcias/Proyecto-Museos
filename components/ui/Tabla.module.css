@@ -16,6 +16,8 @@
   border: var(--borde-fino);
   text-align: left;
   vertical-align: middle;
+  transition:
+    background-color var(--duracion-transicion) var(--curva-transicion);
 }
 
 .tabla th {

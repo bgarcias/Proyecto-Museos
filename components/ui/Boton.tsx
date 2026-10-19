@@ -17,15 +17,15 @@ function clases(variante: Variante, pequeno?: boolean, bloque?: boolean, compact
 type BotonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variante?: Variante;
   pequeno?: boolean;
-  /** Ocupa todo el ancho de su contenedor, con altura mínima común y texto centrado que puede partirse en dos líneas. */
+  /** Ancho completo, con altura mínima común. El texto puede partirse en dos líneas. */
   bloque?: boolean;
-  /** Con `bloque`: menos relleno vertical y letra menor, para pilas de botones dentro de una fila de tabla. */
+  /** Con `bloque`: menos relleno y letra menor, para pilas de botones en una fila de tabla. */
   compacto?: boolean;
 };
 
 /**
- * Botón consistente en toda la aplicación: uno principal (relleno), uno secundario (solo borde) y
- * uno de peligro (texto y borde de error, sin relleno), para acciones como desactivar o cancelar.
+ * Botón común. Principal (relleno), secundario (solo borde) y de peligro (rojo, sin relleno),
+ * para acciones como desactivar o cancelar.
  */
 export default function Boton({ variante = "principal", pequeno, bloque, compacto, type = "button", className, ...resto }: BotonProps) {
   return <button type={type} className={`${clases(variante, pequeno, bloque, compacto)} ${className ?? ""}`} {...resto} />;
@@ -44,13 +44,13 @@ export function BotonEnlace({
   href: string;
   variante?: Variante;
   pequeno?: boolean;
-  /** Igual que en `Boton`: ancho completo del contenedor, con altura mínima común. */
+  /** Como en `Boton`: ancho completo y altura mínima común. */
   bloque?: boolean;
   /** Igual que en `Boton`. */
   compacto?: boolean;
-  /** El enlace descarga un archivo: se usa un enlace normal y no la navegación de Next. */
+  /** Descarga un archivo: enlace normal, no la navegación de Next. */
   descarga?: boolean;
-  /** El enlace abre en una pestaña nueva (por ejemplo, un PDF). */
+  /** Abre en pestaña nueva (por ejemplo un PDF). */
   nuevaPestana?: boolean;
   children: ReactNode;
 }) {

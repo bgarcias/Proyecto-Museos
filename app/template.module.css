@@ -1,0 +1,16 @@
+/* Mantiene el diseño de columna de .contenedor, para que las pantallas no cambien */
+.entrada {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  animation: entrada var(--duracion-entrada) var(--curva-transicion) backwards;
+}
+
+/* Solo el punto de partida: al terminar no queda transform ni opacity, para no afectar a position: fixed */
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(var(--desplazamiento-entrada));
+  }
+}

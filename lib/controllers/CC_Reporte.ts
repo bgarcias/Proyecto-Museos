@@ -27,6 +27,8 @@ import {
   TOTAL_PRESTAMOS,
   errorDeRangoFechas,
   esFechaIso,
+  ETIQUETA_CATEGORIA,
+  ETIQUETA_ESTADO_CONSERVACION,
 } from "../constantes";
 import { compararCodigos } from "../codigos";
 import { obtenerDatos } from "../data";
@@ -52,7 +54,8 @@ import type {
   Resultado,
   UsuarioPublico,
 } from "../tipos";
-import { coincideTexto, exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./acceso";
+import { coincideTexto } from "../busquedaTexto";
+import { exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./acceso";
 
 /* ECUS02: Generar Reporte de Inventario por Categoría y Estado */
 
@@ -62,10 +65,7 @@ export async function cargarReporte(): Promise<{ categorias: Categoria[] }> {
   return { categorias: await datos.listarCategorias(usuario.organizacionId) };
 }
 
-/**
- * Lógica única del reporte: valida el rango de fechas, filtra las piezas de los museos que la persona puede ver
- * y agrupa por categoría y estado. La usan la pantalla y las exportaciones, para que nunca difieran.
- */
+/** Lógica única del reporte, compartida por la pantalla y las exportaciones para que nunca difieran. Valida el rango, filtra y agrupa por categoría y estado. */
 async function calcularReporte(usuario: UsuarioPublico, filtros: FiltrosReporte): Promise<Resultado<Reporte>> {
   const errorRango = errorDeRangoFechas(filtros.desde, filtros.hasta);
   if (errorRango) return { ok: false, error: errorRango };
@@ -112,8 +112,8 @@ export type ArchivoReporte =
   | { ok: false; error: string };
 
 /**
- * Exporta el reporte en PDF o Excel. El servidor lo recalcula con los filtros recibidos y la sesión de la persona,
- * sin confiar en los datos de la pantalla. Con filtros inválidos o sin resultados devuelve el error y no genera archivo.
+ * Exporta en PDF o Excel. Se recalcula en el servidor con los filtros y la sesión, sin confiar en lo que muestra la pantalla.
+ * Con filtros inválidos o sin resultados devuelve el error y no genera archivo.
  */
 export async function exportarReporte(formato: "pdf" | "excel", filtros: FiltrosReporte): Promise<ArchivoReporte> {
   const usuario = await exigirSesion();
@@ -127,10 +127,10 @@ export async function exportarReporte(formato: "pdf" | "excel", filtros: Filtros
     generadoPor: usuario.nombre,
     fechaGeneracion: formatearFechaHora(new Date().toISOString()),
     filtros: [
-      ["Categoría", categorias.find((c) => c.id === filtros.categoriaId)?.nombre ?? "Todas"],
-      ["Estado de conservación", filtros.estado ? ETIQUETAS_ESTADO_CONSERVACION[filtros.estado as keyof typeof ETIQUETAS_ESTADO_CONSERVACION] ?? filtros.estado : "Todos"],
-      ["Fecha de registro desde", filtros.desde ? formatearFecha(filtros.desde) : "Sin límite"],
-      ["Fecha de registro hasta", filtros.hasta ? formatearFecha(filtros.hasta) : "Sin límite"],
+      [ETIQUETA_CATEGORIA, categorias.find((c) => c.id === filtros.categoriaId)?.nombre ?? "Todas"],
+      [ETIQUETA_ESTADO_CONSERVACION, filtros.estado ? ETIQUETAS_ESTADO_CONSERVACION[filtros.estado as keyof typeof ETIQUETAS_ESTADO_CONSERVACION] ?? filtros.estado : "Todos"],
+      ["Fecha de registro desde", filtros.desde ? formatearFecha(filtros.desde) : TEXTO_SIN_LIMITE],
+      ["Fecha de registro hasta", filtros.hasta ? formatearFecha(filtros.hasta) : TEXTO_SIN_LIMITE],
     ] as [string, string][],
   };
   const base = `reporte_categoria_estado_${hoyISO()}`;
@@ -145,17 +145,14 @@ export async function exportarReporte(formato: "pdf" | "excel", filtros: Filtros
   };
 }
 
-/* ---- Reportes de piezas, exposiciones y préstamos ---- */
+/* Reportes de piezas, exposiciones y préstamos */
 
 /** Valores válidos de cada filtro de lista. Un valor vacío significa que el filtro no se usa. */
 const DISPONIBILIDADES_VALIDAS = DISPONIBILIDADES as readonly string[];
 const ESTADOS_EXPOSICION_VALIDOS = Object.keys(ETIQUETAS_ESTADO_EXPOSICION);
 const SITUACIONES_VALIDAS = Object.keys(ETIQUETAS_SITUACION_PRESTAMO);
 
-/**
- * Validación común de los filtros, en el orden de los reportes: acceso al museo, valores permitidos y formato de las
- * fechas, y después el rango. Devuelve el mensaje de error o nada si los filtros son correctos.
- */
+/** Validación común de filtros: acceso al museo, valores permitidos y formato de fechas, y después el rango. Devuelve el error o nada. */
 async function errorDeFiltrosComunes(
   datos: Datos,
   usuario: UsuarioPublico,

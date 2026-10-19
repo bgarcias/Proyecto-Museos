@@ -11,7 +11,7 @@ import Boton, { BotonEnlace } from "@/components/ui/Boton";
 import { Campo, Casilla, DatoLectura, Entrada, Formulario, GrupoCasillas, Seleccion } from "@/components/ui/Campo";
 import Celda, { Acciones, EncabezadoPagina } from "@/components/ui/Celda";
 import Mensaje from "@/components/ui/Mensaje";
-import Ventana from "@/components/ui/Ventana";
+import Popup from "@/components/ui/Popup";
 import estilos from "./CI_Formulario_Usuario.module.css";
 
 /** Registrar un usuario (sin datos) o editarlo (con el usuario actual). Campos: nombre, email, rol y museos. */
@@ -49,7 +49,7 @@ export default function CI_Formulario_Usuario({
     // La alerta se dispara antes de navegar: el Toaster del layout sigue visible en la lista.
     alertaExito(resultado.mensaje ?? "");
     if (!usuario && "datos" in resultado && resultado.datos) {
-      // La contraseña temporal se muestra una sola vez; al cerrar la ventana se vuelve a la lista.
+      // La contraseña temporal se muestra una sola vez; al cerrar el popup vuelve a la lista.
       setContrasenaTemporal(resultado.datos.contrasenaTemporal);
       return;
     }
@@ -109,9 +109,9 @@ export default function CI_Formulario_Usuario({
       </Celda>
 
       {contrasenaTemporal && (
-        <Ventana
+        <Popup
           titulo="Usuario registrado"
-          dialogo
+          angosto
           onCerrar={() => router.push("/usuarios")}
           pie={<Boton onClick={() => router.push("/usuarios")}>Volver a la lista</Boton>}
         >
@@ -122,7 +122,7 @@ export default function CI_Formulario_Usuario({
               <BotonCopiar texto={contrasenaTemporal} />
             </div>
           </Mensaje>
-        </Ventana>
+        </Popup>
       )}
     </div>
   );

@@ -2,9 +2,9 @@ import { LIMITE_ANIOS_FECHAS, ZONA_HORARIA } from "./constantes";
 import type { EstadoExposicion, Exposicion, Prestamo, SituacionPrestamo } from "./tipos";
 
 /*
- * Fechas del sistema. Todo cálculo y formato de fechas usa la zona horaria de `ZONA_HORARIA` (America/Lima) de forma
- * explícita. Una marca de tiempo (ISO con hora, en UTC) se convierte a esa zona para obtener su día y su hora. Una fecha
- * de solo día (AAAA-MM-DD) se trata como texto: no se convierte ni se desplaza nunca.
+ * Fechas del sistema, siempre en la zona de `ZONA_HORARIA` (America/Lima) de forma explícita. Una marca de tiempo
+ * (ISO con hora, en UTC) se convierte a esa zona para sacar su día y su hora. Una fecha de solo día (AAAA-MM-DD)
+ * se trata como texto: nunca se convierte ni se desplaza.
  */
 
 const FORMATO_PARTES = new Intl.DateTimeFormat("en-US", {
@@ -80,10 +80,8 @@ export function fechaLimite(): string {
 }
 
 /**
- * Estado de una exposición. Cancelada si así está marcada. Si no, se calcula por fechas,
- * con la fecha de fin exclusiva.
- * Programada: inicio posterior a hoy. Vigente: inicio menor o igual a hoy y hoy menor que fin.
- * Finalizada: fin menor o igual a hoy.
+ * Estado de una exposición: cancelada si está marcada; si no, por fechas con fin exclusivo.
+ * Programada: inicio > hoy. Vigente: inicio <= hoy < fin. Finalizada: fin <= hoy.
  */
 export function estadoExposicion(
   e: Pick<Exposicion, "fechaInicio" | "fechaFin" | "cancelada">,
@@ -96,8 +94,8 @@ export function estadoExposicion(
 }
 
 /**
- * Situación de un préstamo (se calcula, no se guarda). Devuelto si tiene fecha real; Vencido si no la tiene
- * y la fecha prevista es anterior a hoy; En préstamo en los demás casos.
+ * Situación de un préstamo (se calcula, no se guarda): Devuelto con fecha real; Vencido sin ella
+ * y con prevista anterior a hoy; En préstamo en los demás casos.
  */
 export function situacionPrestamo(
   p: Pick<Prestamo, "fechaDevolucionReal" | "fechaDevolucionPrevista">,
@@ -119,8 +117,8 @@ export function rangoExposicion(e: Pick<Exposicion, "fechaInicio" | "fechaFin">)
 }
 
 /**
- * Fecha como DD/MM/AAAA. Una fecha de solo día se formatea como texto, sin conversión. Una marca de tiempo con hora
- * se convierte primero a su día en la zona del sistema.
+ * Fecha como DD/MM/AAAA. El día suelto se formatea como texto; una marca con hora se convierte
+ * antes a su día en la zona del sistema.
  */
 export function formatearFecha(iso?: string): string {
   if (!iso) return "-";

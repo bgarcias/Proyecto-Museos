@@ -4,6 +4,9 @@
   align-items: stretch;
   border: var(--borde);
   background: var(--color-fondo);
+  transition:
+    background-color var(--duracion-transicion) var(--curva-transicion),
+    box-shadow var(--duracion-transicion) var(--curva-transicion);
 }
 
 .contenedor:focus-within {
@@ -30,6 +33,9 @@
   text-transform: uppercase;
   letter-spacing: var(--espaciado-letras-etiqueta);
   cursor: pointer;
+  transition:
+    background-color var(--duracion-transicion) var(--curva-transicion),
+    box-shadow var(--duracion-transicion) var(--curva-transicion);
 }
 
 .boton:hover {
@@ -39,6 +45,6 @@
 /* mobile */
 @media (max-width: 768px) {
   .boton {
-    min-height: 3rem;
+    min-height: var(--alto-control-grande);
   }
 }

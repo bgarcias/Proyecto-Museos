@@ -14,6 +14,7 @@ import {
   type FilaImportacion,
   type VistaPreviaImportacion,
 } from "../importacion/importacion";
+import { MAXIMO_MEGABYTES_ARCHIVO } from "../importacion/limitesImportacion";
 import type { Museo, Resultado, UsuarioPublico } from "../tipos";
 import type { Datos } from "../data/contratos";
 import { museosActivosVisibles } from "./acceso";
@@ -67,7 +68,7 @@ export async function validarArchivo(formulario: FormData): Promise<Resultado<Vi
   }
   // Paso 3: el archivo debe tener el formato de la plantilla (.xlsx)
   if (!archivo.name.toLowerCase().endsWith(".xlsx")) return { ok: false, error: MENSAJE_FORMATO };
-  if (archivo.size > MAXIMO_BYTES_ARCHIVO) return { ok: false, error: "El archivo supera el tamaño máximo de 5 MB" };
+  if (archivo.size > MAXIMO_BYTES_ARCHIVO) return { ok: false, error: `El archivo supera el tamaño máximo de ${MAXIMO_MEGABYTES_ARCHIVO} MB` };
 
   const lectura = await leerArchivoPiezas(await archivo.arrayBuffer());
   if (!lectura.ok) {

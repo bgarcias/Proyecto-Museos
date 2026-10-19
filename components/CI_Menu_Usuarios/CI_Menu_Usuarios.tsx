@@ -8,7 +8,7 @@ import type { UsuarioListado } from "@/lib/tipos";
 import { alertaError, alertaExito } from "@/components/ui/alertas";
 import Boton, { BotonEnlace } from "@/components/ui/Boton";
 import Celda, { EncabezadoPagina } from "@/components/ui/Celda";
-import DialogoConfirmacion from "@/components/ui/DialogoConfirmacion";
+import PopupConfirmacion from "@/components/ui/PopupConfirmacion";
 import Insignia from "@/components/ui/Insignia";
 import Tabla from "@/components/ui/Tabla";
 import estilos from "./CI_Menu_Usuarios.module.css";
@@ -97,7 +97,7 @@ export default function CI_Menu_Usuarios({ usuarios }: { usuarios: UsuarioListad
       </Celda>
 
       {seleccionado && (
-        <DialogoConfirmacion
+        <PopupConfirmacion
           titulo={seleccionado.activo ? "Desactivar usuario" : "Activar usuario"}
           procesando={procesando}
           onConfirmar={confirmar}
@@ -106,7 +106,7 @@ export default function CI_Menu_Usuarios({ usuarios }: { usuarios: UsuarioListad
           {seleccionado.activo
             ? `¿Desactivar la cuenta de ${seleccionado.nombre}? No podrá iniciar sesión y su historial de cambios se conserva.`
             : `¿Activar la cuenta de ${seleccionado.nombre}? Podrá iniciar sesión y conserva sus museos asignados.`}
-        </DialogoConfirmacion>
+        </PopupConfirmacion>
       )}
     </div>
   );

@@ -32,7 +32,7 @@ const SITUACIONES = Object.keys(ETIQUETAS_SITUACION_PRESTAMO) as SituacionPresta
 export default function CI_Reporte_Prestamos({ museos }: { museos: Museo[] }) {
   const [filtros, setFiltros] = useState<FiltrosReportePrestamos>({});
   const [reporte, setReporte] = useState<ReportePrestamos | null>(null);
-  // Filtros con los que se generó el reporte mostrado: las exportaciones usan estos, no los valores actuales de los campos.
+  // Filtros con los que se generó el reporte mostrado: las exportaciones usan estos, no los campos actuales.
   const [filtrosDelReporte, setFiltrosDelReporte] = useState<FiltrosReportePrestamos>({});
   const [enviando, setEnviando] = useState(false);
 

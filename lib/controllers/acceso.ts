@@ -3,15 +3,11 @@ import { estadoExposicion, hoyISO, situacionPrestamo } from "../fechas";
 import type { ExposicionListado, Museo, PiezaListado, PrestamoListado, UsuarioPublico } from "../tipos";
 
 /*
- * Funciones de apoyo para los controladores. No son acciones: no se llaman desde las vistas.
- * Toda lectura se filtra por la organización de la persona en sesión. El administrador ve todos los
- * museos de su organización y el colaborador, solo los que tiene asignados.
+ * Apoyo de los controladores, no se llama desde las vistas. Toda lectura se filtra por la organización de la sesión:
+ * el administrador ve todos los museos y el colaborador, solo los asignados.
  */
 
-/**
- * Acceso a un museo. Siempre dentro de la organización de la persona.
- * El administrador accede a todos los museos de su organización. El colaborador, solo a los asignados.
- */
+/** Acceso a un museo, siempre dentro de la organización. Administrador: todos; colaborador: los asignados. */
 export function puedeAccederMuseo(usuario: UsuarioPublico, museo: Pick<Museo, "id" | "organizacionId">): boolean {
   if (museo.organizacionId !== usuario.organizacionId) return false;
   return usuario.rol === "administrador" || usuario.museoIds.includes(museo.id);
@@ -90,15 +86,4 @@ export async function prestamosVisibles(datos: Datos, usuario: UsuarioPublico): 
     });
   }
   return resultado.sort((a, b) => b.fechaSalida.localeCompare(a.fechaSalida));
-}
-
-/** Minúsculas y sin tildes, para comparar textos sin distinguir mayúsculas ni acentos. */
-function paraComparar(texto: string): string {
-  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-}
-
-/** Coincidencia parcial que ignora mayúsculas y tildes. Un texto buscado vacío coincide con todo. */
-export function coincideTexto(valor: string | undefined, buscado: string | undefined): boolean {
-  if (!buscado?.trim()) return true;
-  return paraComparar(valor ?? "").includes(paraComparar(buscado.trim()));
 }

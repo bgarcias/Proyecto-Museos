@@ -29,7 +29,7 @@ import estilos from "./CI_Reporte_Exposiciones.module.css";
 export default function CI_Reporte_Exposiciones({ museos }: { museos: Museo[] }) {
   const [filtros, setFiltros] = useState<FiltrosReporteExposiciones>({});
   const [reporte, setReporte] = useState<ReporteExposiciones | null>(null);
-  // Filtros con los que se generó el reporte mostrado: las exportaciones usan estos, no los valores actuales de los campos.
+  // Filtros con los que se generó el reporte mostrado: las exportaciones usan estos, no los campos actuales.
   const [filtrosDelReporte, setFiltrosDelReporte] = useState<FiltrosReporteExposiciones>({});
   const [enviando, setEnviando] = useState(false);
 

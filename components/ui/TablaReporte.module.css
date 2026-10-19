@@ -1,7 +1,6 @@
 /*
- * Reglas comunes de las tablas de los reportes de piezas, exposiciones y préstamos. Se aplican con la propiedad `clase`
- * de `Tabla`, así que no afectan a las tablas de otras pantallas. El selector con `table` gana en especificidad a los
- * estilos base de `Tabla`.
+ * Reglas comunes de las tablas de los reportes de piezas, exposiciones y préstamos. Se aplican con `clase` de `Tabla`,
+ * así que no afectan a otras tablas. El selector con `table` gana en especificidad a los estilos base de `Tabla`.
  */
 
 /* El relleno lateral menor deja más ancho al contenido, para que la tabla quepa en escritorio */

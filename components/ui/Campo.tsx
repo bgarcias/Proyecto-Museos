@@ -21,7 +21,7 @@ export function Campo({
 }: {
   etiqueta: string;
   htmlFor: string;
-  /** Marca el campo como obligatorio con un asterisco, sin cambiar el texto de la etiqueta. */
+  /** Agrega un asterisco, sin cambiar el texto de la etiqueta. */
   obligatorio?: boolean;
   /** Mensaje de error del campo, debajo del control. El control puede enlazarlo con aria-describedby={`${htmlFor}-error`}. */
   error?: string;
@@ -43,7 +43,7 @@ export function Campo({
   );
 }
 
-/** Línea de ayuda en texto secundario, para colocar bajo el control de un `Campo`. */
+/** Ayuda en texto secundario, bajo el control de un `Campo`. */
 export function AyudaCampo({ children }: { children: ReactNode }) {
   return <p className={estilos.ayuda}>{children}</p>;
 }
@@ -57,8 +57,8 @@ export function AreaTexto(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 }
 
 /**
- * Opción de placeholder: la de valor vacío cuyo texto empieza con "Selecciona" (por ejemplo "Selecciona un tipo").
- * Las opciones vacías de los filtros ("Todas", "Todos") son opciones reales y no se tocan.
+ * Placeholder: la opción de valor vacío cuyo texto empieza con "Selecciona" (por ejemplo "Selecciona un tipo").
+ * Las vacías de los filtros ("Todas", "Todos") son opciones reales y no se tocan.
  */
 function esPlaceholder(hijo: ReactNode): hijo is ReactElement<OptionHTMLAttributes<HTMLOptionElement>> {
   if (!isValidElement<OptionHTMLAttributes<HTMLOptionElement>>(hijo) || hijo.type !== "option") return false;
@@ -66,10 +66,9 @@ function esPlaceholder(hijo: ReactNode): hijo is ReactElement<OptionHTMLAttribut
 }
 
 /**
- * Selector de formulario. La opción de placeholder se ve como texto inicial del campo cuando está vacío,
- * pero no se puede elegir y no aparece en la lista desplegable abierta (deshabilitada y oculta).
- * Con un valor ya elegido, como al editar un registro, tampoco se muestra.
- * Al estar deshabilitada, un envío nativo no la incluye: los controladores tratan un valor ausente como vacío.
+ * Selector de formulario. El placeholder se ve como texto inicial cuando está vacío, pero no se puede elegir ni
+ * aparece en la lista abierta (deshabilitado y oculto), y tampoco con un valor ya elegido, como al editar.
+ * Al estar deshabilitado, un envío nativo no lo incluye: los controladores tratan un valor ausente como vacío.
  */
 export function Seleccion({ children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   const opciones = Children.map(children, (hijo) => (esPlaceholder(hijo) ? cloneElement(hijo, { disabled: true, hidden: true }) : hijo));
@@ -122,9 +121,9 @@ export function DatoLectura({ etiqueta, children }: { etiqueta: string; children
 }
 
 /**
- * Formulario de una sola columna con ancho máximo cómodo. Con `dosColumnas` los hijos se reparten en una
- * rejilla de dos columnas: cada `ColumnaFormulario` ocupa una y `FilaCompleta` ocupa todo el ancho.
- * El orden en el código es el orden de lectura y de tabulación, y en tablet y mobile pasa a una sola columna.
+ * Formulario de una columna con ancho máximo cómodo. Con `dosColumnas` los hijos van en una rejilla de dos:
+ * cada `ColumnaFormulario` ocupa una y `FilaCompleta` todo el ancho. El orden del código es el de lectura
+ * y de tabulación, y en tablet y mobile pasa a una columna.
  */
 export function Formulario({
   children,

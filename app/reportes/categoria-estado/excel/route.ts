@@ -1,7 +1,7 @@
 import { exportarReporte } from "@/lib/controllers/CC_Reporte";
 import { parametrosAFiltros } from "@/lib/reporteParametros";
 
-/** Reporte por categoría y estado en Excel, como descarga. Requiere sesión y recalcula el reporte con los filtros recibidos. */
+/** Excel del reporte por categoría y estado, como descarga. Requiere sesión; recalcula con los filtros recibidos. */
 export async function GET(solicitud: Request) {
   const filtros = parametrosAFiltros(new URL(solicitud.url).searchParams);
   const archivo = await exportarReporte("excel", filtros);

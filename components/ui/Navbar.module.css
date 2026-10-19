@@ -19,9 +19,16 @@
   text-transform: uppercase;
   letter-spacing: var(--espaciado-letras-etiqueta);
   text-decoration: none;
+  transition:
+    background-color var(--duracion-transicion) var(--curva-transicion),
+    color var(--duracion-transicion) var(--curva-transicion),
+    box-shadow var(--duracion-transicion) var(--curva-transicion);
 }
 
-/* El logotipo siempre es amarillo con texto negro, como el del login, y nunca se marca como opción activa */
+/*
+ * El logotipo siempre es amarillo con texto negro, como el del login, y nunca se marca como opción activa.
+ * Es un bloque de marca aparte: un espacio con bordes a ambos lados lo separa de la primera opción.
+ */
 .marca {
   background: var(--color-acento);
   color: var(--color-texto);
@@ -29,18 +36,23 @@
   font-size: var(--texto-titulo-menu);
   font-weight: 400;
   letter-spacing: 0.04em;
-}
-
-/* El logotipo es un bloque de marca aparte: un espacio con bordes a ambos lados lo separa de la primera opción */
-.marca {
   margin-right: var(--espacio-3);
 }
 
-.marca + .enlace {
+.panel > .enlace:first-child {
   border-left: var(--borde);
 }
 
-/* Al pasar el cursor, el logotipo se invierte */
+/* En escritorio la cabecera y el panel no existen como cajas: sus celdas siguen en la fila de la barra */
+.cabecera,
+.panel {
+  display: contents;
+}
+
+.hamburguesa {
+  display: none;
+}
+
 .marca:hover {
   background: var(--color-texto);
   color: var(--color-acento);
@@ -50,7 +62,7 @@
   background: var(--color-resalte-fila);
 }
 
-/* Cerrar sesión pasa a rojo al pasar el cursor */
+/* Cerrar sesión: rojo al pasar el cursor */
 .boton:hover {
   background: var(--color-error);
   color: var(--color-sobre-error);
@@ -92,66 +104,108 @@
   border-right: 0;
 }
 
-/* tablet */
+/* tablet: las opciones no caben en una fila, así que van tras el botón y se apilan bajo la barra */
 @media (max-width: 1025px) {
   .barra {
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .cabecera {
+    display: flex;
+    align-items: stretch;
   }
 
   .celda {
     padding: var(--espacio-3);
   }
 
-  .usuario {
-    margin-left: auto;
-  }
-}
-
-/* mobile */
-@media (max-width: 768px) {
-  .barra {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    border-bottom: 0;
-  }
-
-  .celda {
-    border-bottom: var(--borde);
-    min-height: 3rem;
-  }
-
-  .marca,
-  .usuario,
-  .salir {
-    grid-column: 1 / -1;
-  }
-
   .marca {
+    flex: 1;
     margin-right: 0;
+    border-right: 0;
   }
 
-  .marca + .enlace {
-    border-left: 0;
-  }
-
-  .usuario {
-    margin-left: 0;
-    border-left: 0;
-    flex-direction: row;
+  .hamburguesa {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    gap: var(--espacio-2);
+    gap: var(--espacio-1);
+    min-width: var(--alto-control);
+    min-height: var(--alto-control);
+    border-left: var(--borde);
+    cursor: pointer;
+  }
+
+  .hamburguesa:hover,
+  .abierta {
+    background: var(--color-acento);
+  }
+
+  /* Tres líneas que pasan a una X: la de arriba y la de abajo giran hacia el centro y la del medio se apaga */
+  .linea {
+    width: var(--tamano-icono-menu);
+    height: var(--borde-grosor);
+    background: var(--color-texto);
+    transition:
+      transform var(--duracion-transicion) var(--curva-transicion),
+      opacity var(--duracion-transicion) var(--curva-transicion);
+  }
+
+  .abierta .linea:nth-child(1) {
+    transform: translateY(calc(var(--borde-grosor) + var(--espacio-1))) rotate(45deg);
+  }
+
+  .abierta .linea:nth-child(2) {
+    opacity: 0;
+  }
+
+  .abierta .linea:nth-child(3) {
+    transform: translateY(calc((var(--borde-grosor) + var(--espacio-1)) * -1)) rotate(-45deg);
+  }
+
+  .panel {
+    display: none;
+    flex-direction: column;
+  }
+
+  .panelAbierto {
+    display: flex;
+    animation: entradaMenu var(--duracion-entrada) var(--curva-transicion) backwards;
+  }
+
+  .panel .celda {
+    border-right: 0;
+    border-top: var(--borde);
+  }
+
+  .panel > .enlace:first-child {
+    border-left: 0;
+  }
+
+  /* El nombre ya aparece en el inicio: en el menú compacto solo queda Cerrar sesión */
+  .usuario {
+    display: none;
   }
 
   .salir .celda {
     width: 100%;
     justify-content: center;
   }
+}
 
-  .celda {
-    border-right: 0;
+/* Solo el estado inicial, para no dejar opacity ni transform al terminar */
+@keyframes entradaMenu {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--desplazamiento-entrada) * -1));
   }
+}
 
-  .enlace:nth-of-type(even) {
-    border-right: var(--borde);
+/* mobile */
+@media (max-width: 768px) {
+  .celda {
+    min-height: var(--alto-control-grande);
   }
 }

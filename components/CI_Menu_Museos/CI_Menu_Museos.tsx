@@ -8,7 +8,7 @@ import type { Museo } from "@/lib/tipos";
 import { alertaError, alertaExito } from "@/components/ui/alertas";
 import Boton, { BotonEnlace } from "@/components/ui/Boton";
 import Celda, { EncabezadoPagina } from "@/components/ui/Celda";
-import DialogoConfirmacion from "@/components/ui/DialogoConfirmacion";
+import PopupConfirmacion from "@/components/ui/PopupConfirmacion";
 import Insignia from "@/components/ui/Insignia";
 import Tabla from "@/components/ui/Tabla";
 import estilos from "./CI_Menu_Museos.module.css";
@@ -85,7 +85,7 @@ export default function CI_Menu_Museos({ museos }: { museos: Museo[] }) {
       </Celda>
 
       {seleccionado && (
-        <DialogoConfirmacion
+        <PopupConfirmacion
           titulo={seleccionado.activo ? "Desactivar museo" : "Activar museo"}
           procesando={procesando}
           onConfirmar={confirmar}
@@ -94,7 +94,7 @@ export default function CI_Menu_Museos({ museos }: { museos: Museo[] }) {
           {seleccionado.activo
             ? `¿Desactivar el museo «${seleccionado.nombre}»? Dejará de ofrecerse en los formularios nuevos. Sus piezas y exposiciones se conservan.`
             : `¿Activar el museo «${seleccionado.nombre}»? Volverá a ofrecerse en los formularios nuevos.`}
-        </DialogoConfirmacion>
+        </PopupConfirmacion>
       )}
     </div>
   );

@@ -4,7 +4,7 @@ import { parametrosAMapa } from "@/lib/reporteParametros";
 
 const CLAVES = ["museoId", "situacion", "institucion", "desde", "hasta"] as const;
 
-/** Reporte de prestamos en PDF, en el visor del navegador. Requiere sesión y recalcula el reporte con los filtros recibidos. */
+/** PDF del reporte de préstamos, en el visor del navegador. Requiere sesión; recalcula con los filtros recibidos. */
 export async function GET(solicitud: Request) {
   const filtros = parametrosAMapa(new URL(solicitud.url).searchParams, CLAVES);
   const archivo = await exportarReportePrestamos("pdf", filtros);

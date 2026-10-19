@@ -1,6 +1,6 @@
 /*
- * Reglas del prefijo del museo y del código de las piezas. Son funciones puras: la capa de datos las usa
- * dentro de la misma operación que inserta el museo o la pieza, y las vistas y los controladores no calculan nada.
+ * Reglas del prefijo del museo y del código de las piezas. Funciones puras: la capa de datos las usa
+ * dentro de la misma operación que inserta el museo o la pieza.
  */
 
 export const MAXIMO_PREFIJO = 5;
@@ -8,15 +8,21 @@ export const MINIMO_DIGITOS_CODIGO = 3;
 export const MAXIMO_CODIGO_ANTERIOR = 40;
 export const MENSAJE_CODIGO_ANTERIOR_LARGO = `El código anterior no puede tener más de ${MAXIMO_CODIGO_ANTERIOR} caracteres`;
 export const MENSAJE_CODIGO_ANTERIOR_REPETIDO = "Ya existe una pieza con ese código anterior en el museo";
+export const MENSAJE_MUSEO_NOMBRE_SIN_CARACTERES = "El nombre del museo debe incluir al menos una letra o un número";
 
-/** Artículos, preposiciones y conjunciones que no cuentan como palabra significativa del nombre. */
+/** Palabras que no cuentan en el prefijo (artículos, preposiciones, conjunciones). */
 const PALABRAS_IGNORADAS = new Set(["de", "del", "la", "las", "el", "los", "y", "e"]);
 
 function sinTildes(texto: string): string {
   return texto.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
-/** Prefijo base de un nombre, sin resolver repetidos: iniciales de las palabras significativas, o tres letras si hay una sola. */
+/** True si el nombre tiene alguna letra o cifra de la que sacar el prefijo (A a Z o 0 a 9, sin tildes). */
+export function nombreTienePrefijo(nombre: string): boolean {
+  return /[A-Z0-9]/.test(sinTildes(nombre).toUpperCase());
+}
+
+/** Prefijo base sin resolver repetidos: iniciales de las palabras significativas, o tres letras si hay una sola. */
 export function prefijoBase(nombre: string): string {
   const palabras = sinTildes(nombre)
     .toUpperCase()
@@ -32,7 +38,7 @@ export function prefijoBase(nombre: string): string {
     .slice(0, MAXIMO_PREFIJO);
 }
 
-/** Prefijo del museo: el base, con un número al final (2, 3 y así) hasta que no coincida con ninguno de los existentes. */
+/** Prefijo del museo: el base, con número al final (2, 3...) hasta no coincidir con ninguno existente. */
 export function calcularPrefijoMuseo(nombre: string, existentes: string[]): string {
   const usados = new Set(existentes.map((p) => p.toUpperCase()));
   const base = prefijoBase(nombre);

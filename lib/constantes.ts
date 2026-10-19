@@ -12,7 +12,7 @@ import type {
 
 /*
  * Valores fijos (en minúscula, como se guardan) y sus etiquetas para la interfaz.
- * Las categorías ya no son fijas: son datos de cada organización.
+ * Las categorías no son fijas: son datos de cada organización.
  */
 
 export const ROLES: readonly Rol[] = ["administrador", "colaborador"];
@@ -44,7 +44,6 @@ export const ETIQUETAS_DISPONIBILIDAD: Record<Disponibilidad, string> = {
   pendiente_verificacion: "Pendiente de verificación",
 };
 
-export const ESTADOS_INVENTARIO: readonly EstadoInventario[] = ["en_curso", "cerrado"];
 export const ETIQUETAS_ESTADO_INVENTARIO: Record<EstadoInventario, string> = {
   en_curso: "En curso",
   cerrado: "Cerrado",
@@ -111,9 +110,8 @@ export const TITULO_REPORTE_PRESTAMOS = "Reporte de préstamos";
 export const DETALLE_REPORTE_PRESTAMOS = "Listado de préstamos y devoluciones";
 
 /**
- * Zona horaria única del sistema. Todo día y toda hora que se calculan o se muestran a partir de una marca de tiempo
- * se convierten a esta zona de forma explícita: nada depende de la zona del proceso, del servidor ni del navegador.
- * Las marcas de tiempo se guardan en UTC y las fechas de solo día (AAAA-MM-DD) no se convierten nunca.
+ * Zona horaria única del sistema: todo día y hora sacados de una marca de tiempo se convierten a ella de forma explícita,
+ * sin depender del proceso, el servidor ni el navegador. Las marcas se guardan en UTC y las fechas de solo día (AAAA-MM-DD) nunca se convierten.
  */
 export const ZONA_HORARIA = "America/Lima";
 
@@ -142,6 +140,16 @@ export function esFechaIso(valor: string): boolean {
 export const TEXTO_TODOS = "Todos";
 export const TEXTO_TODAS = "Todas";
 export const TEXTO_SIN_LIMITE = "Sin límite";
+
+/* Etiquetas de los datos de una pieza, compartidas por pantallas, fichas y archivos de importación y reportes */
+export const ETIQUETA_CATEGORIA = "Categoría";
+export const ETIQUETA_DISPONIBILIDAD = "Disponibilidad";
+export const ETIQUETA_FECHA_REGISTRO = "Fecha de registro";
+export const ETIQUETA_ESTADO_CONSERVACION = "Estado de conservación";
+export const ETIQUETA_UBICACION_FISICA = "Ubicación física";
+export const ETIQUETA_CODIGO_ANTERIOR = "Código anterior";
+export const MENSAJE_PIEZA_NO_ENCONTRADA = "No se encontró la pieza";
+
 export const TITULO_RESULTADOS_REPORTE_PIEZAS = "Listado de piezas por museo";
 export const TITULO_RESULTADOS_REPORTE_EXPOSICIONES = "Listado de exposiciones con sus piezas";
 export const TITULO_RESULTADOS_REPORTE_PRESTAMOS = "Listado de préstamos y devoluciones";
@@ -151,7 +159,7 @@ export const TOTAL_PRESTAMOS = "Total de préstamos";
 
 export const ETIQUETAS_FILTROS_REPORTE = {
   museo: "Museo",
-  disponibilidad: "Disponibilidad",
+  disponibilidad: ETIQUETA_DISPONIBILIDAD,
   estado: "Estado",
   situacion: "Situación",
   institucion: "Institución destino",
@@ -162,12 +170,12 @@ export const ETIQUETAS_FILTROS_REPORTE = {
 export const COLUMNAS_REPORTE_PIEZAS = {
   codigo: "Código",
   nombre: "Nombre",
-  categoria: "Categoría",
+  categoria: ETIQUETA_CATEGORIA,
   estado: "Estado",
-  disponibilidad: "Disponibilidad",
+  disponibilidad: ETIQUETA_DISPONIBILIDAD,
   museo: "Museo",
   ubicacion: "Ubicación",
-  fechaRegistro: "Fecha de registro",
+  fechaRegistro: ETIQUETA_FECHA_REGISTRO,
 } as const;
 
 export const COLUMNAS_REPORTE_EXPOSICIONES = {
@@ -219,3 +227,8 @@ export function etiquetaValorHistorial(campo: string, valor?: string): string {
 export const TEXTO_CODIGO_404 = "404";
 export const TEXTO_MENSAJE_404 = "Esta página no se encontró";
 export const ETIQUETA_VOLVER_AL_INICIO = "Volver al inicio";
+
+/** Menú de navegación compacto: etiquetas del botón y la misma consulta de ancho que la media query de tablet. */
+export const ETIQUETA_ABRIR_MENU = "Abrir menú";
+export const ETIQUETA_CERRAR_MENU = "Cerrar menú";
+export const CONSULTA_MENU_COMPACTO = "(max-width: 1025px)";

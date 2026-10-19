@@ -21,7 +21,7 @@ export type CambiosMuseo = Partial<Pick<Museo, "nombre" | "tipo" | "direccion">>
 export type NuevoUsuario = Omit<Usuario, "id">;
 export type CambiosUsuario = Partial<Pick<Usuario, "nombre" | "email" | "rol" | "museoIds">>;
 
-/** Una pieza nueva queda con disponibilidad "disponible" y fecha de registro de hoy. El código lo asigna la capa de datos al insertarla. */
+/** Nace "disponible" y con fecha de registro de hoy. El código lo asigna la capa de datos al insertarla. */
 export type NuevaPieza = Omit<Pieza, "id" | "codigo" | "fechaRegistro" | "disponibilidad">;
 /** Datos editables de una pieza. El museo, el estado de conservación y la disponibilidad tienen operaciones propias. */
 export type CambiosPieza = Partial<
@@ -41,10 +41,7 @@ export type NuevoInventario = Omit<Inventario, "id" | "usuarioCierreId" | "fecha
 
 export type NuevoCambio = Omit<HistorialCambio, "id" | "fecha">;
 
-/**
- * Contratos de la capa de datos. Toda implementación (memoria hoy, Prisma después)
- * debe cumplirlos. Todas las funciones son asíncronas.
- */
+/** Contrato que cumple toda implementación de la capa de datos (memoria hoy, Prisma después). Todo es asíncrono. */
 export interface Datos {
   /* Organización */
   obtenerOrganizacion(id: string): Promise<Organizacion | null>;

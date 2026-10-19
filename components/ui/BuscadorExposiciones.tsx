@@ -16,7 +16,7 @@ type Props = {
   museos: Museo[];
   /** Lista inicial ya cargada por la página, sin filtros. Si no se da, se carga al abrir. */
   exposicionesIniciales?: ExposicionListado[];
-  /** Con onElegir, el buscador funciona como ventana de selección única. */
+  /** Con onElegir, el buscador funciona como popup de selección única. */
   elegidaId?: string;
   onElegir?: (exposicion: ExposicionListado) => void;
 };
@@ -28,9 +28,9 @@ function hayFiltros(f: FiltrosExposiciones): boolean {
   return Boolean(f.nombre?.trim() || (f.vigencia && f.vigencia !== "todas") || f.museoId);
 }
 
-/** Buscador de exposiciones: se construye una sola vez y se usa como página y como ventana emergente. */
+/** Un solo buscador, como página y como popup. */
 export default function BuscadorExposiciones({ museos, exposicionesIniciales, elegidaId, onElegir }: Props) {
-  // Lo que la persona escribe y lo que se aplicó con Buscar o Enter son cosas distintas.
+  // Lo escrito y lo aplicado con Buscar o Enter son cosas distintas.
   const [filtros, setFiltros] = useState<FiltrosExposiciones>(FILTROS_INICIALES);
   const [aplicados, setAplicados] = useState<FiltrosExposiciones>(FILTROS_INICIALES);
   const [exposiciones, setExposiciones] = useState<ExposicionListado[] | null>(exposicionesIniciales ?? null);
@@ -48,14 +48,14 @@ export default function BuscadorExposiciones({ museos, exposicionesIniciales, el
     if (!hayFiltros(f)) setTotal(resultado.length);
   }
 
-  // La ventana de selección consulta al abrir. La lista del módulo parte de la que cargó la página.
+  // El popup de selección consulta al abrir. La lista del módulo parte de la que cargó la página.
   useEffect(() => {
     if (exposicionesIniciales === undefined) void consultar(FILTROS_INICIALES);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Si la página entrega una lista inicial nueva (por ejemplo tras cancelar o modificar una exposición y refrescar
-  // la ruta), el estado local ya no la refleja: se actualiza el total y se consulta con los filtros aplicados.
+  // Si la página entrega una lista nueva (por ejemplo tras cancelar o modificar una exposición), el estado local
+  // queda viejo: se actualiza el total y se vuelve a consultar con los filtros aplicados.
   const inicialesAnteriores = useRef(exposicionesIniciales);
   useEffect(() => {
     if (exposicionesIniciales === inicialesAnteriores.current) return;

@@ -50,6 +50,10 @@
   color: var(--color-texto);
   font-family: var(--tipografia-texto);
   font-size: var(--texto-base);
+  transition:
+    background-color var(--duracion-transicion) var(--curva-transicion),
+    border-color var(--duracion-transicion) var(--curva-transicion),
+    box-shadow var(--duracion-transicion) var(--curva-transicion);
 }
 
 .control:focus {
@@ -91,8 +95,8 @@
 }
 
 .casilla input {
-  width: 1.375rem;
-  height: 1.375rem;
+  width: var(--tamano-casilla);
+  height: var(--tamano-casilla);
   margin: 0;
   accent-color: var(--color-texto);
   flex: none;
@@ -123,11 +127,10 @@
   }
 
   .control {
-    min-height: 3rem;
+    min-height: var(--alto-control-grande);
   }
 }
 
-/* Línea de ayuda bajo un control */
 .ayuda {
   margin: 0;
   font-size: var(--texto-etiqueta);

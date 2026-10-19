@@ -1,10 +1,7 @@
 import { obtenerDataSource } from "../config/env";
 import type { Datos } from "./contratos";
 
-/**
- * Elige la implementación de la capa de datos según DATA_SOURCE.
- * Por defecto es memoria. Cuando exista lib/data/prisma, se agrega aquí.
- */
+/** Implementación según DATA_SOURCE; memoria por defecto. Cuando exista lib/data/prisma se agrega aquí. */
 export async function obtenerDatos(): Promise<Datos> {
   if (obtenerDataSource() === "prisma") {
     throw new Error(

@@ -1,6 +1,6 @@
 /*
- * Única fuente de las opciones de navegación. El menú y las tarjetas de acceso del inicio salen de esta lista,
- * con el mismo orden y los mismos permisos por rol, para que no puedan desfasarse.
+ * Única fuente de las opciones de navegación: el menú y las tarjetas del inicio salen de esta lista,
+ * con el mismo orden y permisos por rol, para que no se desfasen.
  */
 
 import {

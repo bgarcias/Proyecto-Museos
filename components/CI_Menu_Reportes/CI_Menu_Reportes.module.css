@@ -5,9 +5,8 @@
 }
 
 /*
- * Cuatro tarjetas en una fila de cuatro columnas, con la misma técnica de bordes compartidos que las tarjetas
- * de acceso del Inicio: cada tarjeta se extiende un grosor de borde sobre la vecina y el relleno de la cuadrícula
- * aloja esa extensión en la última columna y la última fila.
+ * Cuatro tarjetas en una fila, con los mismos bordes compartidos que las tarjetas del Inicio (ver
+ * CI_Inicio.module.css).
  */
 .tarjetas {
   display: grid;
@@ -28,6 +27,9 @@
   color: var(--color-texto);
   text-decoration: none;
   background: var(--color-fondo);
+  transition:
+    background-color var(--duracion-transicion) var(--curva-transicion),
+    box-shadow var(--duracion-transicion) var(--curva-transicion);
 }
 
 .activa:hover {

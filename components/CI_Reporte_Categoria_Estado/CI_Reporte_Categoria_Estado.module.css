@@ -4,21 +4,6 @@
   gap: var(--espacio-4);
 }
 
-/* Generar y Limpiar a la izquierda, las exportaciones a la derecha. En mobile se apilan. */
-.filaBotones {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--espacio-3);
-}
-
-/* mobile */
-@media (max-width: 768px) {
-  .filaBotones {
-    flex-direction: column;
-  }
-}
-
 .formulario {
   display: flex;
   flex-direction: column;

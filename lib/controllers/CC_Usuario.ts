@@ -169,9 +169,8 @@ export async function listarUsuarios(): Promise<UsuarioListado[]> {
 }
 
 /**
- * Datos del formulario de usuario, para registrar (sin id) o editar (con id).
- * Al registrar se ofrecen los museos activos. Al editar, además, los museos inactivos que el usuario ya tiene asignados.
- * Devuelve null si el usuario no existe en la organización.
+ * Formulario para registrar (sin id) o editar (con id). Ofrece los museos activos y, al editar, también los inactivos ya asignados.
+ * Null si el usuario no existe en la organización.
  */
 export async function cargarFormularioUsuario(
   id?: string,

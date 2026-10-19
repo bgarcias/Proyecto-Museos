@@ -8,6 +8,8 @@ import {
   ESTADOS_CONSERVACION,
   ETIQUETAS_DISPONIBILIDAD,
   ETIQUETAS_ESTADO_CONSERVACION,
+  MENSAJE_SIN_ACCESO_MUSEO,
+  MENSAJE_PIEZA_NO_ENCONTRADA,
 } from "../constantes";
 import {
   MAXIMO_CODIGO_ANTERIOR,
@@ -27,12 +29,13 @@ import type {
   Resultado,
 } from "../tipos";
 import { anioActual, validarAnio } from "../validaciones";
-import { coincideTexto, museosActivosVisibles, museosVisibles, piezasVisibles, puedeAccederAlMuseo } from "./acceso";
+import { coincideTexto } from "../busquedaTexto";
+import { museosActivosVisibles, museosVisibles, piezasVisibles, puedeAccederAlMuseo } from "./acceso";
 
 const MENSAJE_IMAGEN = "La imagen debe ser PNG o JPG de máximo 1 MB";
 const MAXIMO_IMAGEN_BYTES = 1024 * 1024;
 
-/* Catálogo y búsqueda de piezas. El buscador se usa como página y como ventana emergente. */
+/* Catálogo y búsqueda de piezas. El buscador se usa como página y como popup. */
 
 export async function buscarPiezas(filtros: FiltrosPiezas): Promise<PiezaListado[]> {
   const usuario = await exigirSesion();
@@ -77,10 +80,7 @@ export async function cargarDetallePieza(id: string): Promise<PiezaListado> {
 
 /* Gestionar piezas: registrar y editar */
 
-/**
- * Datos del formulario de pieza, para registrar (sin id) o editar (con id).
- * Devuelve null si la pieza no existe o la persona no tiene acceso a su museo.
- */
+/** Formulario para registrar (sin id) o editar (con id). Null si la pieza no existe o no hay acceso a su museo. */
 export async function cargarFormularioPieza(
   id?: string,
 ): Promise<{ museos: Museo[]; categorias: Categoria[]; pieza: PiezaListado | null; anioMaximo: number } | null> {
@@ -141,7 +141,7 @@ export async function registrarPieza(
   }
   if (!entrada.museoId) return { ok: false, error: "Selecciona un museo" };
   if (!(await puedeAccederAlMuseo(datos, usuario, entrada.museoId))) {
-    return { ok: false, error: "No tienes acceso al museo seleccionado" };
+    return { ok: false, error: MENSAJE_SIN_ACCESO_MUSEO };
   }
   if (entrada.imagen && !imagenValida(entrada.imagen)) return { ok: false, error: MENSAJE_IMAGEN };
   if (codigoAnterior && (await datos.buscarPiezaPorCodigoAnterior(entrada.museoId, codigoAnterior))) {
@@ -166,15 +166,15 @@ export async function registrarPieza(
 }
 
 /**
- * Editar una pieza. El estado de conservación se cambia solo desde Actualizar estado
- * y el museo de una pieza no se puede cambiar. Cada campo que cambia genera un registro de historial.
+ * El estado de conservación solo cambia desde Actualizar estado y el museo no se puede cambiar.
+ * Cada campo modificado genera un registro de historial.
  */
 export async function actualizarPieza(id: string, entrada: EntradaPieza): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
   const pieza = await datos.obtenerPieza(id);
   if (!pieza || !(await puedeAccederAlMuseo(datos, usuario, pieza.museoId))) {
-    return { ok: false, error: "No se encontró la pieza" };
+    return { ok: false, error: MENSAJE_PIEZA_NO_ENCONTRADA };
   }
   const codigoAnterior = entrada.codigoAnterior.trim() || undefined;
   const nombre = entrada.nombre.trim();
@@ -262,7 +262,7 @@ export async function actualizarEstado(
   const datos = await obtenerDatos();
   const pieza = await datos.obtenerPieza(piezaId);
   if (!pieza || !(await puedeAccederAlMuseo(datos, usuario, pieza.museoId))) {
-    return { ok: false, error: "No se encontró la pieza" };
+    return { ok: false, error: MENSAJE_PIEZA_NO_ENCONTRADA };
   }
   if (!(ESTADOS_CONSERVACION as readonly string[]).includes(nuevoEstado)) {
     return { ok: false, error: "Selecciona el nuevo estado" };
@@ -290,10 +290,7 @@ export async function actualizarEstado(
 
 /* Ficha técnica en PDF */
 
-/**
- * PDF de la ficha técnica de una pieza. Solo la genera quien tiene acceso al museo de la pieza;
- * en otro caso devuelve null (no se encuentra).
- */
+/** PDF de la ficha técnica. Solo con acceso al museo de la pieza; si no, null (no se encuentra). */
 export async function generarFichaTecnica(id: string): Promise<{ nombreArchivo: string; contenido: Uint8Array } | null> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();

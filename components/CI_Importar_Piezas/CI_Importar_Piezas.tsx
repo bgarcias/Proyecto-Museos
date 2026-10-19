@@ -30,7 +30,7 @@ export default function CI_Importar_Piezas({ museos }: { museos: Museo[] }) {
   function elegirArchivo(e: React.ChangeEvent<HTMLInputElement>) {
     const elegido = e.target.files?.[0] ?? null;
     if (elegido && elegido.size > MAXIMO_BYTES_ARCHIVO) {
-      alertaError("El archivo supera el tamaño máximo de 5 MB");
+      alertaError(`El archivo supera el tamaño máximo de ${MAXIMO_MEGABYTES_ARCHIVO} MB`);
       setClaveArchivo((k) => k + 1);
       setArchivo(null);
       return;

@@ -1,8 +1,8 @@
 import type { FiltrosReporte } from "./tipos";
 
 /*
- * Los filtros con que se generó un reporte viajan a las rutas de exportación como parámetros de la dirección.
- * Lo comparten la vista (que arma los enlaces de descarga) y las rutas (que los leen).
+ * Los filtros de un reporte viajan a las rutas de exportación como parámetros de la dirección.
+ * Lo comparten la vista (enlaces de descarga) y las rutas (que los leen).
  */
 
 /** Parámetros de dirección de los filtros. Los vacíos no se envían. */

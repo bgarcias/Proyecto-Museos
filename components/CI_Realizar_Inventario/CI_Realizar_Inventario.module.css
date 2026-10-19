@@ -52,8 +52,8 @@
 }
 
 /*
- * Tabla de piezas del inventario, solo esta tabla: el código nunca se parte y su columna, igual que la de Guardado,
- * toma el ancho justo de su contenido. El selector con `table` gana en especificidad a los estilos base de `Tabla`.
+ * Solo esta tabla: el código nunca se parte y su columna, igual que la de Guardado, toma el ancho justo.
+ * El selector con `table` gana en especificidad a los estilos base de `Tabla`.
  */
 table.piezas .ajustada {
   width: 1%;

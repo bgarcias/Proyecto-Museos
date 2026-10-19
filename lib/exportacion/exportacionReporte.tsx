@@ -1,11 +1,11 @@
 import { Document, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import ExcelJS from "exceljs";
-import { ETIQUETAS_ESTADO_CONSERVACION, TITULO_REPORTE } from "../constantes";
+import { ETIQUETAS_ESTADO_CONSERVACION, TITULO_REPORTE, ETIQUETA_CATEGORIA } from "../constantes";
 import type { Reporte } from "../tipos";
 
 /*
- * Archivos del reporte por categoría y estado, en PDF y en Excel. No usan sesión ni datos:
- * el controlador les pasa el reporte ya calculado y los textos de los filtros aplicados.
+ * Reporte por categoría y estado en PDF y Excel. Sin sesión ni datos: el controlador pasa el reporte
+ * ya calculado y los textos de los filtros.
  */
 
 export const NOMBRE_HOJA_REPORTE = "Reporte";
@@ -111,7 +111,7 @@ export async function generarExcelReporte(datos: DatosExportacionReporte): Promi
   for (const [etiqueta, valor] of datos.filtros) hoja.addRow([etiqueta, valor]);
   hoja.addRow([]);
 
-  const encabezado = hoja.addRow(["Categoría", ...COLUMNAS_ESTADO(reporte), "Total"]);
+  const encabezado = hoja.addRow([ETIQUETA_CATEGORIA, ...COLUMNAS_ESTADO(reporte), "Total"]);
   encabezado.font = { bold: true };
   for (const f of reporte.filas) hoja.addRow([f.categoria, ...reporte.estados.map((e) => f.porEstado[e]), f.total]);
   const totales = hoja.addRow(["Totales", ...reporte.estados.map((e) => reporte.totalesPorEstado[e]), reporte.totalGeneral]);

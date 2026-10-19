@@ -3,7 +3,7 @@ import { DatoLectura } from "@/components/ui/Campo";
 import Celda, { Acciones, EncabezadoPagina } from "@/components/ui/Celda";
 import Insignia from "@/components/ui/Insignia";
 import Miniatura from "@/components/ui/Miniatura";
-import { ETIQUETAS_DISPONIBILIDAD, ETIQUETAS_ESTADO_CONSERVACION } from "@/lib/constantes";
+import { ETIQUETAS_DISPONIBILIDAD, ETIQUETAS_ESTADO_CONSERVACION, ETIQUETA_CODIGO_ANTERIOR, ETIQUETA_CATEGORIA, ETIQUETA_ESTADO_CONSERVACION, ETIQUETA_DISPONIBILIDAD, ETIQUETA_UBICACION_FISICA, ETIQUETA_FECHA_REGISTRO } from "@/lib/constantes";
 import { formatearFecha } from "@/lib/fechas";
 import type { PiezaListado } from "@/lib/tipos";
 import estilos from "./CI_Detalle_Pieza.module.css";
@@ -21,24 +21,24 @@ export default function CI_Detalle_Pieza({ pieza }: { pieza: PiezaListado }) {
           <Miniatura src={pieza.imagenUrl} alt={`Imagen de ${pieza.nombre}`} tamano="detalle" />
           <div className={estilos.datos}>
             <DatoLectura etiqueta="Código">{pieza.codigo}</DatoLectura>
-            {pieza.codigoAnterior && <DatoLectura etiqueta="Código anterior">{pieza.codigoAnterior}</DatoLectura>}
+            {pieza.codigoAnterior && <DatoLectura etiqueta={ETIQUETA_CODIGO_ANTERIOR}>{pieza.codigoAnterior}</DatoLectura>}
             <DatoLectura etiqueta="Nombre">{pieza.nombre}</DatoLectura>
-            <DatoLectura etiqueta="Categoría">{pieza.categoriaNombre}</DatoLectura>
+            <DatoLectura etiqueta={ETIQUETA_CATEGORIA}>{pieza.categoriaNombre}</DatoLectura>
             <DatoLectura etiqueta="Descripción">{valorOGuion(pieza.descripcion)}</DatoLectura>
             <DatoLectura etiqueta="Año">{valorOGuion(pieza.anio)}</DatoLectura>
             <DatoLectura etiqueta="Material">{valorOGuion(pieza.material)}</DatoLectura>
-            <DatoLectura etiqueta="Estado de conservación">
+            <DatoLectura etiqueta={ETIQUETA_ESTADO_CONSERVACION}>
               <Insignia valor={ETIQUETAS_ESTADO_CONSERVACION[pieza.estadoConservacion]} />
             </DatoLectura>
-            <DatoLectura etiqueta="Disponibilidad">
+            <DatoLectura etiqueta={ETIQUETA_DISPONIBILIDAD}>
               <Insignia valor={ETIQUETAS_DISPONIBILIDAD[pieza.disponibilidad]} />
             </DatoLectura>
             <DatoLectura etiqueta="Situación">
               <Insignia valor={pieza.enExhibicion ? "En exhibición" : "En almacén"} />
             </DatoLectura>
-            <DatoLectura etiqueta="Ubicación física">{valorOGuion(pieza.ubicacionFisica)}</DatoLectura>
+            <DatoLectura etiqueta={ETIQUETA_UBICACION_FISICA}>{valorOGuion(pieza.ubicacionFisica)}</DatoLectura>
             <DatoLectura etiqueta="Museo">{pieza.museoNombre}</DatoLectura>
-            <DatoLectura etiqueta="Fecha de registro">{formatearFecha(pieza.fechaRegistro)}</DatoLectura>
+            <DatoLectura etiqueta={ETIQUETA_FECHA_REGISTRO}>{formatearFecha(pieza.fechaRegistro)}</DatoLectura>
           </div>
         </div>
         <Acciones>

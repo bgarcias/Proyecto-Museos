@@ -1,7 +1,6 @@
 /*
- * Validaciones de formulario que comparten las vistas y los controladores.
- * Las vistas las usan para avisar de inmediato. Los controladores las repiten siempre,
- * porque no se puede confiar en lo que envía el cliente.
+ * Validaciones de formulario compartidas. Las vistas avisan de inmediato; los controladores
+ * las repiten siempre, porque no se puede confiar en lo que envía el cliente.
  */
 
 import { hoyISO } from "./fechas";
@@ -41,8 +40,8 @@ export function anioEnRango(anio: number): boolean {
 }
 
 /**
- * Validación estricta del año. Se recorta el texto y vacío significa sin año. Solo se acepta un signo menos
- * opcional seguido de dígitos: no hay decimales, notación científica, hexadecimales ni signo más.
+ * Validación estricta del año: se recorta el texto, vacío es sin año y solo se acepta un signo menos opcional
+ * y dígitos (sin decimales, notación científica, hexadecimales ni signo más).
  */
 export function validarAnio(texto: string): { ok: true; anio?: number } | { ok: false; error: string } {
   const limpio = texto.trim();
@@ -60,8 +59,8 @@ export const VALOR_ASEGURADO_MAXIMO = 100_000_000;
 export const MENSAJE_VALOR_ASEGURADO = "El valor asegurado debe ser un número mayor que cero, con hasta 2 decimales, y no superar 100 millones";
 
 /**
- * Validación estricta del valor asegurado. Se recorta el texto y solo se acepta un número con dígitos y hasta 2 decimales
- * con punto: sin signo, notación científica, hexadecimal ni separadores de miles. Debe ser mayor que cero y no superar el máximo.
+ * Validación estricta del valor asegurado: se recorta el texto y solo se acepta un número con dígitos y hasta 2 decimales
+ * con punto (sin signo, notación científica, hexadecimal ni separadores de miles). Mayor que cero y no más que el máximo.
  */
 export function validarValorAsegurado(texto: string): { ok: true; valor: number } | { ok: false; error: string } {
   const limpio = texto.trim();

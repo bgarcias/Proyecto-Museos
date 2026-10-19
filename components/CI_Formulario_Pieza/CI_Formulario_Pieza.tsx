@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { actualizarPieza, registrarPieza } from "@/lib/controllers/CC_Pieza";
 import { MAXIMO_CODIGO_ANTERIOR } from "@/lib/codigos";
-import { ESTADOS_CONSERVACION, ETIQUETAS_ESTADO_CONSERVACION } from "@/lib/constantes";
+import { ESTADOS_CONSERVACION, ETIQUETAS_ESTADO_CONSERVACION, ETIQUETA_CODIGO_ANTERIOR, ETIQUETA_CATEGORIA, ETIQUETA_ESTADO_CONSERVACION, ETIQUETA_UBICACION_FISICA } from "@/lib/constantes";
 import type { Categoria, Museo, PiezaListado } from "@/lib/tipos";
 import { ANIO_MINIMO } from "@/lib/validaciones";
 import { alertaError, alertaExito } from "@/components/ui/alertas";
@@ -40,7 +40,7 @@ function leerComoDataUrl(archivo: File): Promise<string> {
 
 /**
  * Registrar una pieza (sin datos) o editarla (con la pieza actual), en dos columnas.
- * El orden en el código es el orden de tabulación: primero toda la columna izquierda y luego la derecha.
+ * El orden en el código es el de tabulación: toda la columna izquierda y luego la derecha.
  */
 export default function CI_Formulario_Pieza({
   pieza,
@@ -130,7 +130,7 @@ export default function CI_Formulario_Pieza({
                 </Seleccion>
               </Campo>
             )}
-            <Campo etiqueta="Código anterior" htmlFor="codigo-anterior">
+            <Campo etiqueta={ETIQUETA_CODIGO_ANTERIOR} htmlFor="codigo-anterior">
               <Entrada
                 id="codigo-anterior"
                 value={codigoAnterior}
@@ -141,7 +141,7 @@ export default function CI_Formulario_Pieza({
             <Campo etiqueta="Nombre" htmlFor="nombre" obligatorio>
               <Entrada id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
             </Campo>
-            <Campo etiqueta="Categoría" htmlFor="categoria" obligatorio>
+            <Campo etiqueta={ETIQUETA_CATEGORIA} htmlFor="categoria" obligatorio>
               <Seleccion id="categoria" value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
                 <option value="">Selecciona una categoría</option>
                 {categorias.map((c) => (
@@ -152,11 +152,11 @@ export default function CI_Formulario_Pieza({
               </Seleccion>
             </Campo>
             {pieza ? (
-              <DatoLectura etiqueta="Estado de conservación">
+              <DatoLectura etiqueta={ETIQUETA_ESTADO_CONSERVACION}>
                 <Insignia valor={ETIQUETAS_ESTADO_CONSERVACION[pieza.estadoConservacion]} />
               </DatoLectura>
             ) : (
-              <Campo etiqueta="Estado de conservación" htmlFor="estado" obligatorio>
+              <Campo etiqueta={ETIQUETA_ESTADO_CONSERVACION} htmlFor="estado" obligatorio>
                 <Seleccion id="estado" value={estadoConservacion} onChange={(e) => setEstadoConservacion(e.target.value)}>
                   <option value="">Selecciona un estado</option>
                   {ESTADOS_CONSERVACION.map((s) => (
@@ -183,7 +183,7 @@ export default function CI_Formulario_Pieza({
             <Campo etiqueta="Material" htmlFor="material">
               <Entrada id="material" value={material} onChange={(e) => setMaterial(e.target.value)} />
             </Campo>
-            <Campo etiqueta="Ubicación física" htmlFor="ubicacion">
+            <Campo etiqueta={ETIQUETA_UBICACION_FISICA} htmlFor="ubicacion">
               <Entrada id="ubicacion" value={ubicacionFisica} onChange={(e) => setUbicacionFisica(e.target.value)} />
             </Campo>
             <Campo etiqueta="Descripción" htmlFor="descripcion">

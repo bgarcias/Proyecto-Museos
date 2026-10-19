@@ -11,6 +11,7 @@ import {
   MAXIMO_RESPONSABLE_RECEPTOR,
   MENSAJE_PRESTAMO_DEVOLUCION_LIMITE,
   MENSAJE_PRESTAMO_SALIDA_FUTURA,
+  ETIQUETA_ESTADO_CONSERVACION,
 } from "@/lib/constantes";
 import type { Categoria, Museo, PiezaListado } from "@/lib/tipos";
 import { VALOR_ASEGURADO_MAXIMO, VALOR_ASEGURADO_MINIMO, validarValorAsegurado } from "@/lib/validaciones";
@@ -21,7 +22,7 @@ import { Campo, DatoLectura, Entrada, Formulario } from "@/components/ui/Campo";
 import Celda, { Acciones, EncabezadoPagina } from "@/components/ui/Celda";
 import Insignia from "@/components/ui/Insignia";
 import Miniatura from "@/components/ui/Miniatura";
-import Ventana from "@/components/ui/Ventana";
+import PopupSeleccion from "@/components/ui/PopupSeleccion";
 import estilos from "./CI_Formulario_Prestamo.module.css";
 
 export default function CI_Formulario_Prestamo({
@@ -46,20 +47,20 @@ export default function CI_Formulario_Prestamo({
   const [fechaSalida, setFechaSalida] = useState(hoy);
   const [fechaDevolucionPrevista, setFechaDevolucionPrevista] = useState("");
   const [pieza, setPieza] = useState<PiezaListado | null>(null);
-  const [ventana, setVentana] = useState(false);
+  const [popupAbierto, setPopupAbierto] = useState(false);
   const [temporal, setTemporal] = useState<PiezaListado | null>(null);
   const [enviando, setEnviando] = useState(false);
 
   /** Paso 4: "Seleccionar pieza" abre la búsqueda de piezas en selección única. */
   function seleccionarPieza() {
     setTemporal(pieza);
-    setVentana(true);
+    setPopupAbierto(true);
   }
 
   /** Paso 6: se muestra la pieza elegida con su estado de conservación actual. */
   function confirmarPieza() {
     setPieza(temporal);
-    setVentana(false);
+    setPopupAbierto(false);
   }
 
   async function alEnviar(e: React.FormEvent<HTMLFormElement>) {
@@ -157,7 +158,7 @@ export default function CI_Formulario_Prestamo({
                   <Miniatura src={pieza.imagenUrl} alt={`Imagen de ${pieza.nombre}`} />
                   &nbsp;{pieza.codigo} · {pieza.nombre}
                 </DatoLectura>
-                <DatoLectura etiqueta="Estado de conservación">
+                <DatoLectura etiqueta={ETIQUETA_ESTADO_CONSERVACION}>
                   <Insignia valor={ETIQUETAS_ESTADO_CONSERVACION[pieza.estadoConservacion]} />
                 </DatoLectura>
               </>
@@ -173,14 +174,13 @@ export default function CI_Formulario_Prestamo({
         </Formulario>
       </Celda>
 
-      {ventana && (
-        <Ventana
-          seleccion
+      {popupAbierto && (
+        <PopupSeleccion
           titulo="Buscar piezas"
-          onCerrar={() => setVentana(false)}
+          onCerrar={() => setPopupAbierto(false)}
           pie={
             <>
-              <Boton variante="secundario" onClick={() => setVentana(false)}>
+              <Boton variante="secundario" onClick={() => setPopupAbierto(false)}>
                 Cancelar
               </Boton>
               <Boton onClick={confirmarPieza} disabled={!temporal}>
@@ -196,7 +196,7 @@ export default function CI_Formulario_Prestamo({
             seleccionadas={temporal ? [temporal.id] : []}
             onAlternar={setTemporal}
           />
-        </Ventana>
+        </PopupSeleccion>
       )}
     </div>
   );

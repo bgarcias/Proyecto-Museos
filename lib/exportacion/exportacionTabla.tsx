@@ -3,8 +3,8 @@ import ExcelJS from "exceljs";
 import { formatearMonto } from "../formatos";
 
 /*
- * Exportación genérica de un reporte en forma de tabla, a PDF y a Excel. La usan los reportes de piezas, de
- * exposiciones y de préstamos. No usa sesión ni datos: el controlador le pasa todo ya calculado.
+ * Exportación genérica a PDF y Excel de los reportes de piezas, exposiciones y préstamos.
+ * Sin sesión ni datos: el controlador pasa todo ya calculado.
  */
 
 export const NOMBRE_HOJA_TABLA = "Reporte";

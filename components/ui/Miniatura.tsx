@@ -1,7 +1,7 @@
 import { IMAGEN_MARCADOR } from "@/lib/constantes";
 import estilos from "./Miniatura.module.css";
 
-/** Imagen de una pieza. Si no tiene, muestra el marcador de posición neutro. */
+/** Imagen de una pieza. Sin imagen, muestra el marcador neutro. */
 export default function Miniatura({
   src,
   alt,
@@ -9,7 +9,7 @@ export default function Miniatura({
 }: {
   src?: string;
   alt: string;
-  /** pequena: listas dentro de formularios. seleccion: ventanas de selección de piezas. lista: catálogo. grande: historial. detalle: pantalla de detalle. */
+  /** pequena: listas en formularios. seleccion: popups de selección. lista: catálogo. grande: historial. detalle: pantalla de detalle. */
   tamano?: "pequena" | "seleccion" | "lista" | "grande" | "detalle";
 }) {
   // eslint-disable-next-line @next/next/no-img-element

@@ -3,21 +3,20 @@
 import { toast } from "sonner";
 
 /*
- * Helper central de alertas. Las pantallas usan estas dos funciones y no llaman a Sonner directamente.
- * Para mensajes que deben quedar visibles dentro de la pantalla se usa components/ui/Mensaje.tsx.
+ * Alertas centrales: las pantallas usan estas dos funciones y no llaman a Sonner directamente.
+ * Lo que debe quedar visible dentro de la pantalla va en components/ui/Mensaje.tsx.
  *
- * Solo hay una alerta vigente a la vez, sea de éxito o de error y sin importar la pantalla.
- * Cada alerta tiene su propio id: al lanzar una nueva se descarta la anterior por su id, que hace su
- * salida animada, y la nueva entra con su animación de entrada normal.
+ * Solo hay una alerta vigente a la vez, de éxito o de error y en cualquier pantalla. Cada una tiene su propio id:
+ * al lanzar una nueva se descarta la anterior por su id (sale animada) y la nueva entra con su animación normal.
  *
- * Si una acción guarda y luego navega a otra pantalla, la alerta se dispara antes de navegar:
- * el Toaster vive en el layout raíz, así que sigue visible tras la redirección.
+ * Si una acción guarda y navega, la alerta se dispara antes de navegar: el Toaster vive en el layout raíz
+ * y sigue visible tras la redirección.
  */
 
 let contador = 0;
 let idUltima: string | null = null;
 
-/** Descarta la última alerta lanzada y devuelve el id propio de la nueva. */
+/** Descarta la última alerta y devuelve el id de la nueva. */
 function nuevoId(): string {
   if (idUltima !== null) toast.dismiss(idUltima);
   idUltima = `alerta-${++contador}`;

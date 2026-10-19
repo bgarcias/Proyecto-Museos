@@ -2,27 +2,24 @@
 
 import { useEffect, type ReactNode } from "react";
 import Boton from "./Boton";
-import estilos from "./Ventana.module.css";
+import estilos from "./Popup.module.css";
 
-/** Ventana emergente. Todas comparten el mismo diseño: título, contenido y botones al pie. */
-export default function Ventana({
+/** Popup base. Todos comparten diseño: título, contenido y botones al pie. */
+export default function Popup({
   titulo,
   onCerrar,
   children,
   pie,
-  dialogo,
-  ancha,
+  angosto,
   seleccion,
 }: {
   titulo: string;
   onCerrar: () => void;
   children: ReactNode;
   pie?: ReactNode;
-  /** Versión angosta, para diálogos de confirmación. */
-  dialogo?: boolean;
-  /** Hasta el ancho útil del contenedor, para ventanas con tablas de muchas columnas. */
-  ancha?: boolean;
-  /** Ancho de las ventanas de selección de piezas. */
+  /** Versión angosta, para popups de confirmación. */
+  angosto?: boolean;
+  /** Ancho de los popups de selección de piezas. */
   seleccion?: boolean;
 }) {
   useEffect(() => {
@@ -35,7 +32,7 @@ export default function Ventana({
 
   return (
     <div className={estilos.velo} onMouseDown={(e) => e.target === e.currentTarget && onCerrar()}>
-      <div className={`${estilos.ventana} ${dialogo ? estilos.dialogo : ""} ${ancha ? estilos.ancha : ""} ${seleccion ? estilos.seleccion : ""}`} role="dialog" aria-modal="true" aria-label={titulo}>
+      <div className={`${estilos.popup} ${angosto ? estilos.angosto : ""} ${seleccion ? estilos.seleccion : ""}`} role="dialog" aria-modal="true" aria-label={titulo}>
         <header className={estilos.cabecera}>
           <h2>{titulo}</h2>
           <Boton variante="secundario" pequeno onClick={onCerrar} aria-label="Cerrar ventana">

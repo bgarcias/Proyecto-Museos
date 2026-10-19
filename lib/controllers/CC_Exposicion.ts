@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { exigirSesion } from "../auth/session";
-import { MENSAJE_EXPOSICION_FECHAS_LIMITE, MENSAJE_EXPOSICION_SIN_PIEZAS } from "../constantes";
+import { MENSAJE_EXPOSICION_FECHAS_LIMITE, MENSAJE_EXPOSICION_SIN_PIEZAS, MENSAJE_SIN_ACCESO_MUSEO } from "../constantes";
 import { obtenerDatos } from "../data";
 import type { Datos } from "../data/contratos";
 import { fechaLimite, formatearFecha, rangoExposicion, rangosSeCruzan } from "../fechas";
@@ -18,8 +18,8 @@ import type {
   ResultadoGuardarExposicion,
   UsuarioPublico,
 } from "../tipos";
+import { coincideTexto } from "../busquedaTexto";
 import {
-  coincideTexto,
   exposicionesVisibles,
   museosActivosVisibles,
   museosVisibles,
@@ -28,7 +28,7 @@ import {
 
 /* ECUS05: Gestionar Exposición (registrar, modificar y cancelar) */
 
-/* Menú del módulo y buscador de exposiciones. El buscador se usa como página y como ventana emergente. */
+/* Menú del módulo y buscador de exposiciones. El buscador se usa como página y como popup. */
 
 export async function buscarExposiciones(filtros: FiltrosExposiciones): Promise<ExposicionListado[]> {
   const usuario = await exigirSesion();
@@ -58,9 +58,8 @@ async function exposicionVisible(datos: Datos, usuario: UsuarioPublico, id: stri
 /* Formulario de exposición: nueva y modificar */
 
 /**
- * Datos del formulario, para registrar (sin id) o modificar (con id).
- * Al registrar, el museo sede se elige entre los museos activos asignados a la persona.
- * Devuelve null si la exposición no existe, no es accesible o ya no se puede modificar (finalizada o cancelada).
+ * Formulario para registrar (sin id) o modificar (con id). Al registrar, el museo sede sale de los museos activos asignados.
+ * Devuelve null si no existe, no es accesible o ya no se puede modificar (finalizada o cancelada).
  */
 export async function cargarFormularioExposicion(
   id?: string,
@@ -96,9 +95,8 @@ type EntradaExposicion = {
 };
 
 /**
- * Validaciones al guardar, en este orden: fechas (orden y límite de años), al menos una pieza; museo de las piezas igual al museo sede;
- * disponibilidad de cada pieza (préstamos abiertos y otras exposiciones con fechas cruzadas).
- * Si hay piezas en conflicto no se guarda nada y se devuelven para quitarlas de la selección.
+ * Valida en este orden: fechas, al menos una pieza, museo de las piezas igual al sede, disponibilidad (préstamos abiertos
+ * y exposiciones con fechas cruzadas). Si hay piezas en conflicto no se guarda nada y se devuelven para quitarlas.
  */
 async function guardarExposicion(
   idActual: string | undefined,
@@ -126,7 +124,7 @@ async function guardarExposicion(
   const museos = await museosVisibles(datos, usuario);
   const museo = museos.find((m) => m.id === entrada.museoId);
   if (!museo || (!museo.activo && actual?.museoId !== museo?.id)) {
-    return { ok: false, error: "No tienes acceso al museo seleccionado" };
+    return { ok: false, error: MENSAJE_SIN_ACCESO_MUSEO };
   }
 
   // Paso 7: fechas

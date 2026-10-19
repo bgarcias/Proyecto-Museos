@@ -14,6 +14,11 @@
   letter-spacing: var(--espaciado-letras-etiqueta);
   text-decoration: none;
   cursor: pointer;
+  transition:
+    background-color var(--duracion-transicion) var(--curva-transicion),
+    color var(--duracion-transicion) var(--curva-transicion),
+    border-color var(--duracion-transicion) var(--curva-transicion),
+    box-shadow var(--duracion-transicion) var(--curva-transicion);
 }
 
 .pequeno {
@@ -24,11 +29,11 @@
 
 .boton.bloque {
   width: 100%;
-  min-height: 3rem;
+  min-height: var(--alto-control-grande);
   padding: var(--espacio-1) var(--espacio-2);
 }
 
-/* Altura fija, la de un texto de dos líneas: los botones de una línea quedan con espacio arriba y abajo */
+/* Altura fija de dos líneas: los de una línea quedan con aire arriba y abajo */
 .boton.compacto {
   height: var(--alto-boton-compacto);
   min-height: 0;
@@ -69,6 +74,7 @@
   color: var(--color-texto);
   border-style: dashed;
   cursor: not-allowed;
+  transition: none;
 }
 
 /* tablet */
@@ -81,11 +87,11 @@
 /* mobile */
 @media (max-width: 768px) {
   .boton {
-    min-height: 3rem;
+    min-height: var(--alto-control-grande);
   }
 
   .pequeno {
-    min-height: 2.75rem;
+    min-height: var(--alto-control);
   }
 
   .boton.compacto {

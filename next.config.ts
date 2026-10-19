@@ -3,9 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   agentRules: false,
   experimental: {
-    // Los archivos Excel (hasta 5 MB) y las imágenes (hasta 1 MB) viajan en Server Actions.
+    // Excel de 4 MB con su formulario, o imagen de 1 MB como data URL (unos 1.4 MB). No pasa de 4.5 MB, el tope de las funciones de Vercel.
     serverActions: {
-      bodySizeLimit: "6mb",
+      bodySizeLimit: "4.25mb",
     },
   },
 };

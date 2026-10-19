@@ -2,7 +2,7 @@ import { exportarReporte } from "@/lib/controllers/CC_Reporte";
 import { respuestaPdf } from "@/lib/exportacion/respuestaPdf";
 import { parametrosAFiltros } from "@/lib/reporteParametros";
 
-/** Reporte por categoría y estado en PDF, en el visor del navegador. Requiere sesión y recalcula el reporte con los filtros recibidos. */
+/** PDF del reporte por categoría y estado, en el visor del navegador. Requiere sesión; recalcula con los filtros recibidos. */
 export async function GET(solicitud: Request) {
   const filtros = parametrosAFiltros(new URL(solicitud.url).searchParams);
   const archivo = await exportarReporte("pdf", filtros);

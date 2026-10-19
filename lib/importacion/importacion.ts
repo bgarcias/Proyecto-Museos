@@ -1,13 +1,13 @@
 import ExcelJS from "exceljs";
 import { MAXIMO_CODIGO_ANTERIOR, MENSAJE_CODIGO_ANTERIOR_LARGO, claveCodigoAnterior } from "../codigos";
-import { ESTADOS_CONSERVACION, ETIQUETAS_ESTADO_CONSERVACION } from "../constantes";
+import { ESTADOS_CONSERVACION, ETIQUETAS_ESTADO_CONSERVACION, ETIQUETA_CATEGORIA, ETIQUETA_ESTADO_CONSERVACION, ETIQUETA_UBICACION_FISICA, ETIQUETA_CODIGO_ANTERIOR } from "../constantes";
 import { MAXIMO_FILAS, MAXIMO_MEGABYTES_ARCHIVO } from "./limitesImportacion";
 import { ANIO_MINIMO, anioEnRango, validarAnio } from "../validaciones";
 import type { Categoria, EstadoConservacion } from "../tipos";
 
 /*
  * Lectura, escritura y validación del Excel de importación de piezas.
- * No usa sesión ni datos: los controladores le pasan lo que necesita.
+ * Sin sesión ni datos: los controladores pasan lo que necesita.
  */
 
 export { MAXIMO_BYTES_ARCHIVO, MAXIMO_FILAS } from "./limitesImportacion";
@@ -16,16 +16,16 @@ export const NOMBRE_ARCHIVO_PLANTILLA = "plantilla-importacion-piezas.xlsx";
 
 export const COLUMNAS_PLANTILLA = [
   "Nombre",
-  "Categoría",
+  ETIQUETA_CATEGORIA,
   "Descripción",
   "Año",
   "Material",
-  "Estado de conservación",
-  "Ubicación física",
-  "Código anterior",
+  ETIQUETA_ESTADO_CONSERVACION,
+  ETIQUETA_UBICACION_FISICA,
+  ETIQUETA_CODIGO_ANTERIOR,
 ] as const;
 
-const COLUMNAS_OBLIGATORIAS = ["Nombre", "Categoría", "Estado de conservación"];
+const COLUMNAS_OBLIGATORIAS = ["Nombre", ETIQUETA_CATEGORIA, ETIQUETA_ESTADO_CONSERVACION];
 
 /** Fila tal como viene del archivo, todo en texto. */
 export type FilaCruda = {
@@ -70,7 +70,7 @@ function textoDeCelda(valor: unknown): string {
   if (valor === null || valor === undefined) return "";
   if (typeof valor === "string") return valor.trim();
   if (typeof valor === "number" || typeof valor === "boolean") return String(valor);
-  // Una celda de fecha de Excel es un día de calendario guardado como UTC: se toma su día sin desplazarlo por ninguna zona.
+  // Fecha de Excel: día de calendario guardado como UTC, se toma sin desplazarlo por zona.
   if (valor instanceof Date) return valor.toISOString().slice(0, 10);
   if (typeof valor === "object") {
     const objeto = valor as Record<string, unknown>;
@@ -162,8 +162,8 @@ export async function leerArchivoPiezas(contenido: ArrayBuffer): Promise<Lectura
 }
 
 /**
- * Valida cada fila: obligatorios completos, categoría existente, estado válido, año entero y,
- * solo si la celda tiene valor, código anterior de longitud permitida, no registrado en el museo y no repetido en el archivo.
+ * Valida cada fila: obligatorios, categoría existente, estado y año válidos. Si hay código anterior,
+ * de largo permitido, no registrado en el museo y no repetido en el archivo.
  */
 export function validarFilasPiezas(
   filas: FilaCruda[],
@@ -226,10 +226,7 @@ export function validarFilasPiezas(
   return { validas, errores };
 }
 
-/**
- * Vuelve a validar filas que llegan desde el cliente, que ya no son texto crudo sino datos de pieza.
- * Devuelve true si todas siguen siendo válidas.
- */
+/** Revalida filas que vuelven del cliente (ya son datos de pieza, no texto crudo). True si todas siguen válidas. */
 export function filasConfirmadasSonValidas(
   filas: FilaImportacion[],
   categorias: Categoria[],

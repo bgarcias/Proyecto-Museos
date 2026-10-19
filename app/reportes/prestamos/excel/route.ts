@@ -3,7 +3,7 @@ import { parametrosAMapa } from "@/lib/reporteParametros";
 
 const CLAVES = ["museoId", "situacion", "institucion", "desde", "hasta"] as const;
 
-/** Reporte de prestamos en EXCEL, como descarga. Requiere sesión y recalcula el reporte con los filtros recibidos. */
+/** Excel del reporte de préstamos, como descarga. Requiere sesión; recalcula con los filtros recibidos. */
 export async function GET(solicitud: Request) {
   const filtros = parametrosAMapa(new URL(solicitud.url).searchParams, CLAVES);
   const archivo = await exportarReportePrestamos("excel", filtros);

@@ -7,8 +7,8 @@ import Boton from "./Boton";
 const MILISEGUNDOS_COPIADA = 2500;
 
 /**
- * Botón que copia un texto al portapapeles. Al copiar, muestra "Copiada" unos segundos y vuelve a "Copiar".
- * El éxito no dispara alerta. Si el navegador impide copiar, se muestra una alerta de error.
+ * Copia un texto al portapapeles. Muestra "Copiada" unos segundos y vuelve a "Copiar".
+ * El éxito no lanza alerta. Si el navegador no deja copiar, sale una alerta de error.
  */
 export default function BotonCopiar({ texto }: { texto: string }) {
   const [copiada, setCopiada] = useState(false);

@@ -16,7 +16,7 @@ import BuscadorExposiciones from "@/components/ui/BuscadorExposiciones";
 import Celda, { EncabezadoPagina } from "@/components/ui/Celda";
 import Insignia from "@/components/ui/Insignia";
 import Miniatura from "@/components/ui/Miniatura";
-import Ventana from "@/components/ui/Ventana";
+import Popup from "@/components/ui/Popup";
 import estilos from "./CI_Menu_Exposiciones.module.css";
 
 type Operacion = "modificar" | "cancelar";
@@ -30,7 +30,7 @@ export default function CI_Menu_Exposiciones({
   museos: Museo[];
 }) {
   const router = useRouter();
-  // Ventana de buscar exposición (selección única), abierta por Modificar o por Cancelar
+  // Popup de buscar exposición (selección única), abierta por Modificar o por Cancelar
   const [operacion, setOperacion] = useState<Operacion | null>(null);
   const [elegida, setElegida] = useState<ExposicionListado | null>(null);
   // Resumen de la exposición a cancelar, con su confirmación
@@ -109,7 +109,7 @@ export default function CI_Menu_Exposiciones({
       </Celda>
 
       {operacion && (
-        <Ventana
+        <Popup
           titulo="Buscar exposición"
           onCerrar={cerrarBusqueda}
           pie={
@@ -124,13 +124,13 @@ export default function CI_Menu_Exposiciones({
           }
         >
           <BuscadorExposiciones museos={museos} elegidaId={elegida?.id} onElegir={setElegida} />
-        </Ventana>
+        </Popup>
       )}
 
       {resumen && (
-        <Ventana
+        <Popup
           titulo="Cancelar exposición"
-          dialogo
+          angosto
           onCerrar={() => setResumen(null)}
           pie={
             <>
@@ -182,7 +182,7 @@ export default function CI_Menu_Exposiciones({
               </dd>
             </div>
           </dl>
-        </Ventana>
+        </Popup>
       )}
     </div>
   );
