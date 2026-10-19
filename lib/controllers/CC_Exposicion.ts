@@ -161,7 +161,7 @@ async function guardarExposicion(
 
   // Disponibilidad en las fechas de la exposición
   const rango = { inicio: entrada.fechaInicio, fin: entrada.fechaFin };
-  const prestamosAbiertos = (await datos.listarPrestamos()).filter((p) => !p.fechaDevolucionReal);
+  const prestamosAbiertos = (await datos.listarPrestamos(usuario.organizacionId)).filter((p) => !p.fechaDevolucionReal);
   for (const pieza of elegidas.filter((p) => p.museoId === museo.id)) {
     const prestamo = prestamosAbiertos.find(
       (pr) =>
@@ -202,9 +202,9 @@ async function guardarExposicion(
     piezaIds,
   };
   if (idActual) {
-    await datos.actualizarExposicion(idActual, campos);
+    await datos.actualizarExposicion(usuario.organizacionId, idActual, campos);
   } else {
-    await datos.crearExposicion(campos);
+    await datos.crearExposicion(usuario.organizacionId, campos);
   }
   revalidatePath("/exposiciones");
   revalidatePath("/piezas");
@@ -248,7 +248,7 @@ export async function elegirExposicionParaCancelar(
   if (exposicion.estado === "finalizada" || exposicion.estado === "cancelada") {
     return { ok: false, error: "No es posible cancelar esta exposición" };
   }
-  const todas = await datos.listarPiezas();
+  const todas = await datos.listarPiezas(usuario.organizacionId);
   const piezas = exposicion.piezaIds
     .map((pid) => todas.find((p) => p.id === pid))
     .filter((p): p is NonNullable<typeof p> => Boolean(p))
@@ -265,7 +265,7 @@ export async function cancelarExposicion(id: string): Promise<Resultado> {
   if (exposicion.estado === "finalizada" || exposicion.estado === "cancelada") {
     return { ok: false, error: "No es posible cancelar esta exposición" };
   }
-  await datos.cancelarExposicion(id);
+  await datos.cancelarExposicion(usuario.organizacionId, id);
   revalidatePath("/exposiciones");
   revalidatePath("/piezas");
   return { ok: true, mensaje: "Exposición cancelada correctamente" };

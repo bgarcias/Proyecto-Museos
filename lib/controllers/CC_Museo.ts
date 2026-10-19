@@ -25,8 +25,8 @@ export async function cargarFormularioMuseo(id?: string): Promise<{ museo: Museo
   const sesion = await exigirAdministrador();
   if (!id) return { museo: null };
   const datos = await obtenerDatos();
-  const museo = await datos.obtenerMuseo(id);
-  if (!museo || museo.organizacionId !== sesion.organizacionId) return null;
+  const museo = await datos.obtenerMuseo(sesion.organizacionId, id);
+  if (!museo) return null;
   return { museo };
 }
 
@@ -63,13 +63,13 @@ export async function registrarMuseo(entrada: EntradaMuseo): Promise<Resultado> 
 export async function actualizarMuseo(id: string, entrada: EntradaMuseo): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
-  const museo = await datos.obtenerMuseo(id);
-  if (!museo || museo.organizacionId !== sesion.organizacionId) {
+  const museo = await datos.obtenerMuseo(sesion.organizacionId, id);
+  if (!museo) {
     return { ok: false, error: "No se encontró el museo" };
   }
   const validada = await validarEntrada(datos, sesion, entrada, id);
   if ("error" in validada) return { ok: false, error: validada.error };
-  await datos.actualizarMuseo(id, validada);
+  await datos.actualizarMuseo(sesion.organizacionId, id, validada);
   revalidatePath("/museos");
   return { ok: true, mensaje: "Museo actualizado exitosamente" };
 }
@@ -77,13 +77,13 @@ export async function actualizarMuseo(id: string, entrada: EntradaMuseo): Promis
 async function cambiarEstado(id: string, activo: boolean): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
-  const museo = await datos.obtenerMuseo(id);
-  if (!museo || museo.organizacionId !== sesion.organizacionId) {
+  const museo = await datos.obtenerMuseo(sesion.organizacionId, id);
+  if (!museo) {
     return { ok: false, error: "No se encontró el museo" };
   }
   // No se borra nada: un museo inactivo deja de ofrecerse en los formularios nuevos,
   // pero sus piezas y exposiciones siguen visibles.
-  await datos.cambiarActivoMuseo(id, activo);
+  await datos.cambiarActivoMuseo(sesion.organizacionId, id, activo);
   revalidatePath("/museos");
   return { ok: true, mensaje: activo ? "Museo activado exitosamente" : "Museo desactivado exitosamente" };
 }

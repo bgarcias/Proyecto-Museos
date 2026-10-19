@@ -15,11 +15,11 @@ export async function consultarHistorial(
 ): Promise<{ pieza: Pieza; registros: RegistroHistorial[] }> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
-  const pieza = await datos.obtenerPieza(piezaId);
+  const pieza = await datos.obtenerPieza(usuario.organizacionId, piezaId);
   if (!pieza || !(await puedeAccederAlMuseo(datos, usuario, pieza.museoId))) notFound();
 
   const [cambios, usuarios] = await Promise.all([
-    datos.listarHistorialPieza(piezaId),
+    datos.listarHistorialPieza(usuario.organizacionId, piezaId),
     datos.listarUsuarios(usuario.organizacionId),
   ]);
   const registros = cambios

@@ -116,7 +116,7 @@ export async function registrarPrestamo(entrada: {
   }
 
   // Paso 10: el estado de salida se toma del estado actual de la pieza, que pasa a "en préstamo"
-  await datos.crearPrestamo({
+  await datos.crearPrestamo(usuario.organizacionId, {
     piezaId: pieza.id,
     usuarioId: usuario.id,
     institucionDestino,
@@ -128,9 +128,9 @@ export async function registrarPrestamo(entrada: {
     fechaDevolucionPrevista: entrada.fechaDevolucionPrevista,
     estadoConservacionSalida: pieza.estadoConservacion,
   });
-  await datos.actualizarDisponibilidadPieza(pieza.id, "en_prestamo");
+  await datos.actualizarDisponibilidadPieza(usuario.organizacionId, pieza.id, "en_prestamo");
   // Paso 11: el cambio queda en el historial de la pieza
-  await datos.registrarCambio({
+  await datos.registrarCambio(usuario.organizacionId, {
     piezaId: pieza.id,
     usuarioId: usuario.id,
     campoModificado: CAMPO_DISPONIBILIDAD,
@@ -163,18 +163,18 @@ export async function registrarDevolucionPrestamo(prestamoId: string, estado: st
   }
   const estadoDevolucion = estado as EstadoConservacion;
 
-  const pieza = await datos.obtenerPieza(prestamo.piezaId);
+  const pieza = await datos.obtenerPieza(usuario.organizacionId, prestamo.piezaId);
   if (!pieza) return { ok: false, error: MENSAJE_PIEZA_NO_ENCONTRADA };
 
   // Paso 5: fecha real de devolución (hoy), estado de devolución, estado de la pieza y disponibilidad
-  await datos.registrarDevolucion(prestamo.id, {
+  await datos.registrarDevolucion(usuario.organizacionId, prestamo.id, {
     fechaDevolucionReal: hoyISO(),
     estadoConservacionDevolucion: estadoDevolucion,
   });
   // Paso 6: cada cambio queda en el historial de la pieza (el de estado solo si cambia, como en ECUS03)
   if (pieza.estadoConservacion !== estadoDevolucion) {
-    await datos.actualizarEstadoPieza(pieza.id, estadoDevolucion);
-    await datos.registrarCambio({
+    await datos.actualizarEstadoPieza(usuario.organizacionId, pieza.id, estadoDevolucion);
+    await datos.registrarCambio(usuario.organizacionId, {
       piezaId: pieza.id,
       usuarioId: usuario.id,
       campoModificado: CAMPO_ESTADO_CONSERVACION,
@@ -182,8 +182,8 @@ export async function registrarDevolucionPrestamo(prestamoId: string, estado: st
       valorNuevo: estadoDevolucion,
     });
   }
-  await datos.actualizarDisponibilidadPieza(pieza.id, "disponible");
-  await datos.registrarCambio({
+  await datos.actualizarDisponibilidadPieza(usuario.organizacionId, pieza.id, "disponible");
+  await datos.registrarCambio(usuario.organizacionId, {
     piezaId: pieza.id,
     usuarioId: usuario.id,
     campoModificado: CAMPO_DISPONIBILIDAD,

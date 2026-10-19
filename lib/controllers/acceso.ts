@@ -25,17 +25,17 @@ export async function museosActivosVisibles(datos: Datos, usuario: UsuarioPublic
 }
 
 export async function puedeAccederAlMuseo(datos: Datos, usuario: UsuarioPublico, museoId: string): Promise<boolean> {
-  const museo = await datos.obtenerMuseo(museoId);
+  const museo = await datos.obtenerMuseo(usuario.organizacionId, museoId);
   return museo !== null && puedeAccederMuseo(usuario, museo);
 }
 
 /** Piezas de los museos a los que la persona tiene acceso, con museo, categoría y situación (exhibición o almacén). */
 export async function piezasVisibles(datos: Datos, usuario: UsuarioPublico): Promise<PiezaListado[]> {
   const [piezas, museos, categorias, exposiciones] = await Promise.all([
-    datos.listarPiezas(),
+    datos.listarPiezas(usuario.organizacionId),
     museosVisibles(datos, usuario),
     datos.listarCategorias(usuario.organizacionId),
-    datos.listarExposiciones(),
+    datos.listarExposiciones(usuario.organizacionId),
   ]);
   // Una exposición cancelada tiene estado "cancelada", así que no cuenta como vigente.
   const enExhibicion = new Set<string>();
@@ -58,7 +58,7 @@ export async function piezasVisibles(datos: Datos, usuario: UsuarioPublico): Pro
 
 /** Exposiciones de los museos a los que la persona tiene acceso, con estado calculado. */
 export async function exposicionesVisibles(datos: Datos, usuario: UsuarioPublico): Promise<ExposicionListado[]> {
-  const [exposiciones, museos] = await Promise.all([datos.listarExposiciones(), museosVisibles(datos, usuario)]);
+  const [exposiciones, museos] = await Promise.all([datos.listarExposiciones(usuario.organizacionId), museosVisibles(datos, usuario)]);
   const resultado: ExposicionListado[] = [];
   for (const e of exposiciones) {
     const museo = museos.find((m) => m.id === e.museoId);
@@ -70,7 +70,7 @@ export async function exposicionesVisibles(datos: Datos, usuario: UsuarioPublico
 
 /** Préstamos de las piezas de los museos a los que la persona tiene acceso, con pieza, museo y situación calculada. */
 export async function prestamosVisibles(datos: Datos, usuario: UsuarioPublico): Promise<PrestamoListado[]> {
-  const [prestamos, piezas] = await Promise.all([datos.listarPrestamos(), piezasVisibles(datos, usuario)]);
+  const [prestamos, piezas] = await Promise.all([datos.listarPrestamos(usuario.organizacionId), piezasVisibles(datos, usuario)]);
   const hoy = hoyISO();
   const resultado: PrestamoListado[] = [];
   for (const p of prestamos) {

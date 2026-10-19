@@ -13,7 +13,8 @@
     "db:generar": "prisma generate",
     "db:validar": "prisma validate",
     "db:simular": "tsx scripts/cargaInicial.ts simular",
-    "db:cargar": "tsx scripts/cargaInicial.ts cargar"
+    "db:cargar": "tsx scripts/cargaInicial.ts cargar",
+    "db:verificar": "tsx scripts/verificarCapaDatos.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",

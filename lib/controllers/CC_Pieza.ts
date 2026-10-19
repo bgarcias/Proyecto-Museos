@@ -144,12 +144,12 @@ export async function registrarPieza(
     return { ok: false, error: MENSAJE_SIN_ACCESO_MUSEO };
   }
   if (entrada.imagen && !imagenValida(entrada.imagen)) return { ok: false, error: MENSAJE_IMAGEN };
-  if (codigoAnterior && (await datos.buscarPiezaPorCodigoAnterior(entrada.museoId, codigoAnterior))) {
+  if (codigoAnterior && (await datos.buscarPiezaPorCodigoAnterior(usuario.organizacionId, entrada.museoId, codigoAnterior))) {
     return { ok: false, error: MENSAJE_CODIGO_ANTERIOR_REPETIDO };
   }
 
   // Registrar una pieza a mano no genera historial.
-  await datos.crearPieza({
+  await datos.crearPieza(usuario.organizacionId, {
     codigoAnterior,
     nombre,
     categoriaId: entrada.categoriaId,
@@ -172,7 +172,7 @@ export async function registrarPieza(
 export async function actualizarPieza(id: string, entrada: EntradaPieza): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
-  const pieza = await datos.obtenerPieza(id);
+  const pieza = await datos.obtenerPieza(usuario.organizacionId, id);
   if (!pieza || !(await puedeAccederAlMuseo(datos, usuario, pieza.museoId))) {
     return { ok: false, error: MENSAJE_PIEZA_NO_ENCONTRADA };
   }
@@ -191,7 +191,7 @@ export async function actualizarPieza(id: string, entrada: EntradaPieza): Promis
   const anio = validacionAnio.anio;
   if (entrada.imagen && !imagenValida(entrada.imagen)) return { ok: false, error: MENSAJE_IMAGEN };
   if (codigoAnterior) {
-    const otra = await datos.buscarPiezaPorCodigoAnterior(pieza.museoId, codigoAnterior);
+    const otra = await datos.buscarPiezaPorCodigoAnterior(usuario.organizacionId, pieza.museoId, codigoAnterior);
     if (otra && otra.id !== id) return { ok: false, error: MENSAJE_CODIGO_ANTERIOR_REPETIDO };
   }
 
@@ -221,7 +221,7 @@ export async function actualizarPieza(id: string, entrada: EntradaPieza): Promis
     });
   }
 
-  await datos.actualizarPieza(id, {
+  await datos.actualizarPieza(usuario.organizacionId, id, {
     codigoAnterior,
     nombre,
     categoriaId: categoria.id,
@@ -232,7 +232,7 @@ export async function actualizarPieza(id: string, entrada: EntradaPieza): Promis
     imagenUrl,
   });
   for (const c of cambios) {
-    await datos.registrarCambio({
+    await datos.registrarCambio(usuario.organizacionId, {
       piezaId: id,
       usuarioId: usuario.id,
       campoModificado: c.campo,
@@ -260,7 +260,7 @@ export async function actualizarEstado(
 ): Promise<Resultado<{ estadoActual: EstadoConservacion }>> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
-  const pieza = await datos.obtenerPieza(piezaId);
+  const pieza = await datos.obtenerPieza(usuario.organizacionId, piezaId);
   if (!pieza || !(await puedeAccederAlMuseo(datos, usuario, pieza.museoId))) {
     return { ok: false, error: MENSAJE_PIEZA_NO_ENCONTRADA };
   }
@@ -272,8 +272,8 @@ export async function actualizarEstado(
     return { ok: false, error: "El estado seleccionado es el mismo que el actual" };
   }
 
-  await datos.actualizarEstadoPieza(piezaId, nuevoEstado as EstadoConservacion);
-  await datos.registrarCambio({
+  await datos.actualizarEstadoPieza(usuario.organizacionId, piezaId, nuevoEstado as EstadoConservacion);
+  await datos.registrarCambio(usuario.organizacionId, {
     piezaId,
     usuarioId: usuario.id,
     campoModificado: CAMPO_ESTADO_CONSERVACION,

@@ -26,7 +26,7 @@ const MENSAJE_INCOMPLETO = "Debe marcar todas las piezas antes de cerrar el inve
 /** Inventarios de los museos a los que la persona tiene acceso, con museo y con quién lo inició y quién lo cerró. */
 async function inventariosVisibles(datos: Datos, usuario: UsuarioPublico): Promise<InventarioListado[]> {
   const [inventarios, museos, usuarios] = await Promise.all([
-    datos.listarInventarios(),
+    datos.listarInventarios(usuario.organizacionId),
     museosVisibles(datos, usuario),
     datos.listarUsuarios(usuario.organizacionId),
   ]);
@@ -46,8 +46,8 @@ async function inventariosVisibles(datos: Datos, usuario: UsuarioPublico): Promi
 }
 
 /** Piezas esperadas de un museo: las del museo, menos las que están en préstamo. */
-async function piezasEsperadas(datos: Datos, museoId: string): Promise<Pieza[]> {
-  const piezas = await datos.listarPiezas();
+async function piezasEsperadas(datos: Datos, organizacionId: string, museoId: string): Promise<Pieza[]> {
+  const piezas = await datos.listarPiezas(organizacionId);
   return piezas
     .filter((p) => p.museoId === museoId && p.disponibilidad !== "en_prestamo")
     .sort((a, b) => a.codigo.localeCompare(b.codigo, "es"));
@@ -88,10 +88,10 @@ export async function crearInventario(museoId: string): Promise<Resultado<{ id: 
   const museo = (await museosActivosVisibles(datos, usuario)).find((m) => m.id === museoId);
   if (!museo) return { ok: false, error: "Selecciona el museo del inventario" };
 
-  const enCurso = (await datos.listarInventarios()).some((i) => i.museoId === museo.id && i.estado === "en_curso");
+  const enCurso = (await datos.listarInventarios(usuario.organizacionId)).some((i) => i.museoId === museo.id && i.estado === "en_curso");
   if (enCurso) return { ok: false, error: MENSAJE_EN_CURSO };
 
-  const inventario = await datos.crearInventario({
+  const inventario = await datos.crearInventario(usuario.organizacionId, {
     museoId: museo.id,
     usuarioId: usuario.id,
     fechaInicio: new Date().toISOString(),
@@ -111,8 +111,8 @@ export async function cargarInventario(
   const inventario = (await inventariosVisibles(datos, usuario)).find((i) => i.id === id);
   if (!inventario) return null;
 
-  const detalles = await datos.listarDetalleInventario(id);
-  const piezas = await datos.listarPiezas();
+  const detalles = await datos.listarDetalleInventario(usuario.organizacionId, id);
+  const piezas = await datos.listarPiezas(usuario.organizacionId);
   const detalleDe = (piezaId: string) => detalles.find((d) => d.piezaId === piezaId);
 
   if (inventario.estado === "cerrado") {
@@ -123,7 +123,7 @@ export async function cargarInventario(
       .map((p) => aFila(p, detalleDe(p.id)));
     return { inventario, filas, resumen: resumir(filas) };
   }
-  const filas = (await piezasEsperadas(datos, inventario.museoId)).map((p) => aFila(p, detalleDe(p.id)));
+  const filas = (await piezasEsperadas(datos, usuario.organizacionId, inventario.museoId)).map((p) => aFila(p, detalleDe(p.id)));
   return { inventario, filas, resumen: null };
 }
 
@@ -142,10 +142,10 @@ export async function marcarPieza(
   if (!(RESULTADOS_INVENTARIO as readonly string[]).includes(resultado)) {
     return { ok: false, error: "Selecciona el resultado de la pieza" };
   }
-  const esperada = (await piezasEsperadas(datos, inventario.museoId)).some((p) => p.id === piezaId);
+  const esperada = (await piezasEsperadas(datos, usuario.organizacionId, inventario.museoId)).some((p) => p.id === piezaId);
   if (!esperada) return { ok: false, error: "La pieza no forma parte de este inventario" };
 
-  await datos.marcarResultadoInventario(inventarioId, piezaId, resultado as ResultadoInventario, observacion.trim() || undefined);
+  await datos.marcarResultadoInventario(usuario.organizacionId, inventarioId, piezaId, resultado as ResultadoInventario, observacion.trim() || undefined);
   return { ok: true };
 }
 
@@ -161,19 +161,19 @@ export async function cerrarInventario(id: string): Promise<Resultado> {
   if (!inventario) return { ok: false, error: "No se encontró el inventario" };
   if (inventario.estado !== "en_curso") return { ok: false, error: "No es posible modificar un inventario cerrado" };
 
-  const detalles = await datos.listarDetalleInventario(id);
-  const esperadas = await piezasEsperadas(datos, inventario.museoId);
+  const detalles = await datos.listarDetalleInventario(usuario.organizacionId, id);
+  const esperadas = await piezasEsperadas(datos, usuario.organizacionId, inventario.museoId);
   if (!esperadas.every((p) => detalles.some((d) => d.piezaId === p.id))) {
     return { ok: false, error: MENSAJE_INCOMPLETO };
   }
 
   for (const d of detalles) {
-    const pieza = await datos.obtenerPieza(d.piezaId);
+    const pieza = await datos.obtenerPieza(usuario.organizacionId, d.piezaId);
     if (!pieza) continue;
     if (d.resultado === "no_encontrada") {
       if (pieza.disponibilidad !== "pendiente_verificacion") {
-        await datos.actualizarDisponibilidadPieza(pieza.id, "pendiente_verificacion");
-        await datos.registrarCambio({
+        await datos.actualizarDisponibilidadPieza(usuario.organizacionId, pieza.id, "pendiente_verificacion");
+        await datos.registrarCambio(usuario.organizacionId, {
           piezaId: pieza.id,
           usuarioId: usuario.id,
           campoModificado: CAMPO_DISPONIBILIDAD,
@@ -185,8 +185,8 @@ export async function cerrarInventario(id: string): Promise<Resultado> {
     }
     // Toda pieza encontrada (marcada Encontrada o Con daño) que estaba pendiente de verificación vuelve a disponible
     if (pieza.disponibilidad === "pendiente_verificacion") {
-      await datos.actualizarDisponibilidadPieza(pieza.id, "disponible");
-      await datos.registrarCambio({
+      await datos.actualizarDisponibilidadPieza(usuario.organizacionId, pieza.id, "disponible");
+      await datos.registrarCambio(usuario.organizacionId, {
         piezaId: pieza.id,
         usuarioId: usuario.id,
         campoModificado: CAMPO_DISPONIBILIDAD,
@@ -196,8 +196,8 @@ export async function cerrarInventario(id: string): Promise<Resultado> {
     }
     // Si además está marcada Con daño, pasa a estado de conservación malo si no lo estaba
     if (d.resultado === "con_dano" && pieza.estadoConservacion !== "malo") {
-      await datos.actualizarEstadoPieza(pieza.id, "malo");
-      await datos.registrarCambio({
+      await datos.actualizarEstadoPieza(usuario.organizacionId, pieza.id, "malo");
+      await datos.registrarCambio(usuario.organizacionId, {
         piezaId: pieza.id,
         usuarioId: usuario.id,
         campoModificado: CAMPO_ESTADO_CONSERVACION,
@@ -206,7 +206,7 @@ export async function cerrarInventario(id: string): Promise<Resultado> {
       });
     }
   }
-  await datos.cerrarInventario(id, new Date().toISOString(), usuario.id);
+  await datos.cerrarInventario(usuario.organizacionId, id, new Date().toISOString(), usuario.id);
   revalidatePath("/inventarios");
   revalidatePath(`/inventarios/${id}`);
   revalidatePath("/piezas");

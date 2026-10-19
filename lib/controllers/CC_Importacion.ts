@@ -45,8 +45,8 @@ async function museoDeDestino(datos: Datos, usuario: UsuarioPublico, museoId: st
   return museos.find((m) => m.id === museoId) ?? null;
 }
 
-async function codigosAnterioresDelMuseo(datos: Datos, museoId: string): Promise<Set<string>> {
-  const piezas = await datos.listarPiezas();
+async function codigosAnterioresDelMuseo(datos: Datos, organizacionId: string, museoId: string): Promise<Set<string>> {
+  const piezas = await datos.listarPiezas(organizacionId);
   return new Set(
     piezas
       .filter((p) => p.museoId === museoId && p.codigoAnterior)
@@ -80,7 +80,7 @@ export async function validarArchivo(formulario: FormData): Promise<Resultado<Vi
 
   // Paso 4: validación fila por fila
   const categorias = await datos.listarCategorias(usuario.organizacionId);
-  const vista = validarFilasPiezas(lectura.filas, categorias, await codigosAnterioresDelMuseo(datos, museo.id));
+  const vista = validarFilasPiezas(lectura.filas, categorias, await codigosAnterioresDelMuseo(datos, usuario.organizacionId, museo.id));
   return { ok: true, datos: vista };
 }
 
@@ -96,11 +96,11 @@ export async function importarPiezas(museoId: string, filas: FilaImportacion[]):
   if (!museo) return { ok: false, error: "Selecciona el museo de destino" };
 
   const categorias = await datos.listarCategorias(usuario.organizacionId);
-  if (!filasConfirmadasSonValidas(filas, categorias, await codigosAnterioresDelMuseo(datos, museo.id))) {
+  if (!filasConfirmadasSonValidas(filas, categorias, await codigosAnterioresDelMuseo(datos, usuario.organizacionId, museo.id))) {
     return { ok: false, error: "No hay piezas válidas para importar" };
   }
 
-  const creadas = await datos.crearPiezas(
+  const creadas = await datos.crearPiezas(usuario.organizacionId, 
     filas.map((f) => ({
       museoId: museo.id,
       categoriaId: f.categoriaId,
@@ -117,7 +117,7 @@ export async function importarPiezas(museoId: string, filas: FilaImportacion[]):
   // Los códigos los asignó la capa de datos en el orden de las filas.
   // Paso 8: el alta por importación queda en el historial de cada pieza
   for (const pieza of creadas) {
-    await datos.registrarCambio({
+    await datos.registrarCambio(usuario.organizacionId, {
       piezaId: pieza.id,
       usuarioId: usuario.id,
       campoModificado: CAMPO_ALTA_IMPORTACION,

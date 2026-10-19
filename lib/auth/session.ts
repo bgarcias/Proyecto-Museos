@@ -21,7 +21,7 @@ export async function obtenerSesion(): Promise<UsuarioPublico | null> {
   const valor = almacen.get(COOKIE)?.value;
   if (!valor) return null;
   const datos = await obtenerDatos();
-  const usuario = await datos.obtenerUsuario(valor);
+  const usuario = await datos.obtenerUsuarioPorId(valor);
   // Cuenta desactivada: queda sin sesión en su siguiente petición y vuelve al login.
   return usuario && usuario.activo ? aPublico(usuario) : null;
 }

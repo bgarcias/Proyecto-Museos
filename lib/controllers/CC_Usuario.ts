@@ -129,7 +129,7 @@ export async function cambiarContrasena(nueva: string, confirmacion: string): Pr
     return { ok: false, error: "Las contraseñas no coinciden" };
   }
   const datos = await obtenerDatos();
-  const actual = await datos.obtenerUsuario(usuario.id);
+  const actual = await datos.obtenerUsuario(usuario.organizacionId, usuario.id);
   if (actual && actual.contrasena === nueva) {
     return { ok: false, error: "La nueva contraseña debe ser distinta de la actual" };
   }
@@ -179,8 +179,8 @@ export async function cargarFormularioUsuario(
   const datos = await obtenerDatos();
   if (!id) return { museos: await museosActivosVisibles(datos, sesion), usuario: null, esCuentaPropia: false };
 
-  const usuario = await datos.obtenerUsuario(id);
-  if (!usuario || usuario.organizacionId !== sesion.organizacionId) return null;
+  const usuario = await datos.obtenerUsuario(sesion.organizacionId, id);
+  if (!usuario) return null;
   const museos = (await museosVisibles(datos, sesion)).filter((m) => m.activo || usuario.museoIds.includes(m.id));
   return { museos, usuario: sinContrasena(usuario), esCuentaPropia: usuario.id === sesion.id };
 }
@@ -216,8 +216,7 @@ export async function registrarUsuario(
   }
 
   const contrasenaTemporal = generarContrasenaTemporal();
-  await datos.crearUsuario({
-    organizacionId: sesion.organizacionId,
+  await datos.crearUsuario(sesion.organizacionId, {
     nombre: validada.nombre,
     email: validada.email,
     rol: validada.rol,
@@ -233,8 +232,8 @@ export async function registrarUsuario(
 export async function actualizarUsuario(id: string, entrada: EntradaUsuario): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
-  const usuario = await datos.obtenerUsuario(id);
-  if (!usuario || usuario.organizacionId !== sesion.organizacionId) {
+  const usuario = await datos.obtenerUsuario(sesion.organizacionId, id);
+  if (!usuario) {
     return { ok: false, error: "No se encontró el usuario" };
   }
   const validada = validarEntradaUsuario(entrada);
@@ -252,7 +251,7 @@ export async function actualizarUsuario(id: string, entrada: EntradaUsuario): Pr
   const otro = await datos.obtenerUsuarioPorEmail(validada.email);
   if (otro && otro.id !== id) return { ok: false, error: "Este correo ya se encuentra registrado" };
 
-  await datos.actualizarUsuario(id, { nombre: validada.nombre, email: validada.email, rol: validada.rol, museoIds });
+  await datos.actualizarUsuario(sesion.organizacionId, id, { nombre: validada.nombre, email: validada.email, rol: validada.rol, museoIds });
   revalidatePath("/usuarios");
   return { ok: true, mensaje: "Usuario actualizado exitosamente" };
 }
@@ -262,8 +261,8 @@ async function verificarDesactivacion(id: string): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   if (id === sesion.id) return { ok: false, error: "No puede desactivar su propia cuenta" };
   const datos = await obtenerDatos();
-  const usuario = await datos.obtenerUsuario(id);
-  if (!usuario || usuario.organizacionId !== sesion.organizacionId) {
+  const usuario = await datos.obtenerUsuario(sesion.organizacionId, id);
+  if (!usuario) {
     return { ok: false, error: "No se encontró el usuario" };
   }
   return { ok: true };
@@ -277,8 +276,9 @@ export async function verificarDesactivacionUsuario(id: string): Promise<Resulta
 export async function desactivarUsuario(id: string): Promise<Resultado> {
   const verificacion = await verificarDesactivacion(id);
   if (!verificacion.ok) return verificacion;
+  const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
-  await datos.cambiarActivoUsuario(id, false);
+  await datos.cambiarActivoUsuario(sesion.organizacionId, id, false);
   revalidatePath("/usuarios");
   return { ok: true, mensaje: "Usuario desactivado exitosamente" };
 }
@@ -287,11 +287,11 @@ export async function desactivarUsuario(id: string): Promise<Resultado> {
 export async function activarUsuario(id: string): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
-  const usuario = await datos.obtenerUsuario(id);
-  if (!usuario || usuario.organizacionId !== sesion.organizacionId) {
+  const usuario = await datos.obtenerUsuario(sesion.organizacionId, id);
+  if (!usuario) {
     return { ok: false, error: "No se encontró el usuario" };
   }
-  await datos.cambiarActivoUsuario(id, true);
+  await datos.cambiarActivoUsuario(sesion.organizacionId, id, true);
   revalidatePath("/usuarios");
   return { ok: true, mensaje: "Usuario activado exitosamente" };
 }
