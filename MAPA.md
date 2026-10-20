@@ -731,7 +731,7 @@ Qué se verificó, con qué método, y qué queda sin verificar. Las cifras y lo
 - Medición del 20 de octubre de 2026 con la base real, en producción local (`next start`) y con la sesión del administrador armada solo dentro del proceso de la prueba, sin guardarla: diez pantallas (Inicio, catálogo, detalle de pieza, exposiciones, préstamos, inventarios, menú de reportes, reporte de piezas, usuarios y museos) respondieron con estado 200. Esta medición es de latencia y no cuenta como prueba funcional de cada pantalla.
 - **Con clics en el navegador, con la base real de Supabase:**
   - El login de las cuatro cuentas y los museos asignados a cada una: el administrador ve 4 museos y 21 piezas, Miguel ve Pinacoteca y Museo Amano, Gabriela ve Teatro y Pinacoteca, y Marco ve Teatro.
-  - El registro de un usuario con contraseña temporal y el cambio obligatorio de esa contraseña, con el rechazo de una contraseña corta y de una igual a la temporal.
+  - El registro de un usuario con contraseña temporal y el cambio obligatorio de esa contraseña, con el rechazo de una contraseña corta.
   - El rechazo de una cuenta desactivada, con su mensaje, y el de credenciales incorrectas.
   - El registro de una pieza: recibe el código siguiente del museo (MMT-009) y la fecha de registro del día en hora de Lima.
   - El catálogo de piezas y el historial.
