@@ -24,6 +24,7 @@ import { fechaLimite, hoyISO, rangoExposicion, rangosSeCruzan } from "../fechas"
 import { validarValorAsegurado } from "../validaciones";
 import type { Categoria, EstadoConservacion, Museo, PrestamoListado, Resultado } from "../tipos";
 import { exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./acceso";
+import { protegida } from "./errores";
 
 /* ECUS06: Registrar Préstamo de una Pieza */
 
@@ -54,6 +55,19 @@ export async function cargarFormularioPrestamo(): Promise<{ museos: Museo[]; cat
 }
 
 export async function registrarPrestamo(entrada: {
+  piezaId: string;
+  institucionDestino: string;
+  responsableReceptor: string;
+  numeroConvenio: string;
+  numeroPoliza: string;
+  valorAsegurado: string;
+  fechaSalida: string;
+  fechaDevolucionPrevista: string;
+}): Promise<Resultado> {
+  return protegida("registrarPrestamo", () => registrarPrestamoInterno(entrada));
+}
+
+async function registrarPrestamoInterno(entrada: {
   piezaId: string;
   institucionDestino: string;
   responsableReceptor: string;
@@ -152,6 +166,10 @@ export async function cargarDevolucion(): Promise<PrestamoListado[]> {
 }
 
 export async function registrarDevolucionPrestamo(prestamoId: string, estado: string): Promise<Resultado> {
+  return protegida("registrarDevolucionPrestamo", () => registrarDevolucionPrestamoInterno(prestamoId, estado));
+}
+
+async function registrarDevolucionPrestamoInterno(prestamoId: string, estado: string): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
 

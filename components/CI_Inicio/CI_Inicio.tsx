@@ -1,9 +1,8 @@
 import Link from "next/link";
-import Celda, { EncabezadoPagina } from "@/components/ui/Celda";
+import { EncabezadoPagina } from "@/components/ui/Celda";
 import { ETIQUETAS_ROL } from "@/lib/constantes";
 import { opcionesDeNavegacion } from "@/lib/navegacion";
 import type { UsuarioPublico } from "@/lib/tipos";
-import BotonRestablecer from "./BotonRestablecer";
 import estilos from "./CI_Inicio.module.css";
 
 export default function CI_Inicio({ usuario }: { usuario: UsuarioPublico }) {
@@ -22,10 +21,6 @@ export default function CI_Inicio({ usuario }: { usuario: UsuarioPublico }) {
           </Link>
         ))}
       </div>
-      <Celda etiqueta="Prototipo" titulo="Datos de demostración">
-        <p>Devuelve todos los datos a su estado inicial.</p>
-        <BotonRestablecer />
-      </Celda>
     </div>
   );
 }

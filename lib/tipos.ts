@@ -278,3 +278,9 @@ export type ResultadoGuardarExposicion =
 export type ResultadoCampos<C extends string> =
   | { ok: true; mensaje?: string }
   | { ok: false; error?: string; errores?: Partial<Record<C, string>> };
+
+/** Cuentas de demostración que muestra el inicio de sesión. Las lee el servidor y solo se envían si MOSTRAR_DATOS_DEMO es true. */
+export type DatosDemo = {
+  administrador: { correo: string; contrasena: string };
+  colaborador: { correo: string; contrasena: string };
+};

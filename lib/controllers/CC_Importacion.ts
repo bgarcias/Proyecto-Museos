@@ -18,6 +18,7 @@ import { MAXIMO_MEGABYTES_ARCHIVO } from "../importacion/limitesImportacion";
 import type { Museo, Resultado, UsuarioPublico } from "../tipos";
 import type { Datos } from "../data/contratos";
 import { museosActivosVisibles } from "./acceso";
+import { protegida } from "./errores";
 
 /* ECUS04: Importar Piezas desde Excel */
 
@@ -56,6 +57,10 @@ async function codigosAnterioresDelMuseo(datos: Datos, organizacionId: string, m
 
 /** Pasos 2 a 5: verifica el formato, valida cada fila y devuelve la vista previa. No registra nada. */
 export async function validarArchivo(formulario: FormData): Promise<Resultado<VistaPreviaImportacion>> {
+  return protegida("validarArchivo", () => validarArchivoInterno(formulario));
+}
+
+async function validarArchivoInterno(formulario: FormData): Promise<Resultado<VistaPreviaImportacion>> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
 
@@ -89,6 +94,10 @@ export async function validarArchivo(formulario: FormData): Promise<Resultado<Vi
  * antes de insertar: nunca se confía en lo que envía el cliente.
  */
 export async function importarPiezas(museoId: string, filas: FilaImportacion[]): Promise<Resultado<{ total: number }>> {
+  return protegida("importarPiezas", () => importarPiezasInterno(museoId, filas));
+}
+
+async function importarPiezasInterno(museoId: string, filas: FilaImportacion[]): Promise<Resultado<{ total: number }>> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
 

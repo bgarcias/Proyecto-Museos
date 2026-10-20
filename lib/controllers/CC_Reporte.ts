@@ -56,6 +56,7 @@ import type {
 } from "../tipos";
 import { coincideTexto } from "../busquedaTexto";
 import { exposicionesVisibles, museosVisibles, piezasVisibles, prestamosVisibles } from "./acceso";
+import { protegida } from "./errores";
 
 /* ECUS02: Generar Reporte de Inventario por Categoría y Estado */
 
@@ -103,6 +104,10 @@ async function calcularReporte(usuario: UsuarioPublico, filtros: FiltrosReporte)
 }
 
 export async function generarReporte(filtros: FiltrosReporte): Promise<Resultado<Reporte>> {
+  return protegida("generarReporte", () => generarReporteInterno(filtros));
+}
+
+async function generarReporteInterno(filtros: FiltrosReporte): Promise<Resultado<Reporte>> {
   const usuario = await exigirSesion();
   return calcularReporte(usuario, filtros);
 }
@@ -116,6 +121,10 @@ export type ArchivoReporte =
  * Con filtros inválidos o sin resultados devuelve el error y no genera archivo.
  */
 export async function exportarReporte(formato: "pdf" | "excel", filtros: FiltrosReporte): Promise<ArchivoReporte> {
+  return protegida("exportarReporte", () => exportarReporteInterno(formato, filtros));
+}
+
+async function exportarReporteInterno(formato: "pdf" | "excel", filtros: FiltrosReporte): Promise<ArchivoReporte> {
   const usuario = await exigirSesion();
   const resultado = await calcularReporte(usuario, filtros);
   if (!resultado.ok || !resultado.datos) return { ok: false, error: resultado.ok ? MENSAJE_SIN_RESULTADOS : resultado.error };
@@ -243,11 +252,19 @@ async function calcularReportePiezas(usuario: UsuarioPublico, filtros: FiltrosRe
 }
 
 export async function generarReportePiezas(filtros: FiltrosReportePiezas): Promise<Resultado<ReportePiezas>> {
+  return protegida("generarReportePiezas", () => generarReportePiezasInterno(filtros));
+}
+
+async function generarReportePiezasInterno(filtros: FiltrosReportePiezas): Promise<Resultado<ReportePiezas>> {
   const usuario = await exigirSesion();
   return calcularReportePiezas(usuario, filtros);
 }
 
 export async function exportarReportePiezas(formato: "pdf" | "excel", filtros: FiltrosReportePiezas): Promise<ArchivoReporte> {
+  return protegida("exportarReportePiezas", () => exportarReportePiezasInterno(formato, filtros));
+}
+
+async function exportarReportePiezasInterno(formato: "pdf" | "excel", filtros: FiltrosReportePiezas): Promise<ArchivoReporte> {
   const usuario = await exigirSesion();
   const resultado = await calcularReportePiezas(usuario, filtros);
   if (!resultado.ok || !resultado.datos) return { ok: false, error: resultado.ok ? MENSAJE_SIN_RESULTADOS : resultado.error };
@@ -337,11 +354,22 @@ async function calcularReporteExposiciones(
 }
 
 export async function generarReporteExposiciones(filtros: FiltrosReporteExposiciones): Promise<Resultado<ReporteExposiciones>> {
+  return protegida("generarReporteExposiciones", () => generarReporteExposicionesInterno(filtros));
+}
+
+async function generarReporteExposicionesInterno(filtros: FiltrosReporteExposiciones): Promise<Resultado<ReporteExposiciones>> {
   const usuario = await exigirSesion();
   return calcularReporteExposiciones(usuario, filtros);
 }
 
 export async function exportarReporteExposiciones(
+  formato: "pdf" | "excel",
+  filtros: FiltrosReporteExposiciones,
+): Promise<ArchivoReporte> {
+  return protegida("exportarReporteExposiciones", () => exportarReporteExposicionesInterno(formato, filtros));
+}
+
+async function exportarReporteExposicionesInterno(
   formato: "pdf" | "excel",
   filtros: FiltrosReporteExposiciones,
 ): Promise<ArchivoReporte> {
@@ -430,11 +458,22 @@ async function calcularReportePrestamos(
 }
 
 export async function generarReportePrestamos(filtros: FiltrosReportePrestamos): Promise<Resultado<ReportePrestamos>> {
+  return protegida("generarReportePrestamos", () => generarReportePrestamosInterno(filtros));
+}
+
+async function generarReportePrestamosInterno(filtros: FiltrosReportePrestamos): Promise<Resultado<ReportePrestamos>> {
   const usuario = await exigirSesion();
   return calcularReportePrestamos(usuario, filtros);
 }
 
 export async function exportarReportePrestamos(
+  formato: "pdf" | "excel",
+  filtros: FiltrosReportePrestamos,
+): Promise<ArchivoReporte> {
+  return protegida("exportarReportePrestamos", () => exportarReportePrestamosInterno(formato, filtros));
+}
+
+async function exportarReportePrestamosInterno(
   formato: "pdf" | "excel",
   filtros: FiltrosReportePrestamos,
 ): Promise<ArchivoReporte> {

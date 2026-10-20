@@ -25,6 +25,7 @@ import {
   museosVisibles,
   piezasVisibles,
 } from "./acceso";
+import { protegida } from "./errores";
 
 /* ECUS05: Gestionar Exposición (registrar, modificar y cancelar) */
 
@@ -215,16 +216,28 @@ async function guardarExposicion(
 }
 
 export async function registrarExposicion(entrada: EntradaExposicion): Promise<ResultadoGuardarExposicion> {
+  return protegida("registrarExposicion", () => registrarExposicionInterno(entrada));
+}
+
+async function registrarExposicionInterno(entrada: EntradaExposicion): Promise<ResultadoGuardarExposicion> {
   return guardarExposicion(undefined, entrada);
 }
 
 export async function actualizarExposicion(id: string, entrada: EntradaExposicion): Promise<ResultadoGuardarExposicion> {
+  return protegida("actualizarExposicion", () => actualizarExposicionInterno(id, entrada));
+}
+
+async function actualizarExposicionInterno(id: string, entrada: EntradaExposicion): Promise<ResultadoGuardarExposicion> {
   return guardarExposicion(id, entrada);
 }
 
 /* Modificar exposición: tras buscar y elegir la exposición */
 
 export async function elegirExposicionParaModificar(id: string): Promise<Resultado> {
+  return protegida("elegirExposicionParaModificar", () => elegirExposicionParaModificarInterno(id));
+}
+
+async function elegirExposicionParaModificarInterno(id: string): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
   const exposicion = await exposicionVisible(datos, usuario, id);
@@ -239,6 +252,12 @@ export async function elegirExposicionParaModificar(id: string): Promise<Resulta
 
 /** Pasos 1 y 2: tras elegir la exposición, valida que se pueda cancelar y devuelve su resumen. */
 export async function elegirExposicionParaCancelar(
+  id: string,
+): Promise<Resultado<{ exposicion: ExposicionListado; piezas: PiezaResumen[] }>> {
+  return protegida("elegirExposicionParaCancelar", () => elegirExposicionParaCancelarInterno(id));
+}
+
+async function elegirExposicionParaCancelarInterno(
   id: string,
 ): Promise<Resultado<{ exposicion: ExposicionListado; piezas: PiezaResumen[] }>> {
   const usuario = await exigirSesion();
@@ -258,6 +277,10 @@ export async function elegirExposicionParaCancelar(
 
 /** Pasos 3 a 5: marca la exposición como cancelada. Sus piezas quedan liberadas: la lista se conserva como registro. */
 export async function cancelarExposicion(id: string): Promise<Resultado> {
+  return protegida("cancelarExposicion", () => cancelarExposicionInterno(id));
+}
+
+async function cancelarExposicionInterno(id: string): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
   const exposicion = await exposicionVisible(datos, usuario, id);

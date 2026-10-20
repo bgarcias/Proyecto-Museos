@@ -8,6 +8,7 @@ import { obtenerDatos } from "../data";
 import type { Museo, Resultado, TipoColeccion, UsuarioPublico } from "../tipos";
 import type { Datos } from "../data/contratos";
 import { museosVisibles } from "./acceso";
+import { protegida } from "./errores";
 
 /* Gestionar Museos (sin ECU en el informe). Solo el administrador. */
 
@@ -51,6 +52,10 @@ async function validarEntrada(
 }
 
 export async function registrarMuseo(entrada: EntradaMuseo): Promise<Resultado> {
+  return protegida("registrarMuseo", () => registrarMuseoInterno(entrada));
+}
+
+async function registrarMuseoInterno(entrada: EntradaMuseo): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
   const validada = await validarEntrada(datos, sesion, entrada);
@@ -61,6 +66,10 @@ export async function registrarMuseo(entrada: EntradaMuseo): Promise<Resultado> 
 }
 
 export async function actualizarMuseo(id: string, entrada: EntradaMuseo): Promise<Resultado> {
+  return protegida("actualizarMuseo", () => actualizarMuseoInterno(id, entrada));
+}
+
+async function actualizarMuseoInterno(id: string, entrada: EntradaMuseo): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
   const museo = await datos.obtenerMuseo(sesion.organizacionId, id);
@@ -89,9 +98,17 @@ async function cambiarEstado(id: string, activo: boolean): Promise<Resultado> {
 }
 
 export async function desactivarMuseo(id: string): Promise<Resultado> {
+  return protegida("desactivarMuseo", () => desactivarMuseoInterno(id));
+}
+
+async function desactivarMuseoInterno(id: string): Promise<Resultado> {
   return cambiarEstado(id, false);
 }
 
 export async function activarMuseo(id: string): Promise<Resultado> {
+  return protegida("activarMuseo", () => activarMuseoInterno(id));
+}
+
+async function activarMuseoInterno(id: string): Promise<Resultado> {
   return cambiarEstado(id, true);
 }

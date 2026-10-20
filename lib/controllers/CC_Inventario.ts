@@ -17,6 +17,7 @@ import type {
   UsuarioPublico,
 } from "../tipos";
 import { museosActivosVisibles, museosVisibles } from "./acceso";
+import { protegida } from "./errores";
 
 /* Realizar Inventario Físico (sin ECU en el informe, sección 7.8) */
 
@@ -83,6 +84,10 @@ export async function cargarInventarios(): Promise<{ inventarios: InventarioList
 
 /** Paso 3: se elige el museo (activo y asignado) y se crea el inventario en curso. Devuelve su id. */
 export async function crearInventario(museoId: string): Promise<Resultado<{ id: string }>> {
+  return protegida("crearInventario", () => crearInventarioInterno(museoId));
+}
+
+async function crearInventarioInterno(museoId: string): Promise<Resultado<{ id: string }>> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
   const museo = (await museosActivosVisibles(datos, usuario)).find((m) => m.id === museoId);
@@ -134,6 +139,15 @@ export async function marcarPieza(
   resultado: string,
   observacion: string,
 ): Promise<Resultado> {
+  return protegida("marcarPieza", () => marcarPiezaInterno(inventarioId, piezaId, resultado, observacion));
+}
+
+async function marcarPiezaInterno(
+  inventarioId: string,
+  piezaId: string,
+  resultado: string,
+  observacion: string,
+): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
   const inventario = (await inventariosVisibles(datos, usuario)).find((i) => i.id === inventarioId);
@@ -155,6 +169,10 @@ export async function marcarPieza(
  * Lo puede cerrar cualquiera con acceso al museo y queda como quien cerró.
  */
 export async function cerrarInventario(id: string): Promise<Resultado> {
+  return protegida("cerrarInventario", () => cerrarInventarioInterno(id));
+}
+
+async function cerrarInventarioInterno(id: string): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
   const inventario = (await inventariosVisibles(datos, usuario)).find((i) => i.id === id);

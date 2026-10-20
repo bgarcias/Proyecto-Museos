@@ -2,7 +2,9 @@
 
 import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { borrarCuenta, crearCuenta, quitarIndicadorCambioContrasena } from "../auth/cuentas";
 import {
   cerrarSesion,
   exigirAdministrador,
@@ -10,9 +12,16 @@ import {
   iniciarSesion,
   obtenerSesion,
 } from "../auth/session";
-import { ROLES } from "../constantes";
+import {
+  obtenerCargaAdminEmail,
+  obtenerCargaColaboradorEmail,
+  obtenerCargaContrasena,
+  obtenerMostrarDatosDemo,
+} from "../config/env";
+import { MENSAJE_CONTRASENA_DEBIL, ROLES } from "../constantes";
 import { obtenerDatos } from "../data";
-import type { Museo, Resultado, ResultadoCampos, Rol, UsuarioListado, UsuarioPublico } from "../tipos";
+import { crearClienteServidor } from "../supabase/servidor";
+import type { DatosDemo, Museo, Resultado, ResultadoCampos, Rol, UsuarioListado, UsuarioPublico } from "../tipos";
 import {
   CONTRASENA_MAXIMO,
   CONTRASENA_MINIMO,
@@ -22,6 +31,7 @@ import {
   esCorreoValido,
 } from "../validaciones";
 import { museosActivosVisibles, museosVisibles } from "./acceso";
+import { protegida } from "./errores";
 
 /** Sin caracteres ambiguos: faltan 0, O, 1, l e I. */
 const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
@@ -50,8 +60,19 @@ async function redirigirSiHaySesion(): Promise<void> {
   if (usuario) redirect("/");
 }
 
-export async function cargarLogin(): Promise<void> {
+/** Antes de mostrar el inicio de sesión: quien ya tiene sesión pasa al inicio. Devuelve las cuentas de demostración solo si MOSTRAR_DATOS_DEMO es true. */
+export async function cargarLogin(): Promise<DatosDemo | null> {
   await redirigirSiHaySesion();
+  if (!obtenerMostrarDatosDemo()) return null;
+  try {
+    return {
+      administrador: { correo: obtenerCargaAdminEmail(), contrasena: obtenerCargaContrasena() },
+      colaborador: { correo: obtenerCargaColaboradorEmail(), contrasena: obtenerCargaContrasena() },
+    };
+  } catch {
+    // Si faltan las variables de la carga, el recuadro simplemente no se muestra
+    return null;
+  }
 }
 
 export async function obtenerUsuarioActual(): Promise<UsuarioPublico | null> {
@@ -59,6 +80,13 @@ export async function obtenerUsuarioActual(): Promise<UsuarioPublico | null> {
 }
 
 export async function ingresar(
+  correo: string,
+  contrasena: string,
+): Promise<ResultadoCampos<"correo" | "contrasena">> {
+  return protegida("ingresar", () => ingresarInterno(correo, contrasena));
+}
+
+async function ingresarInterno(
   correo: string,
   contrasena: string,
 ): Promise<ResultadoCampos<"correo" | "contrasena">> {
@@ -70,46 +98,77 @@ export async function ingresar(
   if (errorContrasena) errores.contrasena = errorContrasena;
   if (errorCorreo || errorContrasena) return { ok: false, errores };
 
-  const datos = await obtenerDatos();
-  const usuario = await datos.obtenerUsuarioPorEmail(correo);
-  if (!usuario || usuario.contrasena !== contrasena) {
-    return { ok: false, error: "Correo electrónico o contraseña incorrectos" };
+  const inicio = await iniciarSesion(correo.trim(), contrasena);
+  if (!inicio.ok) {
+    return {
+      ok: false,
+      error:
+        inicio.motivo === "desactivada"
+          ? "La cuenta se encuentra desactivada. Comuníquese con el administrador."
+          : "Correo electrónico o contraseña incorrectos",
+    };
   }
-  if (!usuario.activo) {
-    return { ok: false, error: "La cuenta se encuentra desactivada. Comuníquese con el administrador." };
-  }
-  await iniciarSesion(usuario.id);
-  redirect(usuario.debeCambiarContrasena ? "/cambiar-contrasena" : "/");
+  redirect(inicio.usuario.debeCambiarContrasena ? "/cambiar-contrasena" : "/");
 }
 
-/* Recuperación de contraseña: solo interfaz. No consulta usuarios, no envía nada y no modifica contraseñas. */
+/* Recuperación de contraseña con Supabase Auth: el correo lleva un enlace a /restablecer-contrasena */
 
 export async function cargarRecuperacion(): Promise<void> {
   await redirigirSiHaySesion();
 }
 
 export async function solicitarRecuperacion(correo: string): Promise<ResultadoCampos<"correo">> {
+  return protegida("solicitarRecuperacion", () => solicitarRecuperacionInterno(correo));
+}
+
+async function solicitarRecuperacionInterno(correo: string): Promise<ResultadoCampos<"correo">> {
   const errorCorreo = errorDeCorreo(correo);
   if (errorCorreo) return { ok: false, errores: { correo: errorCorreo } };
+  const solicitud = await headers();
+  const servidor = solicitud.get("x-forwarded-host") ?? solicitud.get("host") ?? "";
+  const protocolo = solicitud.get("x-forwarded-proto") ?? (servidor.startsWith("localhost") ? "http" : "https");
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase.auth.resetPasswordForEmail(correo.trim(), {
+    redirectTo: `${protocolo}://${servidor}/restablecer-contrasena`,
+  });
+  // Un límite de envíos no se muestra: el mensaje es el mismo exista o no el correo
+  if (error && error.code !== "over_email_send_rate_limit") throw error;
   // Mensaje neutro: no revela si el correo existe
   return { ok: true, mensaje: "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña" };
 }
 
+/** El enlace del correo deja una sesión de recuperación: sin ella no hay nada que restablecer. */
 export async function cargarRestablecimiento(): Promise<void> {
-  await redirigirSiHaySesion();
+  if (!(await obtenerSesion())) redirect("/login");
 }
 
 export async function definirNuevaContrasena(nueva: string, confirmacion: string): Promise<Resultado> {
+  return protegida("definirNuevaContrasena", () => definirNuevaContrasenaInterno(nueva, confirmacion));
+}
+
+async function definirNuevaContrasenaInterno(nueva: string, confirmacion: string): Promise<Resultado> {
   const errorLongitud = errorDeLongitudContrasena(nueva);
   if (errorLongitud) return { ok: false, error: errorLongitud };
   if (nueva !== confirmacion) {
     return { ok: false, error: "Las contraseñas no coinciden" };
   }
-  // Con datos válidos no se modifica ninguna contraseña: la función se activa al conectar la autenticación
-  return {
-    ok: false,
-    error: "Esta función se activará cuando se conecte la autenticación. Tu contraseña no se modificó",
-  };
+  const usuario = await exigirSesion({ permitirCambioPendiente: true });
+  const error = await cambiarContrasenaEnAuth(nueva);
+  if (error) return { ok: false, error };
+  await quitarIndicadorCambioContrasena(usuario.id);
+  // La sesión de recuperación no se conserva: se vuelve a entrar con la contraseña nueva
+  await cerrarSesion();
+  redirect("/login");
+}
+
+/** Cambia la contraseña de la sesión actual en Auth. Devuelve el mensaje de error, o undefined si salió bien. */
+async function cambiarContrasenaEnAuth(nueva: string): Promise<string | undefined> {
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase.auth.updateUser({ password: nueva });
+  if (!error) return undefined;
+  if (error.code === "same_password") return "La nueva contraseña debe ser distinta de la actual";
+  if (error.code === "weak_password") return MENSAJE_CONTRASENA_DEBIL;
+  throw error;
 }
 
 export async function cerrarSesionAccion(): Promise<void> {
@@ -122,18 +181,22 @@ export async function cargarCambioContrasena(): Promise<UsuarioPublico> {
 }
 
 export async function cambiarContrasena(nueva: string, confirmacion: string): Promise<Resultado> {
+  return protegida("cambiarContrasena", () => cambiarContrasenaInterno(nueva, confirmacion));
+}
+
+async function cambiarContrasenaInterno(nueva: string, confirmacion: string): Promise<Resultado> {
   const usuario = await exigirSesion({ permitirCambioPendiente: true });
   const errorLongitud = errorDeLongitudContrasena(nueva);
   if (errorLongitud) return { ok: false, error: errorLongitud };
   if (nueva !== confirmacion) {
     return { ok: false, error: "Las contraseñas no coinciden" };
   }
-  const datos = await obtenerDatos();
-  const actual = await datos.obtenerUsuario(usuario.organizacionId, usuario.id);
-  if (actual && actual.contrasena === nueva) {
-    return { ok: false, error: "La nueva contraseña debe ser distinta de la actual" };
-  }
-  await datos.actualizarContrasena(usuario.id, nueva);
+  const error = await cambiarContrasenaEnAuth(nueva);
+  if (error) return { ok: false, error };
+  await quitarIndicadorCambioContrasena(usuario.id);
+  // El indicador viaja en la sesión: se renueva para que la nueva ya no lo lleve
+  const supabase = await crearClienteServidor();
+  await supabase.auth.refreshSession();
   // El layout raíz decide si muestra el menú según debeCambiarContrasena: se invalida para que se reevalúe.
   revalidatePath("/", "layout");
   redirect("/");
@@ -144,6 +207,10 @@ export async function cargarInicio(): Promise<UsuarioPublico> {
 }
 
 export async function restablecerDatosDemostracion(): Promise<Resultado> {
+  return protegida("restablecerDatosDemostracion", () => restablecerDatosDemostracionInterno());
+}
+
+async function restablecerDatosDemostracionInterno(): Promise<Resultado> {
   await exigirSesion();
   const datos = await obtenerDatos();
   await datos.restablecerDatos();
@@ -202,6 +269,12 @@ function validarEntradaUsuario(
 export async function registrarUsuario(
   entrada: EntradaUsuario,
 ): Promise<Resultado<{ contrasenaTemporal: string }>> {
+  return protegida("registrarUsuario", () => registrarUsuarioInterno(entrada));
+}
+
+async function registrarUsuarioInterno(
+  entrada: EntradaUsuario,
+): Promise<Resultado<{ contrasenaTemporal: string }>> {
   const sesion = await exigirAdministrador();
   const validada = validarEntradaUsuario(entrada);
   if ("error" in validada) return { ok: false, error: validada.error };
@@ -215,21 +288,35 @@ export async function registrarUsuario(
     return { ok: false, error: "Este correo ya se encuentra registrado" };
   }
 
+  // Primero la cuenta de Auth, con el indicador de cambio de contraseña activo, y luego la fila de usuario
   const contrasenaTemporal = generarContrasenaTemporal();
-  await datos.crearUsuario(sesion.organizacionId, {
-    nombre: validada.nombre,
-    email: validada.email,
-    rol: validada.rol,
-    activo: true,
-    museoIds,
-    contrasena: contrasenaTemporal,
-    debeCambiarContrasena: true,
-  });
+  const cuenta = await crearCuenta(validada.email, contrasenaTemporal, true);
+  if (!cuenta.ok) return { ok: false, error: "Este correo ya se encuentra registrado" };
+  try {
+    await datos.crearUsuario(sesion.organizacionId, {
+      id: cuenta.id,
+      nombre: validada.nombre,
+      email: validada.email,
+      rol: validada.rol,
+      activo: true,
+      museoIds,
+      contrasena: "",
+      debeCambiarContrasena: true,
+    });
+  } catch (error) {
+    // Si falla la fila no debe quedar una cuenta de Auth sin usuario
+    await borrarCuenta(cuenta.id).catch((e: unknown) => console.error("No se pudo borrar la cuenta de Auth creada:", e));
+    throw error;
+  }
   revalidatePath("/usuarios");
   return { ok: true, mensaje: "Usuario registrado exitosamente", datos: { contrasenaTemporal } };
 }
 
 export async function actualizarUsuario(id: string, entrada: EntradaUsuario): Promise<Resultado> {
+  return protegida("actualizarUsuario", () => actualizarUsuarioInterno(id, entrada));
+}
+
+async function actualizarUsuarioInterno(id: string, entrada: EntradaUsuario): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
   const usuario = await datos.obtenerUsuario(sesion.organizacionId, id);
@@ -270,10 +357,18 @@ async function verificarDesactivacion(id: string): Promise<Resultado> {
 
 /** Se llama al elegir "Desactivar", antes de pedir la confirmación. */
 export async function verificarDesactivacionUsuario(id: string): Promise<Resultado> {
+  return protegida("verificarDesactivacionUsuario", () => verificarDesactivacionUsuarioInterno(id));
+}
+
+async function verificarDesactivacionUsuarioInterno(id: string): Promise<Resultado> {
   return verificarDesactivacion(id);
 }
 
 export async function desactivarUsuario(id: string): Promise<Resultado> {
+  return protegida("desactivarUsuario", () => desactivarUsuarioInterno(id));
+}
+
+async function desactivarUsuarioInterno(id: string): Promise<Resultado> {
   const verificacion = await verificarDesactivacion(id);
   if (!verificacion.ok) return verificacion;
   const sesion = await exigirAdministrador();
@@ -285,6 +380,10 @@ export async function desactivarUsuario(id: string): Promise<Resultado> {
 
 /** Extensión fuera del informe: reactiva una cuenta inactiva. Conserva sus museos y su historial. */
 export async function activarUsuario(id: string): Promise<Resultado> {
+  return protegida("activarUsuario", () => activarUsuarioInterno(id));
+}
+
+async function activarUsuarioInterno(id: string): Promise<Resultado> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
   const usuario = await datos.obtenerUsuario(sesion.organizacionId, id);

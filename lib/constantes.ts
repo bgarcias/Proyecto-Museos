@@ -232,3 +232,14 @@ export const ETIQUETA_VOLVER_AL_INICIO = "Volver al inicio";
 export const ETIQUETA_ABRIR_MENU = "Abrir menú";
 export const ETIQUETA_CERRAR_MENU = "Cerrar menú";
 export const CONSULTA_MENU_COMPACTO = "(max-width: 1025px)";
+
+/** Mensaje de un error que no se esperaba. El detalle queda solo en el registro del servidor. */
+export const MENSAJE_ERROR_INESPERADO = "Ocurrió un error inesperado. Intenta de nuevo";
+export const MENSAJE_CONTRASENA_DEBIL = "La contraseña no es lo bastante segura. Elige otra";
+
+/** Recuadro de cuentas de demostración del inicio de sesión (solo con MOSTRAR_DATOS_DEMO en true). */
+export const TITULO_DATOS_DEMO = "Cuentas de demostración";
+export const ETIQUETA_DEMO_ADMINISTRADOR = "Administrador";
+export const ETIQUETA_DEMO_COLABORADOR = "Colaborador";
+export const ETIQUETA_DEMO_CORREO = "Correo";
+export const ETIQUETA_DEMO_CONTRASENA = "Contraseña";

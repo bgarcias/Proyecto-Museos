@@ -31,6 +31,7 @@ import type {
 import { anioActual, validarAnio } from "../validaciones";
 import { coincideTexto } from "../busquedaTexto";
 import { museosActivosVisibles, museosVisibles, piezasVisibles, puedeAccederAlMuseo } from "./acceso";
+import { protegida } from "./errores";
 
 const MENSAJE_IMAGEN = "La imagen debe ser PNG o JPG de máximo 1 MB";
 const MAXIMO_IMAGEN_BYTES = 1024 * 1024;
@@ -120,6 +121,12 @@ function imagenValida(imagen: string): boolean {
 export async function registrarPieza(
   entrada: EntradaPieza & { estadoConservacion: string; museoId: string },
 ): Promise<Resultado> {
+  return protegida("registrarPieza", () => registrarPiezaInterno(entrada));
+}
+
+async function registrarPiezaInterno(
+  entrada: EntradaPieza & { estadoConservacion: string; museoId: string },
+): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
   const codigoAnterior = entrada.codigoAnterior.trim() || undefined;
@@ -170,6 +177,10 @@ export async function registrarPieza(
  * Cada campo modificado genera un registro de historial.
  */
 export async function actualizarPieza(id: string, entrada: EntradaPieza): Promise<Resultado> {
+  return protegida("actualizarPieza", () => actualizarPiezaInterno(id, entrada));
+}
+
+async function actualizarPiezaInterno(id: string, entrada: EntradaPieza): Promise<Resultado> {
   const usuario = await exigirSesion();
   const datos = await obtenerDatos();
   const pieza = await datos.obtenerPieza(usuario.organizacionId, id);
@@ -255,6 +266,13 @@ export async function cargarActualizarEstado(piezaId: string): Promise<PiezaList
 }
 
 export async function actualizarEstado(
+  piezaId: string,
+  nuevoEstado: string,
+): Promise<Resultado<{ estadoActual: EstadoConservacion }>> {
+  return protegida("actualizarEstado", () => actualizarEstadoInterno(piezaId, nuevoEstado));
+}
+
+async function actualizarEstadoInterno(
   piezaId: string,
   nuevoEstado: string,
 ): Promise<Resultado<{ estadoActual: EstadoConservacion }>> {
