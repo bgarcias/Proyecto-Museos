@@ -3,13 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ingresar } from "@/lib/controllers/CC_Usuario";
-import {
-  ETIQUETA_DEMO_ADMINISTRADOR,
-  ETIQUETA_DEMO_COLABORADOR,
-  ETIQUETA_DEMO_CONTRASENA,
-  ETIQUETA_DEMO_CORREO,
-  TITULO_DATOS_DEMO,
-} from "@/lib/constantes";
 import type { DatosDemo } from "@/lib/tipos";
 import { errorDeContrasenaIngreso, errorDeCorreo } from "@/lib/validaciones";
 import { alertaError } from "@/components/ui/alertas";
@@ -17,16 +10,10 @@ import Boton from "@/components/ui/Boton";
 import { Campo, Entrada, Formulario } from "@/components/ui/Campo";
 import CampoContrasena from "@/components/ui/CampoContrasena";
 import PantallaAcceso from "@/components/ui/PantallaAcceso";
+import DesplegableDemo from "./DesplegableDemo";
 import estilos from "./CI_Login.module.css";
 
 type Errores = { correo?: string; contrasena?: string };
-
-function cuentasDemo(d: DatosDemo) {
-  return [
-    { rol: ETIQUETA_DEMO_ADMINISTRADOR, ...d.administrador },
-    { rol: ETIQUETA_DEMO_COLABORADOR, ...d.colaborador },
-  ];
-}
 
 /** datosDemo solo llega con MOSTRAR_DATOS_DEMO en true: si es null no se muestra el recuadro. */
 export default function CI_Login({ datosDemo }: { datosDemo?: DatosDemo | null }) {
@@ -93,24 +80,7 @@ export default function CI_Login({ datosDemo }: { datosDemo?: DatosDemo | null }
             <Link href="/recuperar-contrasena">¿Olvidaste tu contraseña?</Link>
           </div>
         </Formulario>
-        {datosDemo && (
-          <section className={estilos.demo} aria-label={TITULO_DATOS_DEMO}>
-            <span className={estilos.tituloDemo}>{TITULO_DATOS_DEMO}</span>
-            <dl className={estilos.cuentas}>
-              {cuentasDemo(datosDemo).map((c) => (
-                <div key={c.rol} className={estilos.cuenta}>
-                  <dt>{c.rol}</dt>
-                  <dd>
-                    {ETIQUETA_DEMO_CORREO}: {c.correo}
-                  </dd>
-                  <dd>
-                    {ETIQUETA_DEMO_CONTRASENA}: {c.contrasena}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        )}
+        {datosDemo && <DesplegableDemo datos={datosDemo} />}
       </>
     </PantallaAcceso>
   );

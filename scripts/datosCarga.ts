@@ -2,6 +2,7 @@
 // Todo se referencia por claves de texto: los ids, los prefijos, los códigos y las fechas los calcula el script.
 // Los días son relativos al día de la carga, en hora de Lima. Los correos y la contraseña no van aquí.
 
+import { CUENTAS_DEMO, MUSEO_AMANO, MUSEO_ANDRES, MUSEO_PINACOTECA, MUSEO_TEATRO } from "../lib/datosDemo";
 import type { Disponibilidad, EstadoConservacion, ResultadoInventario, Rol, TipoColeccion } from "../lib/tipos";
 
 export const NOMBRE_ORGANIZACION = "Organización de demostración";
@@ -10,22 +11,27 @@ export const CATEGORIAS = ["Arqueológico", "Pintura", "Escultura", "Cerámica",
 
 export type DatoMuseo = { clave: string; nombre: string; tipo: TipoColeccion };
 export const MUSEOS: DatoMuseo[] = [
-  { clave: "teatro", nombre: "Museo Municipal de Teatro", tipo: "otro" },
-  { clave: "pinacoteca", nombre: "Pinacoteca Municipal Ignacio Merino", tipo: "arte" },
-  { clave: "amano", nombre: "Museo Amano", tipo: "arqueologia" },
-  { clave: "andres", nombre: "Museo Andrés del Castillo", tipo: "ciencias_naturales" },
+  { clave: "teatro", nombre: MUSEO_TEATRO, tipo: "otro" },
+  { clave: "pinacoteca", nombre: MUSEO_PINACOTECA, tipo: "arte" },
+  { clave: "amano", nombre: MUSEO_AMANO, tipo: "arqueologia" },
+  { clave: "andres", nombre: MUSEO_ANDRES, tipo: "ciencias_naturales" },
 ];
 
-/* Sin correo: el del administrador y el de Miguel vienen de CARGA_ADMIN_EMAIL y CARGA_COLABORADOR_EMAIL */
+/* Las cuentas viven en lib/datosDemo.ts. Aquí se pasan los museos de nombre a clave */
 export type DatoUsuario = { clave: string; nombre: string; rol: Rol; museos: string[]; correo?: string; activo?: boolean };
-export const USUARIOS: DatoUsuario[] = [
-  { clave: "admin", nombre: "Brandon Garcia Sanchez", rol: "administrador", museos: ["teatro", "pinacoteca", "amano", "andres"] },
-  { clave: "miguel", nombre: "Miguel Zambrano Meléndez", rol: "colaborador", museos: ["pinacoteca", "amano"] },
-  { clave: "gabriela", nombre: "Gabriela Linares Ortega", rol: "colaborador", museos: ["teatro", "pinacoteca"], correo: "gabriela@vestigio.com" },
-  { clave: "marco", nombre: "Marco Aguirre Soto", rol: "colaborador", museos: ["teatro"], correo: "marco@vestigio.com" },
-  { clave: "lucia", nombre: "Lucía Paredes Vargas", rol: "colaborador", museos: ["amano"], correo: "lucia@vestigio.com" },
-  { clave: "diego", nombre: "Diego Salazar Rojas", rol: "colaborador", museos: ["teatro"], correo: "diego@vestigio.com", activo: false },
-];
+const claveDeMuseo = (nombre: string): string => {
+  const museo = MUSEOS.find((m) => m.nombre === nombre);
+  if (!museo) throw new Error(`Museo desconocido en las cuentas: ${nombre}`);
+  return museo.clave;
+};
+export const USUARIOS: DatoUsuario[] = CUENTAS_DEMO.map((c) => ({
+  clave: c.clave,
+  nombre: c.nombre,
+  rol: c.rol,
+  museos: c.museos.map(claveDeMuseo),
+  correo: c.correo,
+  activo: c.activo,
+}));
 
 export type DatoPieza = {
   clave: string;

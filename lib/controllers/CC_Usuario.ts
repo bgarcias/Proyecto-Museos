@@ -20,6 +20,7 @@ import {
 } from "../config/env";
 import { MENSAJE_CONTRASENA_DEBIL, ROLES } from "../constantes";
 import { obtenerDatos } from "../data";
+import { CUENTAS_DEMO, museosSoloAdministrador } from "../datosDemo";
 import { crearClienteServidor } from "../supabase/servidor";
 import type { DatosDemo, Museo, Resultado, ResultadoCampos, Rol, Usuario, UsuarioListado, UsuarioPublico } from "../tipos";
 import {
@@ -60,9 +61,20 @@ export async function cargarLogin(): Promise<DatosDemo | null> {
   await redirigirSiHaySesion();
   if (!obtenerMostrarDatosDemo()) return null;
   try {
+    const admin = obtenerCargaAdminEmail();
+    const colaborador = obtenerCargaColaboradorEmail();
+    const contrasena = obtenerCargaContrasena();
     return {
-      administrador: { correo: obtenerCargaAdminEmail(), contrasena: obtenerCargaContrasena() },
-      colaborador: { correo: obtenerCargaColaboradorEmail(), contrasena: obtenerCargaContrasena() },
+      contrasena,
+      cuentas: CUENTAS_DEMO.map((c) => ({
+        clave: c.clave,
+        nombre: c.nombre,
+        rol: c.rol,
+        activo: c.activo,
+        correo: c.correo ?? (c.clave === "admin" ? admin : colaborador),
+        museos: c.museos,
+      })),
+      soloAdministrador: museosSoloAdministrador(),
     };
   } catch {
     // Si faltan las variables de la carga, el recuadro simplemente no se muestra

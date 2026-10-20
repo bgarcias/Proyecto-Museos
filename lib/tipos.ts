@@ -280,6 +280,7 @@ export type ResultadoCampos<C extends string> =
 
 /** Cuentas de demostración que muestra el inicio de sesión. Las lee el servidor y solo se envían si MOSTRAR_DATOS_DEMO es true. */
 export type DatosDemo = {
-  administrador: { correo: string; contrasena: string };
-  colaborador: { correo: string; contrasena: string };
+  contrasena: string;
+  cuentas: { clave: string; nombre: string; rol: Rol; activo: boolean; correo: string; museos: string[] }[];
+  soloAdministrador: string[];
 };

@@ -1,0 +1,104 @@
+/* Desplegable de datos demo: solo aparece con MOSTRAR_DATOS_DEMO en true */
+.demo {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--texto-pequeno);
+}
+
+/* La altura se anima con filas de grid: de cero a su contenido */
+.panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows var(--duracion-transicion) var(--curva-transicion),
+    visibility var(--duracion-transicion) var(--curva-transicion);
+}
+
+.panelAbierto {
+  grid-template-rows: 1fr;
+  visibility: visible;
+}
+
+.interior {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin-top: var(--espacio-3);
+  padding: var(--espacio-3);
+  border: var(--borde);
+  background: var(--color-gris-claro);
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--desplazamiento-entrada)));
+  transition:
+    opacity var(--duracion-transicion) var(--curva-transicion),
+    transform var(--duracion-transicion) var(--curva-transicion);
+}
+
+.panelAbierto .contenido {
+  opacity: 1;
+  transform: none;
+}
+
+.aviso,
+.contrasena,
+.nota {
+  overflow-wrap: anywhere;
+}
+
+.aviso {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+  font-size: var(--texto-etiqueta);
+}
+
+.cuentas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cuenta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  padding-top: var(--espacio-3);
+  border-top: var(--borde-fino);
+  overflow-wrap: anywhere;
+}
+
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-1) var(--espacio-2);
+}
+
+.nombre {
+  font-weight: 800;
+}
+
+.rol {
+  font-size: var(--texto-etiqueta);
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-letras-etiqueta);
+}
+
+.correo {
+  font-weight: 700;
+}
+
+.nota {
+  padding-top: var(--espacio-3);
+  border-top: var(--borde-fino);
+  font-weight: 700;
+}
