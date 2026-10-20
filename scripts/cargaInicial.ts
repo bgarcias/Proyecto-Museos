@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createInterface } from "node:readline/promises";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { CORREOS_RETIRADOS } from "../lib/datosDemo";
 import { calcularPrefijoMuseo, claveCodigoAnterior, formatearCodigo, MAXIMO_CODIGO_ANTERIOR } from "../lib/codigos";
 import {
   obtenerCargaAdminEmail,
@@ -589,7 +590,7 @@ function contar(f: Filas): { tabla: string; filas: number }[] {
   return TABLAS.map((tabla, i) => ({ tabla, filas: n[i] }));
 }
 
-/** Debe haber un administrador con todos los museos, un colaborador con dos, otro con uno y una cuenta desactivada. */
+/** Debe haber un administrador con todos los museos, un colaborador con dos, otro con uno y un museo que solo vea el administrador. */
 function validarUsuarios(f: Filas): string[] {
   const errores: string[] = [];
   const museosDe = (usuarioId: string) => f.usuarioMuseo.filter((x) => x.usuarioId === usuarioId).length;
@@ -598,7 +599,6 @@ function validarUsuarios(f: Filas): string[] {
   if (administradores.length !== 1 || museosDe(administradores[0].id) !== f.museos.length) errores.push("el administrador debe tener asignados todos los museos");
   if (!colaboradores.some((u) => museosDe(u.id) === 2)) errores.push("falta un colaborador con dos museos");
   if (!colaboradores.some((u) => museosDe(u.id) === 1)) errores.push("falta un colaborador con un museo");
-  if (!f.usuarios.some((u) => !u.activo)) errores.push("falta una cuenta desactivada");
   for (const u of f.usuarios) if (museosDe(u.id) === 0) errores.push("hay un usuario sin museos asignados");
   if (f.usuarios.some((u) => u.rol === "administrador" && !u.activo)) errores.push("el administrador debe estar activo");
   // Un museo que solo ve el administrador
@@ -666,8 +666,9 @@ function leerVariables(): { ok: true; correos: Correos } | { ok: false; problema
   if (!esCorreoValido(colaborador)) problemas.push("CARGA_COLABORADOR_EMAIL no tiene un formato de correo válido.");
   const fijos = datos.USUARIOS.flatMap((u) => (u.correo ? [u.correo.toLowerCase()] : []));
   const propios = [admin.trim().toLowerCase(), colaborador.trim().toLowerCase()];
-  if (new Set([...fijos, ...propios]).size !== fijos.length + propios.length) {
-    problemas.push("Los correos de la carga deben ser distintos entre sí y de los cuatro fijos de los datos.");
+  const retirados = CORREOS_RETIRADOS.map((c) => c.toLowerCase());
+  if (new Set([...fijos, ...propios, ...retirados]).size !== fijos.length + propios.length + retirados.length) {
+    problemas.push("Los correos de la carga deben ser distintos entre sí, de los fijos de los datos y de los retirados.");
   }
   const errorClave = errorDeLongitudContrasena(contrasena);
   if (errorClave) problemas.push(`CARGA_CONTRASENA no cumple las reglas de longitud: ${errorClave.toLowerCase()}.`);
@@ -692,7 +693,7 @@ async function cuentasConEstosCorreos(supabase: SupabaseClient, correos: string[
 async function confirmar(): Promise<boolean> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    console.log("\nAVISO: esta carga BORRA todas las filas de las 12 tablas y las cuentas de Auth de los seis correos de la carga.");
+    console.log("\nAVISO: esta carga BORRA todas las filas de las 12 tablas y las cuentas de Auth de los correos de la carga y de los retirados.");
     const respuesta = await rl.question("Escriba CARGAR para continuar, o cualquier otra cosa para salir: ");
     return respuesta.trim() === "CARGAR";
   } finally {
@@ -737,9 +738,9 @@ async function cargar(correos: Correos): Promise<void> {
   const dia = (d: string) => new Date(`${d}T00:00:00.000Z`);
 
   try {
-    // Cuentas anteriores de estos dos correos: sus filas referenciadas se vacían primero, para que Auth pueda borrarlas
+    // Cuentas anteriores de estos correos y de los retirados: sus filas referenciadas se vacían primero, para que Auth pueda borrarlas
     const mapaCorreos = correosPorUsuario(correos);
-    const anteriores = await cuentasConEstosCorreos(supabase, Object.values(mapaCorreos));
+    const anteriores = await cuentasConEstosCorreos(supabase, [...Object.values(mapaCorreos), ...CORREOS_RETIRADOS]);
     if (anteriores.length > 0) {
       console.log(`\nSe encontraron ${anteriores.length} cuenta(s) anteriores de la carga. Se vacían las tablas y se borran de Auth.`);
       await prisma.$transaction(vaciar());

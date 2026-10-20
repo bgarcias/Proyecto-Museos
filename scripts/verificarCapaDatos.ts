@@ -177,17 +177,17 @@ async function lecturas(org: string): Promise<{ usuarios: Usuario[] }> {
     const o = await d.obtenerOrganizacion(org);
     esperar(o !== null && o.nombre === carga.NOMBRE_ORGANIZACION, "no coincide con el nombre cargado");
   });
-  await prueba("cantidades: 4 museos, 6 usuarios, 8 categorías, 21 piezas, 6 exposiciones, 5 préstamos, 3 inventarios", async () => {
+  await prueba("cantidades: 4 museos, 4 usuarios, 8 categorías, 21 piezas, 6 exposiciones, 5 préstamos, 3 inventarios", async () => {
     esperarIgual(museos.length, 4, "cantidad de museos");
-    esperarIgual(usuarios.length, 6, "cantidad de usuarios");
+    esperarIgual(usuarios.length, 4, "cantidad de usuarios");
     esperarIgual(categorias.length, 8, "cantidad de categorías");
     esperarIgual(piezas.length, 21, "cantidad de piezas");
     esperarIgual(exposiciones.length, 6, "cantidad de exposiciones");
     esperarIgual(prestamos.length, 5, "cantidad de préstamos");
     esperarIgual(inventarios.length, 3, "cantidad de inventarios");
   });
-  await prueba("11 asignaciones de museos, 15 detalles de inventario y 18 registros de historial", async () => {
-    esperarIgual(usuarios.reduce((n, u) => n + u.museoIds.length, 0), 11, "asignaciones usuario_museo");
+  await prueba("9 asignaciones de museos, 15 detalles de inventario y 18 registros de historial", async () => {
+    esperarIgual(usuarios.reduce((n, u) => n + u.museoIds.length, 0), 9, "asignaciones usuario_museo");
     const detalles = (await Promise.all(inventarios.map((i) => d.listarDetalleInventario(org, i.id)))).flat();
     esperarIgual(detalles.length, 15, "detalles de inventario");
     const historial = (await Promise.all(piezas.map((p) => d.listarHistorialPieza(org, p.id)))).flat();

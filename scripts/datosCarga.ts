@@ -112,8 +112,8 @@ export const PRESTAMOS: DatoPrestamo[] = [
   { pieza: "T6", usuario: "gabriela", institucion: "Centro Cultural Ficticio del Norte", responsable: "Responsable receptor 1", convenio: "CONV-PRUEBA-001", poliza: "POL-PRUEBA-001", valor: 1000, salidaHace: 10, previstaEnDias: 20, estadoSalida: "bueno" },
   { pieza: "P4", usuario: "miguel", institucion: "Biblioteca Ficticia del Sur", responsable: "Responsable receptor 2", convenio: "CONV-PRUEBA-002", poliza: "POL-PRUEBA-002", valor: 2000, salidaHace: 60, previstaEnDias: -15, estadoSalida: "regular" },
   { pieza: "T5", usuario: "marco", institucion: "Instituto Ficticio de Artes Escénicas", responsable: "Responsable receptor 3", convenio: "CONV-PRUEBA-003", poliza: "POL-PRUEBA-003", valor: 500, salidaHace: 90, previstaEnDias: -40, realHace: 30, estadoSalida: "bueno", estadoDevolucion: "regular" },
-  { pieza: "A3", usuario: "lucia", institucion: "Galería Ficticia de Arte", responsable: "Responsable receptor 4", convenio: "CONV-PRUEBA-004", poliza: "POL-PRUEBA-004", valor: 3000, salidaHace: 70, previstaEnDias: -50, realHace: 48, estadoSalida: "regular", estadoDevolucion: "regular" },
-  { pieza: "A3", usuario: "lucia", institucion: "Casa de la Cultura Ficticia", responsable: "Responsable receptor 5", convenio: "CONV-PRUEBA-005", poliza: "POL-PRUEBA-005", valor: 1500, salidaHace: 3, previstaEnDias: 25, estadoSalida: "regular" },
+  { pieza: "A3", usuario: "miguel", institucion: "Galería Ficticia de Arte", responsable: "Responsable receptor 4", convenio: "CONV-PRUEBA-004", poliza: "POL-PRUEBA-004", valor: 3000, salidaHace: 70, previstaEnDias: -50, realHace: 48, estadoSalida: "regular", estadoDevolucion: "regular" },
+  { pieza: "A3", usuario: "miguel", institucion: "Casa de la Cultura Ficticia", responsable: "Responsable receptor 5", convenio: "CONV-PRUEBA-005", poliza: "POL-PRUEBA-005", valor: 1500, salidaHace: 3, previstaEnDias: 25, estadoSalida: "regular" },
 ];
 
 export type DatoInventario = {
@@ -130,7 +130,7 @@ export type DatoInventario = {
 export const INVENTARIOS: DatoInventario[] = [
   { clave: "I1", museo: "teatro", inicia: "gabriela", cierra: "marco", inicioHace: 5, inicioHora: 9, cierreHace: 5, cierreHora: 12, estado: "cerrado" },
   { clave: "I2", museo: "pinacoteca", inicia: "miguel", cierra: "miguel", inicioHace: 12, inicioHora: 9, cierreHace: 12, cierreHora: 12, estado: "cerrado" },
-  { clave: "I3", museo: "amano", inicia: "lucia", inicioHace: 1, inicioHora: 9, estado: "en_curso" },
+  { clave: "I3", museo: "amano", inicia: "miguel", inicioHace: 1, inicioHora: 9, estado: "en_curso" },
 ];
 
 export type DatoDetalle = { inventario: string; pieza: string; resultado: ResultadoInventario; observacion?: string };
@@ -166,15 +166,15 @@ export const HISTORIAL: DatoCambio[] = [
   { hace: 60, hora: 11, pieza: "P3", usuario: "gabriela", campo: ESTADO, anterior: "bueno", nuevo: "regular" },
   { hace: 15, hora: 12, pieza: "P3", usuario: "admin", campo: ESTADO, anterior: "regular", nuevo: "malo" },
   { hace: 90, hora: 10, pieza: "T5", usuario: "marco", campo: DISP, anterior: "disponible", nuevo: "en_prestamo" },
-  { hace: 70, hora: 10, pieza: "A3", usuario: "lucia", campo: DISP, anterior: "disponible", nuevo: "en_prestamo" },
+  { hace: 70, hora: 10, pieza: "A3", usuario: "miguel", campo: DISP, anterior: "disponible", nuevo: "en_prestamo" },
   { hace: 60, hora: 10, pieza: "P4", usuario: "miguel", campo: DISP, anterior: "disponible", nuevo: "en_prestamo" },
-  { hace: 48, hora: 10, pieza: "A3", usuario: "lucia", campo: DISP, anterior: "en_prestamo", nuevo: "disponible" },
+  { hace: 48, hora: 10, pieza: "A3", usuario: "miguel", campo: DISP, anterior: "en_prestamo", nuevo: "disponible" },
   { hace: 30, hora: 10, pieza: "T5", usuario: "marco", campo: DISP, anterior: "en_prestamo", nuevo: "disponible" },
   { hace: 30, hora: 11, pieza: "T5", usuario: "marco", campo: ESTADO, anterior: "bueno", nuevo: "regular" },
   { hace: 20, hora: 10, pieza: "T1", usuario: "gabriela", campo: "ubicación física", anterior: "Depósito A, Estante 1", nuevo: "Sala 1, Vitrina 1" },
   { hace: 10, hora: 10, pieza: "T6", usuario: "gabriela", campo: DISP, anterior: "disponible", nuevo: "en_prestamo" },
-  { hace: 8, hora: 10, pieza: "A1", usuario: "lucia", campo: "ubicación física", anterior: "Almacén", nuevo: "Sala 1, vitrina 1" },
+  { hace: 8, hora: 10, pieza: "A1", usuario: "miguel", campo: "ubicación física", anterior: "Almacén", nuevo: "Sala 1, vitrina 1" },
   { hace: 5, hora: 12, pieza: "T7", usuario: "gabriela", campo: ESTADO, anterior: "regular", nuevo: "malo" },
   { hace: 5, hora: 12, pieza: "T8", usuario: "gabriela", campo: DISP, anterior: "disponible", nuevo: "pendiente_verificacion" },
-  { hace: 3, hora: 10, pieza: "A3", usuario: "lucia", campo: DISP, anterior: "disponible", nuevo: "en_prestamo" },
+  { hace: 3, hora: 10, pieza: "A3", usuario: "miguel", campo: DISP, anterior: "disponible", nuevo: "en_prestamo" },
 ];
