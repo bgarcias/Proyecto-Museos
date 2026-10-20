@@ -480,6 +480,36 @@ Contenido relevante:
 
 Los scripts no imprimen claves, contraseñas, cadenas de conexión, correos ni servidores: los errores se limpian antes de mostrarse.
 
+### Despliegue en Vercel
+
+La aplicación está publicada en https://proyecto-museos.vercel.app, en el plan Hobby de Vercel, desplegada desde la rama `main` del repositorio de GitHub: cada subida a `main` genera un despliegue nuevo.
+
+Para repetirlo:
+1. Importar el repositorio de GitHub en Vercel. Es un proyecto Next.js y no hace falta cambiar ningún comando: `postinstall` genera el cliente de Prisma durante la instalación.
+2. Pegar las variables de entorno de la tabla siguiente, con los valores propios y nunca en el repositorio.
+3. Desplegar.
+4. Cambiar la región de las funciones a Portland (`pdx1`) y redesplegar, porque un cambio de región solo se aplica a un despliegue nuevo.
+
+| Variable | Tipo | Nota |
+|-|-|-|
+| `NEXT_PUBLIC_SUPABASE_URL` | Pública | Se incrusta al compilar: cambiar su valor exige un despliegue nuevo |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Pública | Se incrusta al compilar, igual que la anterior |
+| `DATABASE_URL` | Secreta | Conexión con pool que usa la aplicación (`obtenerDatabaseUrl`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secreta | Crear y borrar cuentas de Auth desde el servidor (`obtenerSupabaseServiceRoleKey`) |
+| `DIRECT_URL` | Secreta | Necesaria en el build, porque `postinstall` ejecuta `prisma generate`. La lee `prisma.config.ts`, no `lib/config/env.ts`. Sin ella la instalación falla con un mensaje que lo explica |
+| `MOSTRAR_DATOS_DEMO`, `CARGA_ADMIN_EMAIL`, `CARGA_COLABORADOR_EMAIL` y `CARGA_CONTRASENA` | Solo servidor | Las del desplegable de datos demo del login. Las tres `CARGA_` son secretas. Si falta alguna, el desplegable no aparece |
+
+Para ocultar el desplegable de datos demo, `MOSTRAR_DATOS_DEMO` se pone en `false` y se redespliega. Con el valor `true` el login muestra la contraseña de demostración a cualquier visitante.
+
+**Región.** Las funciones corren en Portland (`pdx1`), en la misma región que la base de Supabase (West US, Oregón, `us-west-2`). Se configura en el panel de Vercel (Settings, Function Regions) y no en el repositorio. El plan Hobby permite una sola región. Se comprobó en el navegador con la cabecera `X-Vercel-Id`: la petición entra por São Paulo y se ejecuta en Portland.
+
+**Rendimiento observado.** La primera visita tras un despliegue es lenta por el arranque en frío (unos 6 a 7 segundos observados) y las siguientes tardan entre 2 y 3 segundos al pasar de una pantalla a otra. Antes de publicar, medido desde Lima, cada consulta a la base tardaba unos 175 ms. No se midió el tiempo del servidor en Vercel. Pendiente conocido: la conexión a la base se cierra tras 10 segundos de inactividad (`lib/data/prisma/cliente.ts`) y el clic siguiente paga la reapertura.
+
+**Límites y avisos.**
+- El plan Hobby es de uso personal y no comercial, con un máximo de 100 despliegues por día.
+- El plan gratuito de Supabase pausa los proyectos tras una semana sin uso. Conviene abrir la aplicación uno o dos días antes de una presentación, y si está pausado, se restaura desde el panel de Supabase.
+- `db:cargar` apunta a la misma base que usa la aplicación publicada, así que devuelve los datos de demostración a su estado inicial (y recrea las cuentas de demostración) antes de cada presentación. Se ejecuta desde un equipo local con `.env.local`, no desde Vercel.
+
 ## 5. Componentes compartidos: `components/ui/`
 
 | Componente | Descripción |
@@ -720,7 +750,7 @@ Qué se verificó, con qué método, y qué queda sin verificar. Las cifras y lo
 
 **Verificado**
 - `npm run build` compila sin errores ni advertencias, con las 34 páginas, y `tsc` con las opciones de variables y parámetros sin uso no marca nada.
-- Construcción desde cero, como la haría Vercel: un clon del repositorio sin ningún archivo `.env`, `npm ci` con un valor de relleno de `DIRECT_URL` solo en el comando, el `postinstall` genera el cliente de Prisma y `npm run build` pasa sin ninguna variable de entorno. Sin `DIRECT_URL`, la instalación falla con el mensaje que explica qué falta. La prueba se hizo en la máquina de desarrollo (Windows), no en Vercel.
+- Construcción desde cero, como la haría Vercel: un clon del repositorio sin ningún archivo `.env`, `npm ci` con un valor de relleno de `DIRECT_URL` solo en el comando, el `postinstall` genera el cliente de Prisma y `npm run build` pasa sin ninguna variable de entorno. Sin `DIRECT_URL`, la instalación falla con el mensaje que explica qué falta. La prueba se hizo en la máquina de desarrollo (Windows).
 - `npm run db:simular`: 4 usuarios, 9 asignaciones, las 12 tablas con las cantidades de la sección 4 y las 10 reglas de consistencia correctas. No se conecta a nada.
 - `npm run db:verificar`: 27 pruebas contra la base real de Supabase, todas correctas y con 0 fallos, y con la base idéntica antes y después. Escribe datos temporales ("Verificación temporal"), los borra al terminar y comprueba que las 12 tablas quedaron idénticas. Las pruebas son:
   - **Datos cargados (6):** nombre de la organización, cantidades de cada tabla, 9 asignaciones, 15 detalles y 18 registros de historial, tipos convertidos (fechas de solo día en texto, marcas en ISO UTC y valor asegurado como número), correo en minúscula con búsqueda sin distinguir mayúsculas, y lo que ve cada persona según sus museos.
@@ -729,6 +759,7 @@ Qué se verificó, con qué método, y qué queda sin verificar. Las cifras y lo
   - **Operaciones de escritura (8):** museos (prefijo, nombre duplicado, actualizar y desactivar), piezas (códigos correlativos, código anterior normalizado, nada a medias, actualizar, estado, disponibilidad y límites de la base), exposiciones (crear, cruces, modificar y cancelar), préstamos (disponibilidad, un solo préstamo abierto, devolución y límites), inventarios (uno en curso por museo, marcas, cierre con sus efectos y registros), historial y usuarios (reemplazar museos, activar y desactivar, y exigir la cuenta de Auth).
   - **Operaciones simultáneas (7):** dos creaciones de pieza a la vez dan códigos distintos, dos museos con el mismo prefijo reciben prefijos distintos, dos museos con el mismo nombre dejan uno solo, dos préstamos de la misma pieza dejan uno solo, dos exposiciones con la misma pieza y fechas cruzadas dejan una sola, dos inventarios en el mismo museo dejan uno en curso y un doble cierre del mismo inventario se cierra una vez y sin historial duplicado.
 - Medición del 20 de octubre de 2026 con la base real, en producción local (`next start`) y con la sesión del administrador armada solo dentro del proceso de la prueba, sin guardarla: diez pantallas (Inicio, catálogo, detalle de pieza, exposiciones, préstamos, inventarios, menú de reportes, reporte de piezas, usuarios y museos) respondieron con estado 200. Esta medición es de latencia y no cuenta como prueba funcional de cada pantalla.
+- **En producción** (https://proyecto-museos.vercel.app, con la base real): el login con la cuenta de administrador, el listado de piezas con los datos correctos, la generación de un reporte con filtro y la región de las funciones, por la cabecera `X-Vercel-Id` (entrada por São Paulo y ejecución en Portland).
 - **Con clics en el navegador, con la base real de Supabase:**
   - El login de las cuatro cuentas y los museos asignados a cada una: el administrador ve 4 museos y 21 piezas, Miguel ve Pinacoteca y Museo Amano, Gabriela ve Teatro y Pinacoteca, y Marco ve Teatro.
   - El registro de un usuario con contraseña temporal y el cambio obligatorio de esa contraseña, con el rechazo de una contraseña corta.
@@ -742,7 +773,8 @@ Qué se verificó, con qué método, y qué queda sin verificar. Las cifras y lo
 - Con rutas temporales, que se eliminaron al terminar, en esa misma etapa: las acciones de los controladores, la equivalencia de los resultados con el proceso en UTC y en America/Lima, y la exportación de los reportes.
 
 **No verificado**
-- El despliegue en Vercel: no se ha publicado. Tampoco la velocidad en producción real, la duración y la memoria de las funciones de PDF, Excel e importación, ni que Vercel conserve los encabezados de las respuestas de PDF.
+- En producción en Vercel: no se midió el tiempo del servidor (solo se observaron tiempos desde el navegador), ni la duración y la memoria de las funciones de PDF, Excel e importación, ni que Vercel conserve los encabezados de las respuestas de PDF.
+- En producción, además: la recuperación de contraseña con correo real, la importación de Excel, las exportaciones a PDF y a Excel, la ficha técnica, las escrituras de cada rol, las cuentas de colaborador, y tablet y mobile.
 - La recuperación de contraseña con un correo real: el envío del correo, el enlace, el canje del código y la nueva contraseña no se han ejercitado de punta a punta.
 - Las imágenes de las piezas en Supabase Storage: no existe todavía. Hoy se guardan como data URL en la base.
 - Tablet y mobile en los reportes, y el comportamiento responsive del resto de la interfaz (catálogo, detalle, formularios de dos columnas, tarjetas del Inicio, insignias y popups). El menú hamburguesa, las transiciones, la entrada animada de las pantallas y el desplegable de datos demo no se han comprobado en dispositivos reales.
@@ -759,17 +791,15 @@ Qué se verificó, con qué método, y qué queda sin verificar. Las cifras y lo
 
 ### Pendientes
 
-- **Publicación en Vercel.** No se ha desplegado. Lo que falta:
-  - **Variables de entorno.** Públicas: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Secretas, en ejecución: `DATABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`. `DIRECT_URL` (secreta) debe estar definida durante la instalación y el build, porque `postinstall` ejecuta `prisma generate`: sin ella la instalación falla. Opcionales, solo para mostrar el desplegable de datos demo: `MOSTRAR_DATOS_DEMO` y las tres variables `CARGA_`. Con `MOSTRAR_DATOS_DEMO` en true el login muestra la contraseña de demostración a cualquier visitante, así que conviene dejarla sin definir en un sitio público.
-  - **Región cercana a la base.** La latencia medida desde la máquina de desarrollo es de unos 175 ms por consulta, y cada pantalla encadena entre 2 y 7 consultas seguidas (de 0,35 a 1,2 s en `next start`). Además, el pool cierra sus conexiones tras 10 s sin uso, y la primera petición posterior paga la reapertura (cerca de 1,3 s más). Esa distancia desde Lima a la base explica la lentitud medida en desarrollo. Al publicar, el servidor de Vercel debe ir en la región más cercana a la base, que está en West US (Oregon).
-  - **Auth.** Agregar el dominio publicado a las URLs de redirección de Supabase Authentication (sección 4).
-  - **Límites de las funciones.** Revisar la duración y la memoria de la importación de 500 piezas, los PDF y los Excel, y que el límite de cuerpo de las Server Actions (4.25 MB, bajo el tope de 4.5 MB de Vercel) siga siendo coherente.
-- **Imágenes de las piezas en Supabase Storage.** Hoy se guardan como data URL en la columna `imagen_url`, y cada listado de piezas las trae todas. Plan: un bucket público `piezas`, subir la imagen desde el servidor con la clave de servicio al registrar o editar, y guardar su URL pública, con las mismas reglas de PNG o JPG y 1 MB. El marcador `sin-imagen.svg` no pasa por Storage. La ficha técnica solo incrusta data URL PNG o JPG: con URLs de Storage habrá que descargar la imagen en el servidor antes de generar el PDF.
+- **Auth con la dirección publicada.** Registrar en Supabase Authentication la dirección publicada como Site URL y su ruta `/restablecer-contrasena` como URL de redirección.
+- **Servidor de correo propio.** Configurarlo en Supabase para poder probar la recuperación de contraseña con un correo real.
+- **Rendimiento en producción.** La conexión a la base se cierra tras 10 segundos de inactividad y el clic siguiente paga la reapertura. Tampoco se ha medido el tiempo del servidor en Vercel, ni revisado la duración y la memoria de las funciones de importación, PDF y Excel frente a los límites del plan Hobby.
+- **Imágenes de las piezas en Supabase Storage.** Hoy ninguna pieza tiene imagen y se muestra el marcador; una imagen que se suba se guarda como data URL en la columna `imagen_url`, y cada listado de piezas las trae todas. Plan: un bucket público `piezas`, subir la imagen desde el servidor con la clave de servicio al registrar o editar, y guardar su URL pública, con las mismas reglas de PNG o JPG y 1 MB. El marcador `sin-imagen.svg` no pasa por Storage. La ficha técnica solo incrusta data URL PNG o JPG: con URLs de Storage habrá que descargar la imagen en el servidor antes de generar el PDF.
 - **Editar el correo de un usuario no cambia el correo de su cuenta de Auth.** La fila de usuario queda con el correo nuevo, y la persona seguiría entrando con el anterior.
 - **Pantalla de error propia.** No existe `error.tsx` ni `global-error.tsx`: ante un error inesperado se ve la pantalla de error por defecto de Next.js.
 - **Acciones de solo lectura sin captura de errores.** 32 de las 68 funciones exportadas de los controladores (`cargar*`, `buscar*`, `listar*`, `consultar*`, `generarFichaTecnica`, `generarPlantilla`, `obtenerUsuarioActual` y `cerrarSesionAccion`) no pasan por `protegida`.
 - **Lecturas.** Las pantallas cargan listas completas y filtran en el servidor, y varias repiten lecturas (por ejemplo museos y categorías) o encadenan consultas que podrían ir en paralelo. La relación de un usuario con sus museos y la de una exposición con sus piezas se leen con dos consultas.
-- **Proyectos gratuitos.** Un proyecto gratuito de Supabase se pausa tras una semana sin uso y se restaura desde su panel.
+- **Proyectos gratuitos.** Un proyecto gratuito de Supabase se pausa tras una semana sin uso y se restaura desde su panel. El plan Hobby de Vercel es de uso personal y no comercial.
 
 ### Puntos abiertos
 
