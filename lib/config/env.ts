@@ -13,11 +13,6 @@ function requerir(nombre: string, para: string): string {
   return valor;
 }
 
-/** La base real con Prisma es el origen por defecto. Solo DATA_SOURCE=memoria elige la memoria. */
-export function obtenerDataSource(): "memoria" | "prisma" {
-  return process.env.DATA_SOURCE === "memoria" ? "memoria" : "prisma";
-}
-
 /** Muestra el recuadro de cuentas de demostración en el inicio de sesión. Solo con el valor true. */
 export function obtenerMostrarDatosDemo(): boolean {
   return process.env.MOSTRAR_DATOS_DEMO === "true";

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { actualizarUsuario, registrarUsuario } from "@/lib/controllers/CC_Usuario";
 import { ETIQUETAS_ROL, ROLES } from "@/lib/constantes";
-import type { Museo, UsuarioPublico } from "@/lib/tipos";
+import type { Museo, Usuario } from "@/lib/tipos";
 import { alertaError, alertaExito } from "@/components/ui/alertas";
 import BotonCopiar from "@/components/ui/BotonCopiar";
 import Boton, { BotonEnlace } from "@/components/ui/Boton";
@@ -20,7 +20,7 @@ export default function CI_Formulario_Usuario({
   museos,
   esCuentaPropia,
 }: {
-  usuario: UsuarioPublico | null;
+  usuario: Usuario | null;
   museos: Museo[];
   /** Al editar la propia cuenta, el rol se muestra de solo lectura. */
   esCuentaPropia: boolean;

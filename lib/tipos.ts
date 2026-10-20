@@ -25,8 +25,6 @@ export type Usuario = {
   rol: Rol;
   activo: boolean;
   museoIds: string[]; // equivale a usuario_museo
-  contrasena: string; // solo en memoria
-  debeCambiarContrasena: boolean; // solo en memoria
 };
 
 export type Museo = {
@@ -118,9 +116,10 @@ export type DetalleInventario = {
 
 /* Tipos de apoyo para las vistas y los controladores */
 
-export type UsuarioPublico = Omit<Usuario, "contrasena">;
+/** El indicador de cambio de contraseña pendiente sale de la cuenta de Auth, no de la base. */
+export type UsuarioPublico = Usuario & { debeCambiarContrasena: boolean };
 
-export type UsuarioListado = UsuarioPublico & { museos: string[] };
+export type UsuarioListado = Usuario & { museos: string[] };
 
 export type Vigencia = "todas" | EstadoExposicion;
 

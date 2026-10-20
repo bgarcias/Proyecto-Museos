@@ -1,5 +1,4 @@
 import type { Datos } from "../contratos";
-import { ErrorDatos } from "../errores";
 import { obtenerPrisma } from "./cliente";
 import { enTransaccion, exigirMuseos } from "./comun";
 import { aUsuario } from "./conversiones";
@@ -16,7 +15,6 @@ export const usuarios: Pick<
   | "crearUsuario"
   | "actualizarUsuario"
   | "cambiarActivoUsuario"
-  | "actualizarContrasena"
 > = {
   async listarUsuarios(organizacionId) {
     const filas = await obtenerPrisma().usuario.findMany({ where: { organizacionId }, include: CON_MUSEOS });
@@ -39,7 +37,6 @@ export const usuarios: Pick<
     return fila ? aUsuario(fila) : null;
   },
   async crearUsuario(organizacionId, datos) {
-    if (!datos.id) throw new ErrorDatos("La base real exige el id de la cuenta de Auth para crear un usuario");
     const id = datos.id;
     const museoIds = [...new Set(datos.museoIds)];
     return enTransaccion(async (tx) => {
@@ -78,8 +75,5 @@ export const usuarios: Pick<
   },
   async cambiarActivoUsuario(organizacionId, id, activo) {
     await obtenerPrisma().usuario.updateMany({ where: { id, organizacionId }, data: { activo } });
-  },
-  async actualizarContrasena() {
-    throw new ErrorDatos("actualizarContrasena no existe con la base real: la contraseña se cambia en Supabase Auth");
   },
 };

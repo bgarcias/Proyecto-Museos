@@ -100,7 +100,7 @@ export const piezas: Pick<
     const data: Prisma.PiezaUncheckedUpdateManyInput = {};
     if (cambios.nombre !== undefined) data.nombre = cambios.nombre;
     if (cambios.categoriaId !== undefined) data.categoriaId = cambios.categoriaId;
-    // Una clave presente con valor vacío borra el dato, como en la memoria
+    // Una clave presente con valor vacío borra el dato
     if ("codigoAnterior" in cambios) data.codigoAnterior = cambios.codigoAnterior ?? null;
     if ("descripcion" in cambios) data.descripcion = cambios.descripcion ?? null;
     if ("anio" in cambios) data.anio = cambios.anio ?? null;

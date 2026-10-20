@@ -18,8 +18,8 @@ import type {
 export type NuevoMuseo = Omit<Museo, "id" | "activo" | "organizacionId" | "prefijo">;
 export type CambiosMuseo = Partial<Pick<Museo, "nombre" | "tipo" | "direccion">>;
 
-/** El id es opcional: la memoria genera uno si no viene. Con la base real será el id de la cuenta de Auth y se exigirá. */
-export type NuevoUsuario = Omit<Usuario, "id" | "organizacionId"> & { id?: string };
+/** El id es el de la cuenta de Auth. */
+export type NuevoUsuario = Omit<Usuario, "organizacionId">;
 export type CambiosUsuario = Partial<Pick<Usuario, "nombre" | "email" | "rol" | "museoIds">>;
 
 /** Nace "disponible" y con fecha de registro de hoy. El código lo asigna la capa de datos al insertarla. */
@@ -43,7 +43,7 @@ export type NuevoInventario = Omit<Inventario, "id" | "usuarioCierreId" | "fecha
 export type NuevoCambio = Omit<HistorialCambio, "id" | "fecha">;
 
 /*
- * Contrato que cumple toda implementación de la capa de datos (memoria hoy, Prisma después). Todo es asíncrono.
+ * Contrato que cumple la capa de datos. Todo es asíncrono.
  *
  * Aislamiento por organización: toda función que lee o escribe por id, o que lista, recibe organizacionId y solo
  * opera dentro de esa organización. Lo que no tiene columna de organización (pieza, exposición, préstamo,
@@ -51,8 +51,8 @@ export type NuevoCambio = Omit<HistorialCambio, "id" | "fecha">;
  * Una lectura por id devuelve null si es de otra organización. Una escritura sobre algo de otra organización
  * no hace nada, como si no existiera. Las creaciones lanzan un error si lo que referencian es de otra organización.
  *
- * Solo tres funciones operan sin organización, porque resuelven la identidad antes de saber cuál es:
- * obtenerUsuarioPorId (la sesión), obtenerUsuarioPorEmail (el inicio de sesión y el correo único) y actualizarContrasena.
+ * Solo dos funciones operan sin organización, porque resuelven la identidad antes de saber cuál es:
+ * obtenerUsuarioPorId (la sesión) y obtenerUsuarioPorEmail (el inicio de sesión y el correo único).
  */
 export interface Datos {
   /* Organización */
@@ -75,7 +75,6 @@ export interface Datos {
   crearUsuario(organizacionId: string, datos: NuevoUsuario): Promise<Usuario>;
   actualizarUsuario(organizacionId: string, id: string, cambios: CambiosUsuario): Promise<void>;
   cambiarActivoUsuario(organizacionId: string, id: string, activo: boolean): Promise<void>;
-  actualizarContrasena(id: string, contrasena: string): Promise<void>;
 
   /* Categorías */
   listarCategorias(organizacionId: string): Promise<Categoria[]>;
@@ -122,7 +121,4 @@ export interface Datos {
   /* Historial */
   listarHistorialPieza(organizacionId: string, piezaId: string): Promise<HistorialCambio[]>;
   registrarCambio(organizacionId: string, datos: NuevoCambio): Promise<HistorialCambio>;
-
-  /* Datos de demostración */
-  restablecerDatos(): Promise<void>;
 }

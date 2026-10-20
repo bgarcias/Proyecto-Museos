@@ -842,7 +842,7 @@ async function principal(): Promise<void> {
     process.exitCode = 1;
     return;
   } else {
-    console.log("Aviso: faltan o no son válidas algunas variables de la carga. La simulación usa valores de relleno solo en memoria.");
+    console.log("Aviso: faltan o no son válidas algunas variables de la carga. La simulación usa valores de relleno.");
     for (const p of variables.problemas) console.log(`   ${p}`);
     correos = { admin: "administrador.relleno@ejemplo.com", miguel: "colaborador.relleno@ejemplo.com", contrasena: "x".repeat(Math.min(12, CONTRASENA_MAXIMO)) };
   }

@@ -70,7 +70,7 @@ export function validarValorAsegurado(texto: string): { ok: true; valor: number 
   return { ok: true, valor };
 }
 
-/* Reglas de la contraseña nueva: una sola definición para la generación, el cambio, la recuperación y la semilla. */
+/* Reglas de la contraseña nueva: una sola definición para la generación, el cambio y la recuperación. */
 
 export const CONTRASENA_MINIMO = 10;
 export const CONTRASENA_MAXIMO = 15;

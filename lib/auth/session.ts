@@ -2,7 +2,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { obtenerDatos } from "../data";
 import { crearClienteServidor } from "../supabase/servidor";
-import type { UsuarioPublico } from "../tipos";
+import type { Usuario, UsuarioPublico } from "../tipos";
 import { INDICADOR_CAMBIO_CONTRASENA } from "./cuentas";
 
 /**
@@ -10,9 +10,8 @@ import { INDICADOR_CAMBIO_CONTRASENA } from "./cuentas";
  * La fila de usuario se busca por el id de la cuenta de Auth: de ahí salen la organización, el rol y los museos.
  */
 
-function aPublico(usuario: UsuarioPublico & { contrasena?: string }, debeCambiarContrasena: boolean): UsuarioPublico {
-  const { contrasena: _contrasena, ...publico } = usuario;
-  return { ...publico, debeCambiarContrasena };
+function aPublico(usuario: Usuario, debeCambiarContrasena: boolean): UsuarioPublico {
+  return { ...usuario, debeCambiarContrasena };
 }
 
 /**

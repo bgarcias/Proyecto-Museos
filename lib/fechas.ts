@@ -46,7 +46,7 @@ export function diaLocal(iso: string): string {
   return aISO(new Date(iso));
 }
 
-/** Instante UTC (ISO) de una hora de reloj de la zona del sistema en un día dado. Sirve para la semilla. */
+/** Instante UTC (ISO) de una hora de reloj de la zona del sistema en un día dado. */
 export function instanteDeLima(dia: string, hora: number): string {
   const [y, m, d] = dia.split("-").map(Number);
   const supuesto = Date.UTC(y, m - 1, d, hora);

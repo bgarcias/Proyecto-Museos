@@ -50,7 +50,6 @@ export const aMuseo = (f: MuseoDb): Museo => ({
 
 export const aCategoria = (f: CategoriaDb): Categoria => ({ id: f.id, organizacionId: f.organizacionId, nombre: f.nombre });
 
-/** contrasena y debeCambiarContrasena no existen en la base: salen vacío y falso hasta que los reemplace Auth. */
 export const aUsuario = (f: UsuarioDb & { museos: { museoId: string }[] }): Usuario => ({
   id: f.id,
   organizacionId: f.organizacionId,
@@ -59,8 +58,6 @@ export const aUsuario = (f: UsuarioDb & { museos: { museoId: string }[] }): Usua
   rol: f.rol as Rol,
   activo: f.activo,
   museoIds: f.museos.map((m) => m.museoId),
-  contrasena: "",
-  debeCambiarContrasena: false,
 });
 
 export const aPieza = (f: PiezaDb): Pieza => ({

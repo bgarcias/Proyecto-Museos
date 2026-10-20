@@ -109,7 +109,7 @@ type EntradaPieza = {
   imagen?: string | null;
 };
 
-/** La imagen se guarda como data URL (PNG o JPG, máximo 1 MB) mientras el prototipo use memoria. */
+/** La imagen se guarda como data URL (PNG o JPG, máximo 1 MB). */
 function imagenValida(imagen: string): boolean {
   const m = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/.exec(imagen);
   if (!m) return false;

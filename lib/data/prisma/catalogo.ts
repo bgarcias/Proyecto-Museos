@@ -56,7 +56,7 @@ export const catalogo: Pick<
     const data: Prisma.MuseoUpdateManyMutationInput = {};
     if (cambios.nombre !== undefined) data.nombre = cambios.nombre;
     if (cambios.tipo !== undefined) data.tipo = cambios.tipo;
-    // Una clave presente con valor vacío borra la dirección, como en la memoria
+    // Una clave presente con valor vacío borra la dirección
     if ("direccion" in cambios) data.direccion = cambios.direccion ?? null;
     await obtenerPrisma().museo.updateMany({ where: { id, organizacionId }, data });
   },

@@ -1,5 +1,5 @@
 import type { Datos } from "../contratos";
-import { ErrorDatos, traducir } from "../errores";
+import { traducir } from "../errores";
 import { catalogo } from "./catalogo";
 import { exposiciones } from "./exposiciones";
 import { inventarios } from "./inventarios";
@@ -24,7 +24,4 @@ export const datosPrisma: Datos = {
   ...conTraduccion(exposiciones),
   ...conTraduccion(prestamos),
   ...conTraduccion(inventarios),
-  async restablecerDatos() {
-    throw new ErrorDatos("restablecerDatos no existe con la base real");
-  },
 };

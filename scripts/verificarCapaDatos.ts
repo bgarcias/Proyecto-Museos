@@ -304,7 +304,7 @@ async function aislamiento(org: string, usuarioReal: Usuario): Promise<void> {
       () => d.crearInventario(t, { museoId: museos[0].id, usuarioId: usuarioReal.id, fechaInicio: new Date().toISOString() }),
       () => d.registrarCambio(t, { piezaId: piezas[0].id, usuarioId: usuarioReal.id, campoModificado: "x" }),
       () => d.marcarResultadoInventario(t, inventarios[2].id, piezas[0].id, "encontrada"),
-      () => d.crearUsuario(t, { id: randomUUID(), nombre: "n", email: "n@ejemplo.com", rol: "colaborador", activo: true, museoIds: [museos[0].id], contrasena: "", debeCambiarContrasena: false }),
+      () => d.crearUsuario(t, { id: randomUUID(), nombre: "n", email: "n@ejemplo.com", rol: "colaborador", activo: true, museoIds: [museos[0].id] }),
     ];
     for (const [i, intento] of intentos.entries()) {
       try {
@@ -450,7 +450,7 @@ async function escrituras(org: string, usuarios: Usuario[]): Promise<void> {
     esperar((await d.listarHistorialPieza(org, p1.id)).some((h) => h.id === c.id), "no aparece en el historial");
   });
 
-  await prueba("usuarios: reemplazar museos, activar y desactivar, y operaciones que no existen con la base real", async () => {
+  await prueba("usuarios: reemplazar museos, activar y desactivar y exigir la cuenta de Auth", async () => {
     const objetivo = usuarios.find((u) => !u.activo) ?? usuarios[usuarios.length - 1];
     const museos = await d.listarMuseos(org);
     const otros = museos.filter((m) => !m.nombre.startsWith(NOMBRE_TEMPORAL));
@@ -463,22 +463,13 @@ async function escrituras(org: string, usuarios: Usuario[]): Promise<void> {
       await d.actualizarUsuario(org, objetivo.id, { museoIds: objetivo.museoIds });
       await d.cambiarActivoUsuario(org, objetivo.id, objetivo.activo);
     }
-    await falla("La base real exige el id de la cuenta de Auth para crear un usuario", () => d.crearUsuario(org, { nombre: "n", email: "sin.id@ejemplo.com", rol: "colaborador", activo: true, museoIds: [], contrasena: "", debeCambiarContrasena: false }));
     let rechazado = false;
     try {
-      await d.crearUsuario(org, { id: randomUUID(), nombre: "n", email: "sin.cuenta@ejemplo.com", rol: "colaborador", activo: true, museoIds: [], contrasena: "", debeCambiarContrasena: false });
+      await d.crearUsuario(org, { id: randomUUID(), nombre: "n", email: "sin.cuenta@ejemplo.com", rol: "colaborador", activo: true, museoIds: [] });
     } catch (error) {
       rechazado = error instanceof ErrorDatos;
     }
     esperar(rechazado, "un usuario sin cuenta de Auth debe rechazarse");
-    for (const op of [() => d.actualizarContrasena(objetivo.id, "x"), () => d.restablecerDatos()]) {
-      try {
-        await op();
-        throw new Falla("debía fallar con la base real");
-      } catch (error) {
-        esperar(error instanceof ErrorDatos, "debe fallar con un error claro");
-      }
-    }
   });
 }
 

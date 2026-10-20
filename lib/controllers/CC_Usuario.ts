@@ -21,7 +21,7 @@ import {
 import { MENSAJE_CONTRASENA_DEBIL, ROLES } from "../constantes";
 import { obtenerDatos } from "../data";
 import { crearClienteServidor } from "../supabase/servidor";
-import type { DatosDemo, Museo, Resultado, ResultadoCampos, Rol, UsuarioListado, UsuarioPublico } from "../tipos";
+import type { DatosDemo, Museo, Resultado, ResultadoCampos, Rol, Usuario, UsuarioListado, UsuarioPublico } from "../tipos";
 import {
   CONTRASENA_MAXIMO,
   CONTRASENA_MINIMO,
@@ -45,11 +45,6 @@ function generarContrasenaTemporal(): string {
   }
   for (let i = 0; i < LONGITUD_CONTRASENA_TEMPORAL; i++) r += ALFABETO[randomInt(ALFABETO.length)];
   return r;
-}
-
-function sinContrasena<T extends { contrasena: string }>(u: T): Omit<T, "contrasena"> {
-  const { contrasena: _c, ...resto } = u;
-  return resto;
 }
 
 /* Apoyo: inicio de sesión, cambio de contraseña e inicio */
@@ -206,18 +201,6 @@ export async function cargarInicio(): Promise<UsuarioPublico> {
   return exigirSesion();
 }
 
-export async function restablecerDatosDemostracion(): Promise<Resultado> {
-  return protegida("restablecerDatosDemostracion", () => restablecerDatosDemostracionInterno());
-}
-
-async function restablecerDatosDemostracionInterno(): Promise<Resultado> {
-  await exigirSesion();
-  const datos = await obtenerDatos();
-  await datos.restablecerDatos();
-  revalidatePath("/", "layout");
-  return { ok: true, mensaje: "Datos de demostración restablecidos" };
-}
-
 /* ECUS01: Gestionar Usuarios del Museo */
 
 export async function listarUsuarios(): Promise<UsuarioListado[]> {
@@ -229,7 +212,7 @@ export async function listarUsuarios(): Promise<UsuarioListado[]> {
   ]);
   return usuarios
     .map((u) => ({
-      ...sinContrasena(u),
+      ...u,
       museos: u.museoIds.map((id) => museos.find((m) => m.id === id)?.nombre ?? "").filter(Boolean),
     }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
@@ -241,7 +224,7 @@ export async function listarUsuarios(): Promise<UsuarioListado[]> {
  */
 export async function cargarFormularioUsuario(
   id?: string,
-): Promise<{ museos: Museo[]; usuario: UsuarioPublico | null; esCuentaPropia: boolean } | null> {
+): Promise<{ museos: Museo[]; usuario: Usuario | null; esCuentaPropia: boolean } | null> {
   const sesion = await exigirAdministrador();
   const datos = await obtenerDatos();
   if (!id) return { museos: await museosActivosVisibles(datos, sesion), usuario: null, esCuentaPropia: false };
@@ -249,7 +232,7 @@ export async function cargarFormularioUsuario(
   const usuario = await datos.obtenerUsuario(sesion.organizacionId, id);
   if (!usuario) return null;
   const museos = (await museosVisibles(datos, sesion)).filter((m) => m.activo || usuario.museoIds.includes(m.id));
-  return { museos, usuario: sinContrasena(usuario), esCuentaPropia: usuario.id === sesion.id };
+  return { museos, usuario, esCuentaPropia: usuario.id === sesion.id };
 }
 
 type EntradaUsuario = { nombre: string; email: string; rol: string; museoIds: string[] };
@@ -300,8 +283,6 @@ async function registrarUsuarioInterno(
       rol: validada.rol,
       activo: true,
       museoIds,
-      contrasena: "",
-      debeCambiarContrasena: true,
     });
   } catch (error) {
     // Si falla la fila no debe quedar una cuenta de Auth sin usuario

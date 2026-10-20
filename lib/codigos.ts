@@ -53,17 +53,6 @@ export function formatearCodigo(prefijo: string, numero: number): string {
   return `${prefijo}-${String(numero).padStart(MINIMO_DIGITOS_CODIGO, "0")}`;
 }
 
-/** Siguiente número correlativo: el mayor existente con ese prefijo más uno, no la cantidad de piezas. */
-export function siguienteNumeroCodigo(prefijo: string, codigosDelMuseo: string[]): number {
-  const patron = new RegExp(`^${prefijo}-(\\d+)$`);
-  let mayor = 0;
-  for (const codigo of codigosDelMuseo) {
-    const m = patron.exec(codigo);
-    if (m) mayor = Math.max(mayor, Number(m[1]));
-  }
-  return mayor + 1;
-}
-
 /** Orden de códigos: primero el prefijo en orden alfabético y luego el correlativo en orden numérico (MMT-002 antes que MMT-010). */
 export function compararCodigos(a: string, b: string): number {
   const separar = (codigo: string): [string, number] | null => {
