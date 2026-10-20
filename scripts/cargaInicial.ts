@@ -192,7 +192,7 @@ function construir(idsUsuario: Record<string, string>, correos: Record<string, s
     nombre: u.nombre,
     email: correos[u.clave],
     rol: u.rol,
-    activo: u.activo ?? true,
+    activo: true,
   }));
   const usuarioMuseo = datos.USUARIOS.flatMap((u) => u.museos.map((m) => ({ usuarioId: idsUsuario[u.clave], museoId: idMuseo[m] })));
 

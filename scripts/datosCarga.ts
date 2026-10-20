@@ -18,7 +18,7 @@ export const MUSEOS: DatoMuseo[] = [
 ];
 
 /* Las cuentas viven en lib/datosDemo.ts. Aquí se pasan los museos de nombre a clave */
-export type DatoUsuario = { clave: string; nombre: string; rol: Rol; museos: string[]; correo?: string; activo?: boolean };
+export type DatoUsuario = { clave: string; nombre: string; rol: Rol; museos: string[]; correo?: string };
 const claveDeMuseo = (nombre: string): string => {
   const museo = MUSEOS.find((m) => m.nombre === nombre);
   if (!museo) throw new Error(`Museo desconocido en las cuentas: ${nombre}`);
@@ -30,7 +30,6 @@ export const USUARIOS: DatoUsuario[] = CUENTAS_DEMO.map((c) => ({
   rol: c.rol,
   museos: c.museos.map(claveDeMuseo),
   correo: c.correo,
-  activo: c.activo,
 }));
 
 export type DatoPieza = {

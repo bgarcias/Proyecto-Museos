@@ -70,7 +70,6 @@ export async function cargarLogin(): Promise<DatosDemo | null> {
         clave: c.clave,
         nombre: c.nombre,
         rol: c.rol,
-        activo: c.activo,
         correo: c.correo ?? (c.clave === "admin" ? admin : colaborador),
         museos: c.museos,
       })),

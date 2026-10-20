@@ -237,7 +237,7 @@ async function lecturas(org: string): Promise<{ usuarios: Usuario[] }> {
       if (exposV.length !== esperado.exposiciones) problemas.push(`${u.nombre}: exposiciones`);
       if (prestV.length !== esperado.prestamos) problemas.push(`${u.nombre}: préstamos`);
       if (inventV.length !== esperado.inventarios) problemas.push(`${u.nombre}: inventarios`);
-      filas.push({ persona: u.nombre, activo: u.activo ? "sí" : "no", museos: visibles.size, piezas: piezasV.length, exposiciones: exposV.length, prestamos: prestV.length, inventarios: inventV.length });
+      filas.push({ persona: u.nombre, museos: visibles.size, piezas: piezasV.length, exposiciones: exposV.length, prestamos: prestV.length, inventarios: inventV.length });
     }
     esperar(problemas.length === 0, problemas.join("; "));
   });
@@ -451,7 +451,7 @@ async function escrituras(org: string, usuarios: Usuario[]): Promise<void> {
   });
 
   await prueba("usuarios: reemplazar museos, activar y desactivar y exigir la cuenta de Auth", async () => {
-    const objetivo = usuarios.find((u) => !u.activo) ?? usuarios[usuarios.length - 1];
+    const objetivo = usuarios.find((u) => u.rol !== "administrador") as Usuario;
     const museos = await d.listarMuseos(org);
     const otros = museos.filter((m) => !m.nombre.startsWith(NOMBRE_TEMPORAL));
     try {

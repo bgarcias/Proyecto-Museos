@@ -243,7 +243,6 @@ export const BOTON_MOSTRAR_DEMO = "Mostrar datos demo";
 export const BOTON_OCULTAR_DEMO = "Ocultar datos demo";
 export const ETIQUETA_DEMO_CONTRASENA = "Contraseña de todas las cuentas";
 export const ETIQUETA_DEMO_MUSEOS = "Museos";
-export const ETIQUETA_DEMO_DESACTIVADA = "Desactivada";
 export const TEXTO_DEMO_AVISO = "Son datos de demostración, no cuentas reales.";
 export function textoDemoSoloAdministrador(museos: string[]): string {
   return museos.length === 1 ? `${museos[0]} solo lo ve el administrador.` : `${museos.join(" y ")} solo los ve el administrador.`;

@@ -22,10 +22,6 @@ export function obtenerDatabaseUrl(): string {
   return requerir("DATABASE_URL", "para conectar la aplicación a la base de datos");
 }
 
-export function obtenerDirectUrl(): string {
-  return requerir("DIRECT_URL", "para ejecutar las migraciones");
-}
-
 export function obtenerSupabaseUrl(): string {
   return requerir("NEXT_PUBLIC_SUPABASE_URL", "para conectar con Supabase");
 }

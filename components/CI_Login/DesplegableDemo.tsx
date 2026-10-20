@@ -6,7 +6,6 @@ import {
   BOTON_OCULTAR_DEMO,
   ETIQUETAS_ROL,
   ETIQUETA_DEMO_CONTRASENA,
-  ETIQUETA_DEMO_DESACTIVADA,
   ETIQUETA_DEMO_MUSEOS,
   TEXTO_DEMO_AVISO,
   TITULO_DATOS_DEMO,
@@ -14,7 +13,6 @@ import {
 } from "@/lib/constantes";
 import type { DatosDemo as Datos } from "@/lib/tipos";
 import Boton from "@/components/ui/Boton";
-import Insignia from "@/components/ui/Insignia";
 import estilos from "./DesplegableDemo.module.css";
 
 /** Desplegable con las cuentas de la carga inicial. Cerrado por defecto. */
@@ -40,7 +38,6 @@ export default function DesplegableDemo({ datos }: { datos: Datos }) {
                   <div className={estilos.encabezado}>
                     <span className={estilos.nombre}>{c.nombre}</span>
                     <span className={estilos.rol}>{ETIQUETAS_ROL[c.rol]}</span>
-                    {!c.activo && <Insignia valor={ETIQUETA_DEMO_DESACTIVADA} />}
                   </div>
                   <span className={estilos.correo}>{c.correo}</span>
                   <span>
