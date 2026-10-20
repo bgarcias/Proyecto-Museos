@@ -1,6 +1,6 @@
 # Mapa del proyecto
 
-Mapa de ubicación del prototipo de gestión de colecciones y exposiciones para museos. Describe dónde está cada cosa y cómo está construida hoy. Para correrlo, ver `README.md`. Para conectar base de datos, login e imágenes, ver `docs/CONEXION.md`.
+Mapa de ubicación del sistema de gestión de colecciones y exposiciones para museos. Describe dónde está cada cosa y cómo está construido hoy: una aplicación Next.js conectada a PostgreSQL en Supabase a través de Prisma, con inicio de sesión de Supabase Auth. Para correrlo, ver `README.md`.
 
 Arquitectura MVC:
 
@@ -8,7 +8,7 @@ Arquitectura MVC:
 |-|-|-|
 | Vista | `components/CI_*` | Muestra datos y captura clics y formularios. Nunca lee ni escribe datos directamente |
 | Controlador | `lib/controllers/CC_*.ts` | Server Actions con validaciones, reglas de negocio y permisos. Son los únicos que llaman a la capa de datos y a la sesión |
-| Modelo | `lib/tipos.ts` y `lib/data/` | Tipos y capa de datos |
+| Modelo | `lib/tipos.ts` y `lib/data/` | Tipos y capa de datos con Prisma |
 
 ## 1. Estructura de carpetas
 
@@ -16,47 +16,57 @@ Arquitectura MVC:
 
 | Archivo o carpeta | Propósito | Contiene |
 |-|-|-|
-| `app/` | Rutas de la aplicación | 31 páginas `page.tsx`, diez rutas de servidor (`route.ts`), `layout.tsx`, `not-found.tsx` y `globals.css` |
-| `components/` | Vistas y piezas compartidas | 27 carpetas `CI_*` (una por pantalla) y `ui/` |
-| `lib/` | Lógica de la aplicación | Controladores, capa de datos, sesión, configuración, tipos, constantes y utilidades |
-| `prisma/` | Esquema de la futura base de datos | `schema.prisma` con los 12 modelos, solo como archivo. No se ejecuta hoy |
+| `app/` | Rutas de la aplicación | 31 páginas `page.tsx`, diez rutas de servidor (`route.ts`), `layout.tsx`, `template.tsx`, `not-found.tsx` y `globals.css` |
+| `components/` | Vistas y piezas compartidas | 27 carpetas `CI_*` (una por pantalla) y `ui/` (35 archivos) |
+| `lib/` | Lógica de la aplicación | 46 archivos: controladores (11), capa de datos (13), sesión (2), Supabase (2), configuración (1), exportación (4), importación (2) y 11 archivos sueltos de tipos, constantes y utilidades |
+| `prisma/` | Base de datos | `schema.prisma` (12 modelos, solo para generar el cliente) y `sql/` con los dos scripts que crean y protegen la base, que son su fuente de verdad |
+| `scripts/` | Carga de datos de demostración y verificación | `cargaInicial.ts`, `datosCarga.ts` y `verificarCapaDatos.ts` |
 | `public/` | Archivos estáticos | `piezas/` con el único marcador de posición, `sin-imagen.svg` |
-| `docs/` | Documentación técnica | `CONEXION.md`, guía para conectar Prisma, Supabase y Vercel |
 | `node_modules/` | Dependencias instaladas | Generado por `npm install` |
 | `.next/` | Salida de compilación de Next.js | Generado por `npm run dev` y `npm run build` |
-| `package.json` | Dependencias con versiones exactas, scripts (`dev`, `build`, `start`) y `engines` de Node 24.x | |
+| `package.json` | Dependencias con versiones exactas, scripts y `engines` de Node 24.x | Scripts: `dev`, `build`, `start`, `postinstall`, `db:generar`, `db:validar`, `db:simular`, `db:cargar` y `db:verificar` |
 | `package-lock.json` | Bloqueo de versiones de npm | Generado |
 | `tsconfig.json` | Configuración de TypeScript | Alias `@/*` apuntando a la raíz |
 | `tsconfig.tsbuildinfo` | Caché incremental de TypeScript | Generado, excluido por `.gitignore` |
-| `next.config.ts` | Configuración de Next.js | Desactiva las reglas de agentes que Next genera solo y sube a 6 MB el límite del cuerpo de las Server Actions (`experimental.serverActions.bodySizeLimit`) |
+| `next.config.ts` | Configuración de Next.js | Desactiva las reglas de agentes que Next genera solo y fija en 4.25 MB el límite del cuerpo de las Server Actions (`experimental.serverActions.bodySizeLimit`). Razón: el Excel de importación de 4 MB con su formulario, o una imagen de 1 MB como data URL (unos 1.4 MB), no pasa de 4.5 MB, el tope del cuerpo de las funciones de Vercel |
+| `prisma.config.ts` | Configuración de la herramienta de línea de comandos de Prisma | Carga `.env.local` y lee `DIRECT_URL`. Si falta, falla con un mensaje claro, porque `prisma generate` corre al instalar |
+| `proxy.ts` | Proxy de Next 16 (antes middleware) | Renueva la sesión de Supabase Auth en cada petición, con `lib/supabase/proxy.ts` |
 | `next-env.d.ts` | Tipos de Next.js | Generado, no se edita |
 | `.env.example` | Lista de variables de entorno, sin valores | Un comentario por variable |
-| `.env.local` | Valores locales de las variables | Solo `DATA_SOURCE=memoria`, el resto vacío. No se sube al repositorio |
-| `.gitignore` | Exclusiones de Git | Excluye `.env`, `.env.local`, `.env.*.local`, `node_modules`, `.next` y `*.tsbuildinfo`. No excluye `.env.example` |
-| `README.md` | Cómo correr, cuentas de demostración, funciones y cómo restablecer datos | |
+| `.env.local` | Valores locales de las variables | No se sube al repositorio |
+| `.gitignore` | Exclusiones de Git | Excluye `.env`, `.env.local`, `.env.*.local`, `node_modules`, `.next`, `out`, `next-env.d.ts`, `*.tsbuildinfo` y el cliente de Prisma generado (`lib/data/prisma/generado`). No excluye `.env.example` |
+| `README.md` | Qué es, cómo correrlo, cuentas de demostración, funciones y estado de verificación | |
 | `MAPA.md` | Este archivo | |
-| `AJUSTES_CODIGO_V2.md` | Documento de ajustes que describió la adaptación del código al diseño final | Ver el inventario de documentos en la sección 12 |
 
 ### Librerías (versiones exactas de `package.json`)
 
 | Paquete | Versión | Para qué se usa |
 |-|-|-|
-| `next` | 16.3.8 | Framework (App Router) |
+| `next` | 16.3.8 | Framework (App Router), Server Actions y proxy |
 | `react` y `react-dom` | 19.3.0 | Interfaz |
-| `typescript` | 5.9.3 | Tipado |
+| `typescript` | 5.9.3 | Tipado (está en `dependencies`) |
 | `sonner` | 2.0.8 | Alertas (toasts) |
 | `exceljs` | 4.4.0 | Lee y escribe archivos .xlsx (plantilla e importación de piezas, y reportes en Excel) |
 | `@react-pdf/renderer` | 4.9.0 | Genera la ficha técnica y los reportes en PDF |
+| `@prisma/client` | 7.10.1 | Cliente de Prisma. Se genera en `lib/data/prisma/generado`, que no se versiona |
+| `@prisma/adapter-pg` | 7.10.1 | Adaptador que conecta el cliente de Prisma con PostgreSQL |
+| `pg` | 8.23.1 | Controlador de PostgreSQL que usa el adaptador. El código del proyecto no lo importa directamente |
+| `@supabase/supabase-js` | 2.118.0 | API de administración de Auth (crear y borrar cuentas) y los scripts de carga |
+| `@supabase/ssr` | 0.12.7 | Sesión de Supabase Auth en cookies, para el servidor y el proxy |
+| `prisma` | 7.10.1 | Solo desarrollo. Herramienta de línea de comandos: genera el cliente (`postinstall` y `db:generar`) y valida el esquema (`db:validar`) |
+| `tsx` | 4.23.15 | Solo desarrollo. Ejecuta los scripts TypeScript de `scripts/` |
 | `@types/node` | 24.19.2 | Tipos de desarrollo |
+| `@types/pg` | 8.23.1 | Tipos de desarrollo |
 | `@types/react` y `@types/react-dom` | 19.3.0 | Tipos de desarrollo |
 
-Las librerías no cambiaron con el bloque de reportes: los tres reportes nuevos usan las mismas `exceljs` y `@react-pdf/renderer`. No hay Prisma, Supabase ni otras librerías instaladas, y no se usan Tailwind, Bootstrap ni librerías de estilos.
+No se usan Tailwind, Bootstrap ni librerías de estilos. No hay pruebas automáticas ni lint configurados: la verificación son los scripts `db:simular` y `db:verificar` (sección 10).
 
 ### app/
 
 | Ruta de archivo | Propósito |
 |-|-|
-| `app/layout.tsx` | Layout raíz: carga las fuentes (Anton e Inter con `next/font`), muestra el menú si hay sesión y no hay cambio de contraseña pendiente, y monta el contenedor de alertas una sola vez |
+| `app/layout.tsx` | Layout raíz: carga las fuentes (Anton e Inter con `next/font`), lee la sesión, muestra el `Navbar` si hay sesión y no hay cambio de contraseña pendiente, y monta el contenedor de alertas una sola vez |
+| `app/template.tsx` y `app/template.module.css` | Plantilla que envuelve cada pantalla. Su `key` es la ruta completa, así que cada cambio de dirección vuelve a montarla y anima su entrada (opacidad y un pequeño desplazamiento vertical) con las variables `duracion-entrada`, `curva-transicion` y `desplazamiento-entrada`. La animación solo define el punto de partida: al terminar no queda `transform` ni `opacity`, para no afectar a los elementos con `position: fixed`. Los parámetros de búsqueda y `router.refresh` no cambian la ruta y no animan |
 | `app/globals.css` | Variables CSS globales, base de estilos y contenedor. El `body` es una columna flex con `min-height: 100dvh` y `.contenedor` tiene `flex: 1`, para que una pantalla pueda centrarse en vertical con y sin menú |
 | `app/not-found.tsx` y `app/not-found.module.css` | Página 404 propia, con `Celda estrecha` y `BotonEnlace` hacia `/`: muestra 404, "Esta página no se encontró" y el botón "Volver al inicio". Cubre las direcciones inexistentes y los `notFound()` de las páginas, con el mismo mensaje, sin indicar que el recurso exista ni que falte acceso. Sin sesión se ve sin menú, y con sesión bajo el menú del layout raíz. No es una ruta de la tabla de rutas ni una página con controlador |
 | `app/**/page.tsx` | Una página por pantalla. Son componentes de servidor: llaman a un controlador y pasan los datos a la vista |
@@ -69,11 +79,11 @@ Las librerías no cambiaron con el bloque de reportes: los tres reportes nuevos 
 
 | Carpeta | Pantalla |
 |-|-|
-| `CI_Login/` | Inicio de sesión, con validación por campo y botón para mostrar u ocultar la contraseña |
-| `CI_Recuperar_Contrasena/` | Solicitar recuperación de contraseña (solo interfaz) |
-| `CI_Restablecer_Contrasena/` | Definir una nueva contraseña (solo interfaz) |
+| `CI_Login/` | Inicio de sesión, con validación por campo y botón para mostrar u ocultar la contraseña. Incluye `DesplegableDemo.tsx`, el desplegable de datos demo que solo aparece con `MOSTRAR_DATOS_DEMO` en true |
+| `CI_Recuperar_Contrasena/` | Solicitar recuperación de contraseña: Supabase Auth envía un enlace por correo |
+| `CI_Restablecer_Contrasena/` | Definir una nueva contraseña, con la sesión de recuperación que deja el enlace del correo |
 | `CI_Cambiar_Contrasena/` | Cambio de contraseña temporal |
-| `CI_Inicio/` | Inicio con las tarjetas de acceso según el rol y botón de restablecer (incluye `BotonRestablecer.tsx`) |
+| `CI_Inicio/` | Inicio con las tarjetas de acceso según el rol |
 | `CI_Menu_Usuarios/` | Lista de usuarios, con desactivar y activar |
 | `CI_Formulario_Usuario/` | Registrar y editar usuario |
 | `CI_Menu_Museos/` | Lista de museos, con desactivar y activar |
@@ -104,41 +114,45 @@ Cada carpeta `CI_*` tiene su componente `CI_*.tsx` y su CSS Module `CI_*.module.
 
 | Archivo o carpeta | Propósito |
 |-|-|
-| `lib/controllers/` | Controladores `CC_*.ts` y `utilidades.ts` (funciones de apoyo que no son acciones, como `museosVisibles`, `piezasVisibles`, `exposicionesVisibles` y `prestamosVisibles`) |
-| `lib/data/contratos.ts` | Contratos de la capa de datos |
-| `lib/data/index.ts` | Elige la implementación según `DATA_SOURCE` |
-| `lib/data/memoria/` | Implementación de hoy: `index.ts` (funciones sobre el almacén) y `semilla.ts` (datos de demostración) |
-| `lib/data/prisma/` | Reservada para la implementación con Prisma. Hoy solo tiene un `README.md` |
-| `lib/auth/session.ts` | Toda la lógica de sesión |
+| `lib/controllers/` | Once archivos: los nueve controladores `CC_*.ts` (Server Actions), `acceso.ts` (funciones de apoyo que no son acciones: `puedeAccederMuseo`, `museosVisibles`, `museosActivosVisibles`, `puedeAccederAlMuseo`, `piezasVisibles`, `exposicionesVisibles` y `prestamosVisibles`) y `errores.ts` (`protegida`, que captura los errores de las acciones) |
+| `lib/data/contratos.ts` | Contrato `Datos` de la capa de datos y los tipos de entrada de sus operaciones |
+| `lib/data/index.ts` | `obtenerDatos()`: devuelve siempre la implementación con Prisma |
+| `lib/data/errores.ts` | `ErrorDatos`, los `MENSAJES` y la traducción de los errores de la base a mensajes en español (`traducirError`, `traducir` y `esRestriccion`) |
+| `lib/data/prisma/` | Implementación del contrato con Prisma, en diez archivos: `index.ts` (`datosPrisma`, que une los grupos y traduce los errores), `catalogo.ts` (organización, museos y categorías), `usuarios.ts`, `piezas.ts`, `exposiciones.ts`, `prestamos.ts`, `inventarios.ts` (inventarios y también el historial de cambios de las piezas), `conversiones.ts` (de fila de la base a tipo de `lib/tipos.ts`), `comun.ts` (transacciones, bloqueos y verificaciones de organización) y `cliente.ts` (el cliente y su pool). El cliente generado vive en `generado/`, que no se versiona |
+| `lib/auth/session.ts` | Toda la lógica de sesión, sobre Supabase Auth |
+| `lib/auth/cuentas.ts` | Cuentas de Auth con la API de administración (clave de servicio) |
+| `lib/supabase/servidor.ts` | `crearClienteServidor` (con la sesión de las cookies) y `crearClienteAdmin` (con la clave de servicio) |
+| `lib/supabase/proxy.ts` | `actualizarSesion`, que usa `proxy.ts` en cada petición |
 | `lib/config/env.ts` | Lectura central de variables de entorno |
-| `lib/constantes.ts` | Valores fijos, sus etiquetas, la etiqueta de los valores del historial y las reglas de exposiciones y de préstamos compartidas por la vista y el controlador: `LIMITE_ANIOS_FECHAS` (3 años, para las fechas de exposiciones y la devolución prevista de un préstamo), los mensajes de "al menos una pieza", del tope de fechas, de la fecha de salida, del estado de devolución y de longitud de textos, y los máximos de longitud (`MAXIMO_INSTITUCION_DESTINO` y `MAXIMO_RESPONSABLE_RECEPTOR` de 100, `MAXIMO_NUMERO_CONVENIO` y `MAXIMO_NUMERO_POLIZA` de 40). También tiene `ZONA_HORARIA` ("America/Lima"), los textos y las etiquetas de los reportes (`TEXTO_TODOS`, `TEXTO_TODAS`, `TEXTO_SIN_LIMITE`, los títulos y totales, `ETIQUETAS_FILTROS_REPORTE`, `COLUMNAS_REPORTE_PIEZAS`, `COLUMNAS_REPORTE_EXPOSICIONES` y `COLUMNAS_REPORTE_PRESTAMOS`), los mensajes comunes de los reportes (`MENSAJE_RANGO_FECHAS_INVALIDO`, `MENSAJE_SIN_RESULTADOS`, `MENSAJE_FILTRO_INVALIDO`, `MENSAJE_FECHA_FORMATO` y `MENSAJE_SIN_ACCESO_MUSEO`), `errorDeRangoFechas` y `esFechaIso` |
+| `lib/datosDemo.ts` | Fuente única de las cuatro cuentas de demostración (nombre, rol, museos por nombre y correos fijos), de los nombres de los cuatro museos, de los correos retirados que la carga borra de Auth y de `museosSoloAdministrador`. La usan la carga (`scripts/datosCarga.ts`) y el desplegable del login |
+| `lib/constantes.ts` | Valores fijos, sus etiquetas, la etiqueta de los valores del historial y las reglas de exposiciones y de préstamos compartidas por la vista y el controlador: `LIMITE_ANIOS_FECHAS` (3 años, para las fechas de exposiciones y la devolución prevista de un préstamo), los mensajes de "al menos una pieza", del tope de fechas, de la fecha de salida, del estado de devolución y de longitud de textos, y los máximos de longitud (`MAXIMO_INSTITUCION_DESTINO` y `MAXIMO_RESPONSABLE_RECEPTOR` de 100, `MAXIMO_NUMERO_CONVENIO` y `MAXIMO_NUMERO_POLIZA` de 40). También tiene `ZONA_HORARIA` ("America/Lima"), los textos y las etiquetas de los reportes (`TEXTO_TODOS`, `TEXTO_TODAS`, `TEXTO_SIN_LIMITE`, los títulos y totales, `ETIQUETAS_FILTROS_REPORTE`, `COLUMNAS_REPORTE_PIEZAS`, `COLUMNAS_REPORTE_EXPOSICIONES` y `COLUMNAS_REPORTE_PRESTAMOS`), los mensajes comunes de los reportes (`MENSAJE_RANGO_FECHAS_INVALIDO`, `MENSAJE_SIN_RESULTADOS`, `MENSAJE_FILTRO_INVALIDO`, `MENSAJE_FECHA_FORMATO` y `MENSAJE_SIN_ACCESO_MUSEO`), `errorDeRangoFechas` y `esFechaIso`, los textos de la página 404, del menú (`ETIQUETA_ABRIR_MENU`, `ETIQUETA_CERRAR_MENU` y `CONSULTA_MENU_COMPACTO`), de los errores (`MENSAJE_ERROR_INESPERADO` y `MENSAJE_CONTRASENA_DEBIL`) y del desplegable de datos demo |
 | `lib/navegacion.ts` | Fuente única de las opciones de navegación (la usan el menú y las tarjetas de acceso del Inicio) y de la lista `REPORTES` del menú de reportes (cuatro reportes, todos con ruta y disponibles) |
-| `lib/validaciones.ts` | Validaciones de formulario compartidas por las vistas y los controladores: formato de correo, contraseña no vacía al ingresar, las reglas de la contraseña nueva (`CONTRASENA_MINIMO` de 10 y `CONTRASENA_MAXIMO` de 15 caracteres, sus dos mensajes y `errorDeLongitudContrasena`) la validación estricta del año (`validarAnio`, `ANIO_MINIMO`, `anioActual` con el año de la zona de Lima, `anioEnRango` y sus dos mensajes) y la del valor asegurado de un préstamo (`validarValorAsegurado`, `VALOR_ASEGURADO_MINIMO` y `VALOR_ASEGURADO_MAXIMO` y su mensaje) |
-| `lib/codigos.ts` | Prefijo del museo y código de la pieza: `calcularPrefijoMuseo`, `formatearCodigo`, `siguienteNumeroCodigo`, `compararCodigos` (orden por prefijo y luego por número), `claveCodigoAnterior` y las constantes del código anterior (máximo de 40 caracteres y sus dos mensajes) |
+| `lib/validaciones.ts` | Validaciones de formulario compartidas por las vistas y los controladores: formato de correo, contraseña no vacía al ingresar, las reglas de la contraseña nueva (`CONTRASENA_MINIMO` de 10 y `CONTRASENA_MAXIMO` de 15 caracteres, sus dos mensajes y `errorDeLongitudContrasena`), la validación estricta del año (`validarAnio`, `ANIO_MINIMO`, `anioActual` con el año de la zona de Lima, `anioEnRango` y sus dos mensajes) y la del valor asegurado de un préstamo (`validarValorAsegurado`, `VALOR_ASEGURADO_MINIMO` y `VALOR_ASEGURADO_MAXIMO` y su mensaje) |
+| `lib/codigos.ts` | Prefijo del museo y código de la pieza: `calcularPrefijoMuseo`, `prefijoBase`, `nombreTienePrefijo`, `formatearCodigo`, `compararCodigos` (orden por prefijo y luego por número), `claveCodigoAnterior` y las constantes del código anterior (máximo de 40 caracteres y sus mensajes) |
 | `lib/tipos.ts` | Tipos del modelo y tipos de apoyo para vistas y controladores |
-| `lib/fechas.ts` | Todo cálculo y formato de fechas, con la zona `ZONA_HORARIA` (America/Lima) de forma explícita: `aISO`, `hoyISO`, `diaLocal`, `formatearFecha`, `formatearFechaHora`, `instanteDeLima`, `sumarDias`, `diasDesdeHoy`, `diaSiguiente` y `fechaLimite()` (hoy más el límite de años, que usan las exposiciones y la devolución prevista de los préstamos). También el estado de una exposición, la situación de un préstamo y el cruce de rangos (`rangosSeCruzan`) |
-| `lib/permisos.ts` | `puedeAccederMuseo`: regla de acceso por organización y por museo |
-| `lib/importacion.ts` | Lectura, escritura y validación del Excel de importación de piezas. Vuelve a exportar los límites de `lib/limitesImportacion.ts` |
-| `lib/limitesImportacion.ts` | Límites del archivo de importación: `MAXIMO_BYTES_ARCHIVO` (5 MB), `MAXIMO_MEGABYTES_ARCHIVO` y `MAXIMO_FILAS` (500). Están aparte para que las vistas los usen sin llevar `exceljs` al navegador |
+| `lib/fechas.ts` | Todo cálculo y formato de fechas, con la zona `ZONA_HORARIA` (America/Lima) de forma explícita: `aISO`, `hoyISO`, `diaLocal`, `formatearFecha`, `formatearFechaHora`, `instanteDeLima`, `sumarDias`, `diasDesdeHoy`, `diaSiguiente` y `fechaLimite()` (hoy más el límite de años, que usan las exposiciones y la devolución prevista de los préstamos). También el estado de una exposición, la situación de un préstamo y el cruce de rangos (`rangosSeCruzan` y `rangoExposicion`) |
+| `lib/busquedaTexto.ts` | `coincideTexto`: coincidencia parcial que ignora mayúsculas y tildes |
+| `lib/importacion/importacion.ts` | Lectura, escritura y validación del Excel de importación de piezas |
+| `lib/importacion/limitesImportacion.ts` | Límites del archivo de importación: `MAXIMO_BYTES_ARCHIVO` (4 MB), `MAXIMO_MEGABYTES_ARCHIVO` y `MAXIMO_FILAS` (500). Están aparte para que las vistas los usen sin llevar `exceljs` al navegador |
 | `lib/resultadoBusqueda.ts` | Texto de la línea de resultado de los buscadores (`textoResultadoBusqueda`): "N piezas", "1 pieza" o "X de N piezas", y lo mismo para exposiciones |
-| `lib/ficha.tsx` | Documento PDF de la ficha técnica |
-| `lib/exportacionReporte.tsx` | Archivos del reporte por categoría y estado: PDF con `@react-pdf/renderer` y Excel con ExcelJS |
-| `lib/exportacionTabla.tsx` | Exportación genérica por columnas, para los reportes de piezas, exposiciones y préstamos: PDF apaisado con encabezado fijo en cada página y filas que no se parten, y Excel con la hoja "Reporte" y el valor asegurado como número con 2 decimales. Cada columna lleva un ancho relativo, alineado con el de la pantalla |
+| `lib/exportacion/ficha.tsx` | Documento PDF de la ficha técnica |
+| `lib/exportacion/exportacionReporte.tsx` | Archivos del reporte por categoría y estado: PDF con `@react-pdf/renderer` y Excel con ExcelJS |
+| `lib/exportacion/exportacionTabla.tsx` | Exportación genérica por columnas, para los reportes de piezas, exposiciones y préstamos: PDF apaisado con encabezado fijo en cada página y filas que no se parten, y Excel con la hoja "Reporte" y el valor asegurado como número con 2 decimales. Cada columna lleva un ancho relativo, alineado con el de la pantalla |
+| `lib/exportacion/respuestaPdf.ts` | `respuestaPdf`: respuesta común de todo PDF del sistema (los cuatro reportes y la ficha técnica), con `application/pdf` y `Content-Disposition` inline con el nombre del archivo |
 | `lib/formatos.ts` | `formatearMonto`: monto con separador de miles y 2 decimales |
-| `lib/respuestaPdf.ts` | `respuestaPdf`: respuesta común de todo PDF del sistema (los cuatro reportes y la ficha técnica), con `application/pdf` y `Content-Disposition` inline con el nombre del archivo |
 | `lib/reporteParametros.ts` | Conversión de los filtros a parámetros de dirección y de vuelta, para los enlaces y las rutas de exportación: `filtrosAParametros` y `parametrosAFiltros` para el reporte por categoría y estado, y `mapaAParametros` y `parametrosAMapa` para los otros tres |
 
 ## 2. Mapa de rutas
 
-Son 41 rutas: 31 páginas y 10 rutas de servidor. Todas exigen sesión, salvo las tres rutas públicas de acceso (`/login`, `/recuperar-contrasena` y `/restablecer-contrasena`), que redirigen a `/` si ya hay sesión. Las acciones de cada control están en la sección 3. "Sin ECU" quiere decir que la pantalla existe pero el informe no la especifica como caso de uso. La página 404 (`app/not-found.tsx`) no es una ruta de esta tabla ni cuenta entre las 31 páginas.
+Son 41 rutas: 31 páginas y 10 rutas de servidor. Todas exigen sesión, salvo `/login` y `/recuperar-contrasena`, que redirigen a `/` si ya hay sesión. `/restablecer-contrasena` solo se abre con la sesión de recuperación que deja el enlace del correo: sin ella manda a `/login`. Las acciones de cada control están en la sección 3. "Sin ECU" quiere decir que la pantalla existe pero el informe no la especifica como caso de uso. La página 404 (`app/not-found.tsx`) no es una ruta de esta tabla ni cuenta entre las 31 páginas.
 
 | Ruta | Pantalla | Control | Caso de uso |
 |-|-|-|-|
 | `/login` | `CI_Login` | `CC_Usuario` | Apoyo: iniciar sesión |
-| `/recuperar-contrasena` | `CI_Recuperar_Contrasena` | `CC_Usuario` | Apoyo: solicitar recuperación de contraseña, solo interfaz (pública) |
-| `/restablecer-contrasena` | `CI_Restablecer_Contrasena` | `CC_Usuario` | Apoyo: definir nueva contraseña, solo interfaz (pública) |
+| `/recuperar-contrasena` | `CI_Recuperar_Contrasena` | `CC_Usuario` | Apoyo: solicitar recuperación de contraseña por correo (pública) |
+| `/restablecer-contrasena` | `CI_Restablecer_Contrasena` | `CC_Usuario` | Apoyo: definir nueva contraseña, con la sesión de recuperación |
 | `/cambiar-contrasena` | `CI_Cambiar_Contrasena` | `CC_Usuario` | Apoyo: cambio de contraseña temporal |
-| `/` | `CI_Inicio` | `CC_Usuario` | Apoyo: inicio y restablecer datos |
+| `/` | `CI_Inicio` | `CC_Usuario` | Apoyo: inicio |
 | `/usuarios` | `CI_Menu_Usuarios` | `CC_Usuario` | ECUS01 Gestionar Usuarios del Museo (solo administrador) |
 | `/usuarios/nuevo` | `CI_Formulario_Usuario` | `CC_Usuario` | ECUS01 (solo administrador) |
 | `/usuarios/[id]` | `CI_Formulario_Usuario` | `CC_Usuario` | ECUS01, sub flujo editar (solo administrador) |
@@ -180,20 +194,20 @@ Dónde se usan los buscadores:
 - `BuscadorPiezas`: catálogo (modo catálogo, con acciones por fila), ventana "Buscar piezas" de `CI_Formulario_Exposicion`, que abre el botón "Agregar piezas" (selección múltiple, con el museo sede fijo), y ventana "Buscar piezas" de `CI_Formulario_Prestamo` (selección única).
 - `BuscadorExposiciones`: lista de `CI_Menu_Exposiciones` (parte de la lista cargada por la página) y su ventana "Buscar exposición" (selección única, consulta al abrir), usada por Modificar exposición y Cancelar exposición.
 
+
 ## 3. Controladores
 
-Están en `lib/controllers/`, junto con `utilidades.ts`. Los nueve controles `CC_*.ts` son Server Actions (`"use server"`) y todas sus funciones son asíncronas.
+Están en `lib/controllers/`, junto con `acceso.ts` y `errores.ts`. Los nueve controles `CC_*.ts` son Server Actions (`"use server"`) y todas sus funciones son asíncronas.
 
 | Control | Acción | Pantalla que la usa |
 |-|-|-|
-| `CC_Usuario` | `cargarLogin`, `ingresar` | `CI_Login` |
+| `CC_Usuario` | `cargarLogin` (devuelve los datos demo solo si `MOSTRAR_DATOS_DEMO` es true), `ingresar` | `CI_Login` |
 | | `cargarRecuperacion`, `solicitarRecuperacion` | `CI_Recuperar_Contrasena` |
 | | `cargarRestablecimiento`, `definirNuevaContrasena` | `CI_Restablecer_Contrasena` |
 | | `obtenerUsuarioActual` | `app/layout.tsx` (menú) |
 | | `cerrarSesionAccion` | menú, botón "Cerrar sesión" |
 | | `cargarCambioContrasena`, `cambiarContrasena` | `CI_Cambiar_Contrasena` |
 | | `cargarInicio` | `CI_Inicio` |
-| | `restablecerDatosDemostracion` | `BotonRestablecer` (en `CI_Inicio`) |
 | | `listarUsuarios`, `verificarDesactivacionUsuario`, `desactivarUsuario`, `activarUsuario` | `CI_Menu_Usuarios` |
 | | `cargarFormularioUsuario`, `registrarUsuario`, `actualizarUsuario` | `CI_Formulario_Usuario` |
 | `CC_Museo` | `listarMuseos`, `desactivarMuseo`, `activarMuseo` | `CI_Menu_Museos` |
@@ -227,26 +241,30 @@ Están en `lib/controllers/`, junto con `utilidades.ts`. Los nueve controles `CC
 
 Iniciar y cerrar sesión no disparan alertas: `ingresar` y `cerrarSesionAccion` redirigen desde el controlador. La vista de login solo muestra una alerta cuando hay un error general (credenciales incorrectas o cuenta desactivada).
 
-Recuperación de contraseña, solo interfaz: `solicitarRecuperacion` valida el formato del correo y devuelve un mensaje neutro, sin consultar usuarios ni enviar correo. `definirNuevaContrasena` valida el mínimo de 10 y el máximo de 15 caracteres (con `errorDeLongitudContrasena`) y que ambas coincidan, con los mismos textos que el cambio de contraseña, y con datos válidos no modifica ninguna contraseña: avisa que la función se activará al conectar la autenticación. Ninguna pantalla enlaza a `/restablecer-contrasena`: hoy se llega por su dirección. No cambia datos, así que no invalida el layout.
+Recuperación de contraseña con Supabase Auth: `solicitarRecuperacion` valida el formato del correo y pide a Auth (`resetPasswordForEmail`) que envíe el enlace, con `redirectTo` a `/restablecer-contrasena` del mismo servidor (toma el protocolo y el host de la petición). La respuesta es siempre el mismo mensaje neutro, exista o no el correo, y un límite de envíos de Auth tampoco se muestra. El enlace del correo llega a `/restablecer-contrasena` con un código: el proxy lo canjea por la sesión de recuperación y redirige a la misma ruta sin el parámetro. `cargarRestablecimiento` manda a `/login` si no hay sesión. `definirNuevaContrasena` valida la longitud (10 a 15 caracteres, con `errorDeLongitudContrasena`) y que ambas coincidan, cambia la contraseña en Auth, quita el indicador de cambio pendiente, cierra la sesión de recuperación y redirige a `/login`. Ninguna pantalla enlaza a `/restablecer-contrasena`: se llega solo por el enlace del correo.
 
-Cambio de contraseña temporal: `cambiarContrasena` valida el mínimo y el máximo con las mismas constantes (la vista `CI_Cambiar_Contrasena` los valida antes de enviar), rechaza que ambas no coincidan y que la nueva sea igual a la actual, guarda la contraseña y quita la marca de cambio pendiente. Antes de redirigir a `/` invoca `revalidatePath("/", "layout")`: el layout raíz decide en el servidor si muestra el menú según esa marca, y sin invalidarlo el menú no aparecía hasta recargar la página.
+Cambio de contraseña temporal: `cambiarContrasena` valida el mínimo y el máximo con las mismas constantes (la vista `CI_Cambiar_Contrasena` los valida antes de enviar), rechaza que ambas no coincidan, cambia la contraseña en Auth (que rechaza una igual a la actual y una débil, con su mensaje), quita el indicador `debe_cambiar_contrasena` de `app_metadata` y renueva la sesión para que el indicador deje de viajar en ella. Antes de redirigir a `/` invoca `revalidatePath("/", "layout")`: el layout raíz decide en el servidor si muestra el menú según ese indicador, y sin invalidarlo el menú no aparecía hasta recargar la página.
 
-`lib/controllers/utilidades.ts` no es un control: tiene funciones de apoyo (`museosVisibles`, `museosActivosVisibles`, `puedeAccederAlMuseo`, `piezasVisibles`, `exposicionesVisibles`, `prestamosVisibles`, `coincideTexto`) que filtran por la organización y los museos de la persona y calculan museo, categoría, estado y situación. `coincideTexto` es una coincidencia parcial que ignora mayúsculas y tildes ("Ceramica" encuentra "Cerámica"): la usan el filtro de código, de código anterior y de nombre de `buscarPiezas` y el filtro de nombre de `buscarExposiciones`.
+`registrarUsuario` genera la contraseña temporal, crea primero la cuenta de Auth con el indicador de cambio activo (`crearCuenta`) y luego la fila de usuario con el mismo id. Si la fila falla, borra la cuenta de Auth creada para no dejar una cuenta sin usuario.
+
+`lib/controllers/acceso.ts` no es un control: tiene funciones de apoyo (`puedeAccederMuseo`, `museosVisibles`, `museosActivosVisibles`, `puedeAccederAlMuseo`, `piezasVisibles`, `exposicionesVisibles` y `prestamosVisibles`) que filtran por la organización y los museos de la persona y calculan museo, categoría, estado y situación. `coincideTexto` (en `lib/busquedaTexto.ts`) es una coincidencia parcial que ignora mayúsculas y tildes ("Ceramica" encuentra "Cerámica"): la usan el filtro de código, de código anterior y de nombre de `buscarPiezas`, el filtro de nombre de `buscarExposiciones` y el de institución destino del reporte de préstamos.
+
+`lib/controllers/errores.ts` tiene `protegida(nombre, accion)`, que envuelve las acciones que escriben o validan (36 de las 68 funciones exportadas de los controladores). Deja pasar las redirecciones y los 404 de Next, convierte un `ErrorDatos` en `{ ok: false, error }` con su mensaje en español y cualquier otro error en `MENSAJE_ERROR_INESPERADO`, dejando el detalle solo en el registro del servidor. Las otras 32 son de solo lectura (`cargar*`, `buscar*`, `listar*`, `consultar*`, `generarFichaTecnica`, `generarPlantilla`, `obtenerUsuarioActual` y `cerrarSesionAccion`) y no la usan: ante un error se ve la pantalla de error por defecto de Next.js.
 
 `cargarDetallePieza` usa los mismos permisos que las demás rutas de pieza: una pieza inexistente o de un museo no asignado responde 404. `actualizarEstado` devuelve en `datos` el campo `estadoActual`, que la vista ya no usa porque tras guardar vuelve al catálogo.
 
-`prestamosVisibles` estaba en `CC_Prestamo` y se movió a `utilidades.ts` para que lo compartan el módulo de préstamos y el reporte de préstamos, y `PrestamoListado` incluye ahora `museoId`, el museo de la pieza. `cargarFormularioPrestamo` devuelve los museos, las categorías, `hoy` (`hoyISO()` del servidor, en la zona de Lima) y `limite`: la vista parte de esa fecha para la fecha de salida, así que no depende de la zona horaria del navegador. Los formularios de pieza (`anioMaximo`) y de exposición (`limite`) reciben igualmente sus valores ya calculados desde el servidor. `registrarPrestamo` recibe un único `piezaId`.
+`prestamosVisibles` está en `acceso.ts` para que lo compartan el módulo de préstamos y el reporte de préstamos, y `PrestamoListado` incluye `museoId`, el museo de la pieza. `cargarFormularioPrestamo` devuelve los museos, las categorías, `hoy` (`hoyISO()` del servidor, en la zona de Lima) y `limite`: la vista parte de esa fecha para la fecha de salida, así que no depende de la zona horaria del navegador. Los formularios de pieza (`anioMaximo`) y de exposición (`limite`) reciben igualmente sus valores ya calculados desde el servidor. `registrarPrestamo` recibe un único `piezaId`.
 
 ## 4. Capa de datos y sesión
 
 ### Modelo de datos: 12 entidades
 
-Equivalen a 12 tablas de la futura base de datos (`prisma/schema.prisma`). Los ids son texto con formato uuid. Las relaciones muchos a muchos se representan con arreglos.
+Equivalen a las 12 tablas de la base de datos (`prisma/sql/01_crear_tablas.sql`). Los ids son texto con formato uuid: el de `usuario` es el de su cuenta de Supabase Auth y los demás los genera la base. Las relaciones muchos a muchos se representan con arreglos en los tipos.
 
 | Tabla | Tipo en `lib/tipos.ts` | Campos |
 |-|-|-|
 | `organizacion` | `Organizacion` | id, nombre |
-| `usuario` | `Usuario` | id, organizacionId, nombre, email, rol, activo, museoIds[], contrasena y debeCambiarContrasena (estos dos existen solo en memoria) |
+| `usuario` | `Usuario` | id, organizacionId, nombre, email, rol, activo, museoIds[]. No guarda contraseña: la maneja Supabase Auth |
 | `museo` | `Museo` | id, organizacionId, nombre, prefijo, tipo (tipo de colección), direccion?, activo |
 | `usuario_museo` | `Usuario.museoIds` | Relación usuario y museo |
 | `categoria` | `Categoria` | id, organizacionId, nombre |
@@ -258,15 +276,17 @@ Equivalen a 12 tablas de la futura base de datos (`prisma/schema.prisma`). Los i
 | `inventario` | `Inventario` | id, museoId, usuarioId (quien lo inició), usuarioCierreId? (quien lo cerró, vacío mientras está en curso), fechaInicio, fechaCierre?, estado |
 | `detalle_inventario` | `DetalleInventario` | id, inventarioId, piezaId, resultado, observacion? |
 
-Las fechas de exposición y de préstamo son solo día (`YYYY-MM-DD`). Las fechas de historial, inventario y registro de pieza son fecha y hora ISO, guardadas en UTC.
+Las fechas de exposición y de préstamo son solo día (`YYYY-MM-DD`). Las fechas de historial, inventario y registro de pieza son fecha y hora ISO, guardadas en UTC (columnas `timestamptz`; las de solo día son columnas `date`).
 
-**Zona horaria única.** `ZONA_HORARIA` (`lib/constantes.ts`) vale "America/Lima" y es el único criterio de día y de hora del sistema. Las funciones de `lib/fechas.ts` (`aISO`, `hoyISO`, `diaLocal`, `formatearFecha`, `formatearFechaHora`, `instanteDeLima`, `sumarDias`, `diasDesdeHoy`, `diaSiguiente` y `fechaLimite`) la usan de forma explícita, con `Intl.DateTimeFormat`. Una marca con hora se guarda en UTC y el día y la hora que se calculan o se muestran se convierten a America/Lima. Una fecha de solo día se trata como texto y no se desplaza nunca. `anioActual` y `esFechaIso` usan la misma zona (la segunda valida el calendario en UTC, que no depende de ninguna zona), la semilla parte del hoy de Lima (`instanteDeLima` arma sus marcas con hora) y los formularios de pieza, exposición y préstamo reciben `anioMaximo`, `limite` y `hoy` ya calculados desde el servidor. Ningún cálculo depende de la zona del proceso, del servidor ni del navegador.
+**Zona horaria única.** `ZONA_HORARIA` (`lib/constantes.ts`) vale "America/Lima" y es el único criterio de día y de hora del sistema. Las funciones de `lib/fechas.ts` (`aISO`, `hoyISO`, `diaLocal`, `formatearFecha`, `formatearFechaHora`, `instanteDeLima`, `sumarDias`, `diasDesdeHoy`, `diaSiguiente` y `fechaLimite`) la usan de forma explícita, con `Intl.DateTimeFormat`. Una marca con hora se guarda en UTC y el día y la hora que se calculan o se muestran se convierten a America/Lima. Una fecha de solo día se trata como texto y no se desplaza nunca. `anioActual` y `esFechaIso` usan la misma zona (la segunda valida el calendario en UTC, que no depende de ninguna zona), la carga inicial parte del hoy de Lima (`instanteDeLima` arma sus marcas con hora) y los formularios de pieza, exposición y préstamo reciben `anioMaximo`, `limite` y `hoy` ya calculados desde el servidor. Ningún cálculo depende de la zona del proceso, del servidor ni del navegador.
+
 
 ### Prefijo del museo y código de la pieza: `lib/codigos.ts`
 
-- **Prefijo del museo.** Lo calcula la capa de datos al crear el museo (`crearMuseo`), nunca lo escribe la persona y no cambia después, ni siquiera si se edita el nombre. Regla: la inicial de cada palabra significativa del nombre, sin artículos, preposiciones ni conjunciones (de, del, la, las, el, los, y, e), en mayúsculas y sin tildes. Si hay una sola palabra significativa, sus tres primeras letras. Máximo 5 letras. Si el prefijo ya existe en la organización, se agrega un número al final (2, 3 y así) hasta que sea único. Ejemplos: Museo Municipal de Teatro da MMT, Museo Casa Quiñones da MCQ, Pinacoteca Municipal Ignacio Merino da PMIM, Sala Cultural Santa Rosa da SCSR y Herbario da HER. Se muestra como columna Prefijo en la lista de museos y en solo lectura al editar. El registro de museo no tiene campo de prefijo.
-- **Código de la pieza.** Lo asigna el sistema al guardar y es inmutable: prefijo del museo, guion y número correlativo de al menos 3 dígitos con ceros a la izquierda (MMT-009). El número es el mayor correlativo existente en ese museo con ese prefijo más uno, no la cantidad de piezas, así que los huecos no lo alteran. Se calcula dentro de la capa de datos, en la misma operación que inserta la pieza (`crearPieza`, y `crearPiezas` en el orden de las filas), y no en los controladores ni en las vistas. La persona nunca lo escribe: registrar pieza no tiene campo de código y editar pieza lo muestra en solo lectura.
+- **Prefijo del museo.** Lo calcula la capa de datos al crear el museo (`crearMuseo`), nunca lo escribe la persona y no cambia después, ni siquiera si se edita el nombre. Regla: la inicial de cada palabra significativa del nombre, sin artículos, preposiciones ni conjunciones (de, del, la, las, el, los, y, e), en mayúsculas y sin tildes. Si hay una sola palabra significativa, sus tres primeras letras. Máximo 5 letras. Si el prefijo ya existe en la organización, se agrega un número al final (2, 3 y así) hasta que sea único. Ejemplos: Museo Municipal de Teatro da MMT, Pinacoteca Municipal Ignacio Merino da PMIM, Museo Amano da MA, Museo Andrés del Castillo da MAC y Herbario da HER. La base garantiza la unicidad por organización (`museo_organizacion_prefijo_unico`): si dos registros simultáneos calculan el mismo prefijo, `crearMuseo` lo recalcula, hasta 5 intentos. Se muestra como columna Prefijo en la lista de museos y en solo lectura al editar. El registro de museo no tiene campo de prefijo.
+- **Código de la pieza.** Lo asigna el sistema al guardar y es inmutable: prefijo del museo, guion y número correlativo de al menos 3 dígitos con ceros a la izquierda (MMT-009). El número sale del contador `ultimo_correlativo` del museo, que se incrementa de forma atómica en la misma transacción que inserta la pieza (`crearPieza`, y `crearPiezas` en el orden de las filas): la fila del museo queda bloqueada hasta el final, así que dos registros simultáneos no repiten códigos. El contador nunca baja, así que un número no se reutiliza ni los huecos lo alteran. Se calcula dentro de la capa de datos, y no en los controladores ni en las vistas. La persona nunca lo escribe: registrar pieza no tiene campo de código y editar pieza lo muestra en solo lectura.
 - **Código anterior.** Campo opcional de la pieza, de máximo 40 caracteres y sin validación de formato. Si se llena, no puede repetirse dentro del mismo museo (la comparación ignora mayúsculas y espacios repetidos). Se puede editar y su cambio queda en el historial como "código anterior". Mensajes: "El código anterior no puede tener más de 40 caracteres" y "Ya existe una pieza con ese código anterior en el museo".
+
 
 ### Valores fijos y etiquetas: `lib/constantes.ts`
 
@@ -289,52 +309,133 @@ El tipo de museo es el tipo de colección y se representa con `TipoColeccion`, `
 
 ### Contratos: `lib/data/contratos.ts`
 
-Interfaz `Datos`. Toda implementación debe cumplirla. Todas las funciones devuelven promesas.
+Interfaz `Datos`. La implementación debe cumplirla. Todas las funciones devuelven promesas.
+
+**Aislamiento por organización.** Toda función que lee o escribe por id, o que lista, recibe `organizacionId` y solo opera dentro de esa organización. Lo que no tiene columna de organización (pieza, exposición, préstamo, inventario, detalle de inventario e historial) se filtra por la organización de su museo. Una lectura por id devuelve `null` si es de otra organización. Una escritura sobre algo de otra organización no hace nada, como si no existiera. Las creaciones lanzan un error si lo que referencian es de otra organización. Solo dos funciones operan sin organización, porque resuelven la identidad antes de saber cuál es: `obtenerUsuarioPorId` (la sesión) y `obtenerUsuarioPorEmail` (el inicio de sesión y el correo único).
 
 | Grupo | Funciones |
 |-|-|
 | Organización | `obtenerOrganizacion` |
-| Museos | `listarMuseos` (por organización), `obtenerMuseo`, `crearMuseo` (calcula el prefijo), `actualizarMuseo` (no admite cambiar el prefijo), `cambiarActivoMuseo` |
-| Usuarios | `listarUsuarios` (por organización), `obtenerUsuario`, `obtenerUsuarioPorEmail`, `crearUsuario`, `actualizarUsuario`, `cambiarActivoUsuario`, `actualizarContrasena` |
-| Categorías | `listarCategorias` (por organización) |
+| Museos | `listarMuseos`, `obtenerMuseo`, `crearMuseo` (calcula el prefijo), `actualizarMuseo` (no admite cambiar el prefijo), `cambiarActivoMuseo` |
+| Usuarios | `listarUsuarios`, `obtenerUsuario`, `obtenerUsuarioPorId`, `obtenerUsuarioPorEmail`, `crearUsuario` (exige el id de la cuenta de Auth), `actualizarUsuario`, `cambiarActivoUsuario` |
+| Categorías | `listarCategorias` |
 | Piezas | `listarPiezas`, `obtenerPieza`, `buscarPiezaPorCodigoAnterior`, `crearPieza` (asigna el código), `crearPiezas` (en lote, asigna los códigos en orden), `actualizarPieza`, `actualizarEstadoPieza`, `actualizarDisponibilidadPieza` |
 | Exposiciones | `listarExposiciones`, `obtenerExposicion`, `crearExposicion`, `actualizarExposicion`, `cancelarExposicion` |
 | Préstamos | `listarPrestamos`, `obtenerPrestamo`, `crearPrestamo`, `registrarDevolucion` |
 | Inventarios | `listarInventarios`, `obtenerInventario`, `crearInventario`, `marcarResultadoInventario`, `listarDetalleInventario`, `cerrarInventario` (recibe el id, la fecha de cierre y la persona que cierra) |
 | Historial | `listarHistorialPieza`, `registrarCambio` |
-| Demostración | `restablecerDatos` |
 
-En `prisma/schema.prisma`, `Inventario` tiene `usuarioCierreId` (columna `usuario_cierre_id`, opcional) con su relación al usuario. Como ahora hay dos relaciones entre `Inventario` y `Usuario`, ambas llevan nombre (`InventarioIniciadoPor` e `InventarioCerradoPor`) y `Usuario` tiene los dos lados (`inventariosIniciados` e `inventariosCerrados`). El esquema solo se editó: no se ejecutó ninguna migración.
-
-Hoy ningún controlador usa `obtenerOrganizacion`, `obtenerExposicion`, `obtenerPrestamo` ni `obtenerInventario`. Se conservan porque forman parte del contrato mínimo que se definió para la futura implementación con Prisma.
+Hoy ningún controlador usa `obtenerOrganizacion`, `obtenerExposicion`, `obtenerPrestamo` ni `obtenerInventario`: solo los llama `scripts/verificarCapaDatos.ts`. Se conservan por ser parte del contrato.
 
 También se exportan los tipos `NuevoMuseo` (sin prefijo), `CambiosMuseo`, `NuevoUsuario`, `CambiosUsuario`, `NuevaPieza` (sin código), `CambiosPieza` (sin código), `NuevaExposicion`, `CambiosExposicion`, `NuevoPrestamo`, `DevolucionPrestamo`, `NuevoInventario` y `NuevoCambio`.
 
-### Selección: `lib/data/index.ts`
+### Implementación con Prisma: `lib/data/prisma/`
 
-`obtenerDatos()` devuelve la implementación según `DATA_SOURCE`. Por defecto es `memoria`. Con `prisma` lanza un error claro mientras no exista la implementación.
-
-### Implementación en memoria: `lib/data/memoria/`
+`lib/data/index.ts` devuelve siempre `datosPrisma`. No hay otra implementación ni selección por variable de entorno.
 
 | Archivo | Contiene |
 |-|-|
-| `index.ts` | `datosMemoria`, que cumple `Datos`. Guarda el almacén en `globalThis` (`__museosDemo`) para sobrevivir a la recarga en caliente y devuelve copias. Por eso, al editar la semilla hay que reiniciar el servidor de desarrollo: de lo contrario se conserva el almacén anterior, con la semilla anterior Los registros nuevos usan `crypto.randomUUID()`. Calcula el prefijo de cada museo nuevo y el código de cada pieza nueva con `lib/codigos.ts` |
-| `semilla.ts` | `crearDatosIniciales()`: datos de demostración con ids uuid fijos. Las fechas se calculan desde hoy. `restablecerDatos` vuelve a llamar a esta función |
+| `index.ts` | `datosPrisma`, que cumple `Datos`. Une los grupos y envuelve cada función para que los errores de la base salgan como `ErrorDatos` con mensaje en español |
+| `catalogo.ts` | Organización, museos (con el cálculo del prefijo y su reintento) y categorías |
+| `usuarios.ts` | Usuarios y sus museos asignados. El correo se busca sin distinguir mayúsculas |
+| `piezas.ts` | Piezas. El lote de creación reserva los números de código con un incremento atómico de `ultimo_correlativo` y asigna los códigos en el orden recibido |
+| `exposiciones.ts` | Exposiciones con sus piezas, y la validación de cruces con otras exposiciones y con préstamos abiertos |
+| `prestamos.ts` | Préstamos y devoluciones, con el bloqueo de la pieza |
+| `inventarios.ts` | Inventarios, detalles, cierre con sus efectos y el historial de cambios de las piezas |
+| `conversiones.ts` | Pasa de la fila de la base al tipo de `lib/tipos.ts`: fechas como texto, valores opcionales sin `null` y decimales como número |
+| `comun.ts` | `enTransaccion` (espera máxima de 10 s y duración máxima de 30 s, para cubrir una importación de 500 piezas con la latencia de la red), `bloquearPiezas` y `bloquearInventario` (`for update`, siempre en orden de id para no cruzar bloqueos) y las verificaciones de organización (`exigirMuseos`, `exigirPiezas`, `exigirCategorias` y `exigirUsuarios`) |
+| `cliente.ts` | `obtenerPrisma()`: el cliente con el adaptador `@prisma/adapter-pg` y `DATABASE_URL`. Pool de 3 conexiones como máximo, 5 s de espera para obtener una conexión, 10 s de inactividad antes de cerrarla y SSL activado sin validar el certificado (Supabase lo exige). Se guarda en `globalThis` para que la recarga en caliente no abra un pool nuevo |
+| `generado/` | Cliente de Prisma generado. No se versiona: lo crea `prisma generate` al instalar (`postinstall`) |
 
-### Semilla de demostración
+Las operaciones que tocan más de una fila relacionada corren en una transacción: crear piezas (en lote o una sola), actualizar una pieza, crear y modificar exposiciones, crear préstamos, crear inventarios, marcar y cerrar inventarios, registrar un cambio de historial y crear y actualizar usuarios con sus museos. La devolución de un préstamo es una actualización condicionada: solo cambia si el préstamo sigue abierto, así que dos devoluciones simultáneas cierran una sola vez.
 
-Cantidades (comprobadas con un script temporal de consistencia): 1 organización, 4 museos, 6 usuarios, 8 categorías, 21 piezas, 18 registros de historial, 6 exposiciones, 5 préstamos, 3 inventarios y 15 detalles de inventario.
+**Errores de la base a mensajes en español (`lib/data/errores.ts`).** `ErrorDatos` es el error de la capa de datos y siempre lleva un mensaje listo para mostrar, nunca texto técnico. `traducirError` busca en el texto del error de la base el nombre de una restricción conocida y devuelve su mensaje: correo repetido, nombre de museo repetido, código anterior repetido o demasiado largo, un solo inventario en curso por museo, un solo préstamo abierto por pieza, año fuera de rango, valor asegurado, longitudes de los textos del préstamo y fechas inválidas de exposición y de préstamo. Cualquier otro error da el mensaje genérico "No se pudo completar la operación. Intenta de nuevo" y solo el tipo y el código llegan al registro del servidor. Los mensajes que los controladores ya producen se repiten en `MENSAJES` con el mismo texto, porque en los controladores son privados.
 
-Cuentas (todas con la contraseña de demostración `Museos2026`, que sale de la constante `CONTRASENA_DEMO` de `semilla.ts`, se valida con las reglas de longitud al cargar la semilla y también usa "Restablecer datos de demostración"):
+### Base de datos: `prisma/`
 
-| Persona | Correo | Rol | Museos asignados | Estado |
-|-|-|-|-|-|
-| Brandon Garcia Sanchez | brandon.garcia@example.com | administrador | Museo Municipal de Teatro, Pinacoteca Municipal Ignacio Merino, Museo Casa Quiñones | activo |
-| Gabriela Linares Ortega | gabriela.linares@example.com | colaborador | Museo Municipal de Teatro, Pinacoteca Municipal Ignacio Merino | activo |
-| Marco Aguirre Soto | marco.aguirre@example.com | colaborador | Museo Municipal de Teatro | activo |
-| Miguel Zambrano Melendez | miguel.zambrano@example.com | colaborador | Pinacoteca Municipal Ignacio Merino | activo |
-| Lucía Paredes Vargas | lucia.paredes@example.com | colaborador | Museo Casa Quiñones | activo |
-| Diego Salazar Rojas | diego.salazar@example.com | colaborador | Museo Municipal de Teatro | inactivo |
+El proyecto de Supabase está en la región West US (Oregon), según su panel. Los scripts de `prisma/sql/` son la fuente de verdad de la base. `prisma/schema.prisma` solo refleja las 12 tablas para generar el cliente. **No se usan `prisma migrate`, `prisma db push` ni `prisma db pull`**: cualquiera de ellos podría modificar la base sin pasar por los scripts. Prisma solo genera el cliente y valida el esquema (`db:generar` y `db:validar`).
+
+| Script | Qué hace |
+|-|-|
+| `prisma/sql/01_crear_tablas.sql` | **Destruye datos.** Borra las 12 tablas de la aplicación del esquema `public` y las vuelve a crear vacías, con sus claves foráneas, índices y restricciones `check`. No toca ninguna otra tabla ni el esquema `auth`. `usuario.id` referencia a `auth.users` y se borra con la cuenta. Ejecutar solo en una base que se puede perder |
+| `prisma/sql/02_reglas_y_seguridad.sql` | Se ejecuta después del 01, y de nuevo cada vez que se repite el 01. Crea las unicidades que Prisma no puede expresar y deja la seguridad de las 12 tablas |
+
+Restricciones que viven en la base (no solo en los controladores):
+- **Valores fijos con `check`:** rol, tipo de colección, estado de conservación, disponibilidad, estado de inventario y resultado de inventario.
+- **Formato:** el prefijo del museo solo lleva letras mayúsculas y dígitos, y el código de la pieza tiene la forma prefijo, guion y número.
+- **Valores y longitudes:** año de la pieza desde -10000, código anterior de máximo 40 caracteres, valor asegurado mayor que cero y de hasta 100.000.000 (decimal de 12 dígitos con 2 decimales) y los textos del préstamo con máximos de 100, 100, 40 y 40 caracteres.
+- **Fechas:** la fecha de fin de una exposición es posterior a la de inicio, la devolución prevista de un préstamo es posterior a la salida, y la fecha de devolución real y el estado de devolución van juntos o ninguno de los dos. Un inventario cerrado exige fecha y persona de cierre y uno en curso no las tiene.
+- **Unicidad:** correo sin distinguir mayúsculas; nombre de museo por organización sin distinguir mayúsculas ni espacios al borde; prefijo de museo por organización; nombre de categoría por organización; código de la pieza por museo; código anterior por museo, normalizado (espacios repetidos reducidos, sin espacios al borde y en minúscula) y solo cuando existe; un resultado por pieza en cada inventario; un solo inventario en curso por museo y un solo préstamo abierto por pieza (índices únicos parciales).
+- **Seguridad por fila (RLS):** activada en las 12 tablas y sin ninguna política, y además se quitan todos los permisos a los roles `anon` y `authenticated`. La API pública de Supabase no puede leer ni escribir estas tablas. La aplicación entra solo desde el servidor, con Prisma y la cadena de conexión.
+- **Claves foráneas:** `restrict` en casi todas. `cascade` en las asignaciones (`usuario_museo` y `pieza_exposicion`), en el historial de una pieza y en los detalles de un inventario.
+
+El aislamiento entre organizaciones y entre museos no depende de la base: lo aplican los controladores y la capa de datos.
+
+### Sesión y autenticación
+
+La sesión es la de Supabase Auth, guardada en cookies que renueva el proxy. No hay registro público: las cuentas las crea el administrador.
+
+| Archivo | Qué hace |
+|-|-|
+| `proxy.ts` y `lib/supabase/proxy.ts` | En cada petición renuevan la sesión con `getClaims` y dejan las cookies al día para los componentes de servidor. En `/restablecer-contrasena` con un código en la dirección canjean ese código por la sesión de recuperación y redirigen a la misma ruta sin el parámetro. Las respuestas llevan `Cache-Control: private, no-store`. Si faltan las variables de Supabase no hay sesión que renovar y la petición sigue |
+| `lib/supabase/servidor.ts` | `crearClienteServidor` (clave anónima y sesión de las cookies) y `crearClienteAdmin` (clave de servicio, sin sesión ni renovación) |
+| `lib/auth/session.ts` | Toda la lógica de sesión (tabla siguiente) |
+| `lib/auth/cuentas.ts` | Cuentas de Auth con la API de administración: `crearCuenta` (correo ya confirmado, sin enviar correos), `borrarCuenta` y `quitarIndicadorCambioContrasena` |
+
+| Función de `session.ts` | Qué hace |
+|-|-|
+| `obtenerSesion` | Devuelve el usuario de la sesión o `null`. Valida con `getClaims` (valida la firma sin guardar la sesión de nuevo) y busca la fila de usuario por el id de la cuenta de Auth, de donde salen organización, rol y museos. Una cuenta desactivada no tiene sesión. Se calcula una sola vez por petición (`cache` de React) |
+| `iniciarSesion` | Inicia sesión con correo y contraseña. Una cuenta de Auth sin fila de usuario cuenta como credenciales incorrectas, y una desactivada cierra la sesión y no entra aunque la contraseña sea correcta |
+| `cerrarSesion` | Cierra la sesión de Auth |
+| `exigirSesion` | Exige sesión. Sin sesión redirige a `/login`. Con contraseña temporal redirige a `/cambiar-contrasena`, salvo con la opción `permitirCambioPendiente` |
+| `exigirAdministrador` | Exige sesión de administrador. Un colaborador vuelve a `/` |
+
+**Indicador de cambio de contraseña.** Vive en `app_metadata` de la cuenta de Auth (`debe_cambiar_contrasena`), que la persona no puede editar, a diferencia de `user_metadata`. Al registrar un usuario el controlador genera una contraseña temporal de 10 caracteres y crea la cuenta con el indicador activo. La sesión lo lee de los claims y lo agrega al usuario (`UsuarioPublico.debeCambiarContrasena`), que no es una columna de la base. Al cambiar la contraseña se quita el indicador y se renueva la sesión.
+
+**Configuración necesaria en el panel de Supabase** (Authentication):
+- **URLs de redirección:** agregar la dirección del sitio y su ruta `/restablecer-contrasena`, tanto para `http://localhost:3000` como para el dominio publicado. Sin ellas el enlace del correo de recuperación no vuelve a la aplicación.
+- **Longitud mínima de contraseña:** configurarla en 10 para que coincida con la regla de la aplicación (10 a 15 caracteres). El máximo de 15 lo exige solo la aplicación.
+- **Plantilla del correo de recuperación:** el flujo usa el enlace por defecto, que llega con un código que el proxy canjea. Esto no se probó con un correo real (sección 10).
+
+### Variables de entorno: `lib/config/env.ts`
+
+Único archivo del código de la aplicación que lee `process.env`. Cada variable falla con un mensaje en español solo cuando se usa su función. Las excepciones son los scripts de `scripts/` y `prisma.config.ts`, que corren fuera de Next, que no carga `.env.local`, y lo cargan ellos mismos. Los nombres están en `.env.example`; los valores van solo en `.env.local` y en las variables del proyecto en Vercel.
+
+| Variable | Función de `env.ts` | Tipo | Para qué sirve |
+|-|-|-|-|
+| `DATABASE_URL` | `obtenerDatabaseUrl` | Secreta | Conexión con pool que usa la aplicación (en Supabase, la del pooler en modo transacción) |
+| `DIRECT_URL` | (la lee `prisma.config.ts`) | Secreta | Conexión directa o session pooler para las herramientas de Prisma. Se necesita al instalar, porque `postinstall` ejecuta `prisma generate`. Si falta, la instalación falla con un mensaje que lo explica |
+| `NEXT_PUBLIC_SUPABASE_URL` | `obtenerSupabaseUrl` | Pública | URL del proyecto de Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `obtenerSupabaseAnonKey` | Pública | Clave anónima de Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | `obtenerSupabaseServiceRoleKey` | Secreta | Clave de servicio: crear y borrar cuentas de Auth desde el servidor. Nunca en componentes de cliente |
+| `CARGA_ADMIN_EMAIL` | `obtenerCargaAdminEmail` | Secreta | Correo del administrador de la carga inicial |
+| `CARGA_COLABORADOR_EMAIL` | `obtenerCargaColaboradorEmail` | Secreta | Correo de Miguel Zambrano Meléndez en la carga inicial |
+| `CARGA_CONTRASENA` | `obtenerCargaContrasena` | Secreta | Contraseña que comparten las cuatro cuentas de la carga, con las reglas de longitud de la aplicación |
+| `MOSTRAR_DATOS_DEMO` | `obtenerMostrarDatosDemo` | Solo servidor | Con el valor `true`, el login muestra el desplegable de datos demo |
+
+### Datos de demostración
+
+Todos los registros son de demostración, y los cuatro museos se usan solo como ejemplo: Museo Municipal de Teatro y Pinacoteca Municipal Ignacio Merino son museos municipales de Lima, y Museo Amano y Museo Andrés del Castillo son museos privados de Lima. Los datos viven en `scripts/datosCarga.ts` (separados de la lógica de `scripts/cargaInicial.ts`), y las cuentas, en `lib/datosDemo.ts`. Todo se referencia por claves de texto: los ids, los prefijos, los códigos y las fechas los calcula el script, con días relativos al día de la carga en hora de Lima, así que los estados siempre son coherentes.
+
+Cantidades (las muestra `db:simular` y las comprueba `db:verificar`): 1 organización, 4 museos, 4 usuarios, 9 asignaciones de museo, 8 categorías, 21 piezas, 18 registros de historial, 6 exposiciones, 14 asignaciones de pieza a exposición, 5 préstamos, 3 inventarios y 15 detalles de inventario.
+
+Cuentas. La contraseña es la misma para las cuatro y está en `CARGA_CONTRASENA` de `.env.local`: no se escribe en ningún archivo versionado ni en estos documentos. El login la muestra solo si `MOSTRAR_DATOS_DEMO` es true.
+
+| Persona | Correo | Rol | Museos asignados |
+|-|-|-|-|
+| Brandon Garcia Sanchez | El de `CARGA_ADMIN_EMAIL` | administrador | Museo Municipal de Teatro, Pinacoteca Municipal Ignacio Merino, Museo Amano y Museo Andrés del Castillo |
+| Miguel Zambrano Meléndez | El de `CARGA_COLABORADOR_EMAIL` | colaborador | Pinacoteca Municipal Ignacio Merino y Museo Amano |
+| Gabriela Linares Ortega | gabriela@vestigio.com | colaborador | Museo Municipal de Teatro y Pinacoteca Municipal Ignacio Merino |
+| Marco Aguirre Soto | marco@vestigio.com | colaborador | Museo Municipal de Teatro |
+
+Todas las cuentas están activas. El Museo Andrés del Castillo solo lo ve el administrador (`museosSoloAdministrador` en `lib/datosDemo.ts`, que también alimenta el texto del desplegable). Lo que ve cada cuenta, calculado desde los datos de la carga (es lo que comprueba `db:verificar`):
+
+| Cuenta | Museos | Piezas | Exposiciones | Préstamos | Inventarios |
+|-|-|-|-|-|-|
+| Administrador | 4 | 21 | 6 | 5 | 3 |
+| Miguel | 2 | 11 | 4 | 3 | 2 |
+| Gabriela | 2 | 14 | 5 | 3 | 2 |
+| Marco | 1 | 8 | 2 | 2 | 1 |
 
 Museos, prefijo, tipo de colección y piezas (los prefijos se calculan con la regla de `lib/codigos.ts`):
 
@@ -342,67 +443,66 @@ Museos, prefijo, tipo de colección y piezas (los prefijos se calculan con la re
 |-|-|-|-|
 | Museo Municipal de Teatro | MMT | otro | 8 (MMT-001 a MMT-008) |
 | Pinacoteca Municipal Ignacio Merino | PMIM | arte | 6 (PMIM-001 a PMIM-006) |
-| Museo Casa Quiñones | MCQ | historico | 5 (MCQ-001 a MCQ-005) |
-| Sala Cultural Santa Rosa | SCSR | otro | 2 (SCSR-001 y SCSR-002), inactiva, cerrada por remodelación |
+| Museo Amano | MA | arqueologia | 5 (MA-001 a MA-005) |
+| Museo Andrés del Castillo | MAC | ciencias_naturales | 2 (MAC-001 y MAC-002) |
 
-El administrador ve todos los museos de su organización, incluida la sala inactiva. Los códigos conservan el número de antes y solo cambió el prefijo: PMI pasa a PMIM, CQ pasa a MCQ, SR pasa a SCSR y MMT queda igual. Tres piezas de Museo Casa Quiñones tienen código anterior, para probar la función: MCQ-001 (INV-1987-0412), MCQ-002 (INV-1987-0418) y MCQ-005 (INV-1991-0107). La próxima pieza que se registre recibe MMT-009, PMIM-007, MCQ-006 o SCSR-003, según el museo.
+Tres piezas del Museo Amano tienen código anterior, para probar la función: MA-001 (INV-1987-0412), MA-002 (INV-1987-0418) y MA-005 (INV-1991-0107). La próxima pieza que se registre recibe MMT-009, PMIM-007, MA-006 o MAC-003, según el museo.
 
-Categorías: ocho (Arqueológico, Pintura, Escultura, Cerámica, Textil, Orfebrería, Documento y Otro). "Otro" es la categoría general. Hoy ninguna pantalla crea, edita ni desactiva categorías: el contrato de datos solo tiene `listarCategorias`, y para cambiarlas hay que editar la semilla. En el esquema de Prisma existe la tabla `categoria` por organización, y su gestión queda pendiente.
+Categorías: ocho (Arqueológico, Pintura, Escultura, Cerámica, Textil, Orfebrería, Documento y Otro). "Otro" es la categoría general. Ninguna pantalla crea, edita ni desactiva categorías: el contrato de datos solo tiene `listarCategorias`, y para cambiarlas hay que editar `scripts/datosCarga.ts` y volver a cargar, o escribir en la base.
 
 Contenido relevante:
-- Exposiciones: una vigente (Teatro), tres programadas (Teatro, Casa Quiñones y Pinacoteca), una finalizada (Pinacoteca) y una cancelada (Pinacoteca).
-- Préstamos: dos en curso (MMT-006 en el Teatro y MCQ-003 en Casa Quiñones), uno vencido (PMIM-004) y dos devueltos (MMT-005 y un préstamo anterior de MCQ-003).
-- Inventarios: el del Teatro está cerrado, lo inició Gabriela y lo cerró Marco; el de la Pinacoteca está cerrado, y lo inició y lo cerró Miguel; el de Casa Quiñones está en curso, iniciado por Lucía, y no tiene persona de cierre. Las personas de cierre tienen acceso al museo de su inventario, y en el del Teatro es distinta de quien lo inició, para ver ambos datos.
-- Una pieza pendiente de verificación (MMT-008), resultado del inventario cerrado de Teatro.
-- Ninguna pieza de la semilla tiene imagen: su `imagenUrl` queda vacío y la interfaz muestra el marcador `sin-imagen.svg` solo al mostrarla.
+- Exposiciones: una vigente (Teatro), tres programadas (Teatro, Pinacoteca y Museo Amano), una finalizada (Pinacoteca) y una cancelada (Pinacoteca).
+- Préstamos: dos abiertos (MMT-006 en el Teatro y un segundo préstamo de MA-003 en el Museo Amano), uno vencido (PMIM-004) y dos devueltos (MMT-005 y un préstamo anterior de MA-003).
+- Inventarios: el del Teatro está cerrado, lo inició Gabriela y lo cerró Marco; el de la Pinacoteca está cerrado, y lo inició y lo cerró Miguel; el del Museo Amano está en curso, iniciado por Miguel, y no tiene persona de cierre. Las personas de inicio y de cierre tienen acceso al museo de su inventario, y en el del Teatro son distintas, para ver ambos datos.
+- Una pieza pendiente de verificación (MMT-008), resultado del inventario cerrado del Teatro.
+- Ninguna pieza tiene imagen: su `imagen_url` queda vacío y la interfaz muestra el marcador `sin-imagen.svg` solo al mostrarla.
 
-### Sesión: `lib/auth/session.ts`
+**Las 10 reglas de consistencia.** `db:simular` las exige sobre los datos antes de cargar, y la carga repite la revisión con los ids reales de Auth:
+1. Las piezas de una exposición son del museo de la exposición.
+2. Una pieza en préstamo tiene exactamente un préstamo abierto, y solo ellas. El estado de salida del préstamo abierto es el actual de la pieza.
+3. Una pieza con préstamo abierto no está en una exposición activa con fechas cruzadas.
+4. Ninguna pieza está en dos exposiciones activas con fechas cruzadas.
+5. Un préstamo cerrado tiene fecha y estado de devolución, y la pieza es coherente: disponible y con el estado de la devolución, salvo que haya un préstamo posterior abierto sobre la misma pieza (MA-003), caso en que debe estar en préstamo.
+6. Una pieza pendiente de verificación es exactamente una pieza no encontrada en un inventario cerrado.
+7. Un inventario cerrado tiene un detalle por cada pieza esperada (las del museo registradas a la fecha de inicio y sin préstamo ese día), uno en curso solo tiene las marcadas, y hay uno en curso por museo como máximo.
+8. Todo es de la organización, el correo es único y el código es único por museo.
+9. Todo historial, préstamo e inventario es de alguien con acceso al museo de la pieza, y sigue el orden de los eventos: nada anterior al registro de la pieza, ninguna devolución antes de la salida, y cada salida y devolución tiene su registro de historial.
+10. Los efectos de cada evento están reflejados en el estado actual de las piezas: el historial de cada campo se encadena y termina en el valor actual, y cada cierre de inventario dejó el efecto de sus no encontradas y sus piezas con daño.
 
-Única parte que lee o escribe la cookie `httpOnly` `sesion_demo` (guarda el id del usuario, en texto).
+### Carga inicial y verificación: `scripts/`
 
-| Función | Qué hace |
+| Script (comando) | Qué hace |
 |-|-|
-| `obtenerSesion` | Devuelve el usuario de la sesión (sin contraseña) o `null`. Una cuenta desactivada no tiene sesión |
-| `iniciarSesion` | Escribe la cookie |
-| `cerrarSesion` | Borra la cookie |
-| `exigirSesion` | Exige sesión. Sin sesión redirige a `/login`. Con contraseña temporal redirige a `/cambiar-contrasena`, salvo con la opción `permitirCambioPendiente` |
-| `exigirAdministrador` | Exige sesión de administrador. Un colaborador vuelve a `/` |
+| `scripts/cargaInicial.ts simular` (`npm run db:simular`) | No se conecta a nada. Construye todas las filas, las 12 tablas, y las revisa: cantidades, usuarios (un administrador con todos los museos, un colaborador con dos, otro con uno y un museo que solo ve el administrador), restricciones de la base y las 10 reglas. Imprime los prefijos, el estado de las exposiciones y préstamos y las filas por tabla. Si faltan las variables de la carga, usa valores de relleno |
+| `scripts/cargaInicial.ts cargar` (`npm run db:cargar`) | Repite esa revisión y pide escribir `CARGAR`. Luego busca en Auth las cuentas anteriores de los correos de la carga y de los correos retirados (`CORREOS_RETIRADOS`: solo esos, nunca otra cuenta). Si existen, vacía primero las 12 tablas y después borra esas cuentas. Crea las cuatro cuentas de Auth con el correo confirmado, arma las filas con los ids reales, revisa de nuevo y, en una sola transacción, vacía las 12 tablas y las llena en orden de claves foráneas. Si algo falla, no queda nada a medias en las tablas y borra las cuentas creadas en esa ejecución. No corre con `NODE_ENV=production`. Necesita `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y las tres variables `CARGA_` |
+| `scripts/verificarCapaDatos.ts` (`npm run db:verificar`) | Verifica la capa de datos con Prisma contra la base cargada: 27 pruebas, sección 10. Escribe datos temporales con el nombre "Verificación temporal", los borra al terminar y comprueba que las 12 tablas quedaron idénticas |
+| `scripts/datosCarga.ts` | Los datos de la carga: museos, categorías, piezas, exposiciones, préstamos, inventarios, detalles e historial. Las cuentas las importa de `lib/datosDemo.ts` |
 
-### Variables de entorno: `lib/config/env.ts`
-
-Único archivo que lee `process.env`. Cada variable falla con un mensaje en español solo cuando se usa su función.
-
-| Función | Variable |
-|-|-|
-| `obtenerDataSource` | `DATA_SOURCE` (`memoria` por defecto) |
-| `obtenerDatabaseUrl` | `DATABASE_URL` |
-| `obtenerDirectUrl` | `DIRECT_URL` |
-| `obtenerSupabaseUrl` | `NEXT_PUBLIC_SUPABASE_URL` |
-| `obtenerSupabaseAnonKey` | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
-| `obtenerSupabaseServiceRoleKey` | `SUPABASE_SERVICE_ROLE_KEY` |
+Los scripts no imprimen claves, contraseñas, cadenas de conexión, correos ni servidores: los errores se limpian antes de mostrarse.
 
 ## 5. Componentes compartidos: `components/ui/`
 
 | Componente | Descripción |
 |-|-|
-| `Boton.tsx` | `Boton` y `BotonEnlace`, con tres variantes: principal (negro), secundario (borde) y peligro (texto y borde de `--color-error`, sin relleno, y con fondo de error y texto sobre error al pasar el cursor), con tamaño pequeño opcional y dos opciones reutilizables: `bloque` (ancho completo del contenedor, con altura mínima común y texto centrado que puede partirse en dos líneas) y `compacto`, que se usa con `bloque` y da una altura fija (`--alto-boton-compacto`, la de un texto de dos líneas), menos relleno y letra menor, para pilas de botones dentro de una fila de tabla. La variante peligro se usa en Desactivar (usuarios y museos) y en Cancelar exposición; los demás Cancelar de formularios y diálogos son secundarios. `BotonEnlace` puede descargar un archivo (`descarga`) o abrir en una pestaña nueva (`nuevaPestana`, con `noopener noreferrer`) |
+| `Boton.tsx` | `Boton` y `BotonEnlace`, con tres variantes: principal (negro), secundario (borde) y peligro (texto y borde de `color-error`, sin relleno, y con fondo de error y texto sobre error al pasar el cursor), con tamaño pequeño opcional y dos opciones reutilizables: `bloque` (ancho completo del contenedor, con altura mínima común y texto centrado que puede partirse en dos líneas) y `compacto`, que se usa con `bloque` y da una altura fija (`alto-boton-compacto`, la de un texto de dos líneas), menos relleno y letra menor, para pilas de botones dentro de una fila de tabla. La variante peligro se usa en Desactivar (usuarios y museos) y en Cancelar exposición; los demás Cancelar de formularios y diálogos son secundarios. `BotonEnlace` puede descargar un archivo (`descarga`) o abrir en una pestaña nueva (`nuevaPestana`, con `noopener noreferrer`) |
 | `Celda.tsx` | `Celda` (sección con borde, con las opciones `estrecha` y `ancha` para formularios de una y de dos columnas), `EncabezadoPagina` (etiqueta, título y acciones) y `Acciones` (fila de botones) |
 | `Campo.tsx` | Piezas de formulario: `Campo` (con marca de obligatorio y propiedad `error` para el mensaje debajo del control), `Entrada`, `AreaTexto`, `Seleccion` (con tratamiento central de la opción de placeholder), `Casilla`, `GrupoCasillas`, `AyudaCampo` (línea de ayuda en texto secundario bajo un control: la usan el campo de imagen del formulario de pieza y los campos de museo y de archivo de la importación), `DatoLectura`, `Formulario` (con la opción `dosColumnas`, que reparte sus hijos en una rejilla de dos columnas, y los componentes `ColumnaFormulario` y `FilaCompleta`; en tablet y mobile pasa a una columna) y `Filtros` |
 | `CampoContrasena.tsx` | Campo de contraseña con un botón dentro del campo que alterna entre ocultar y mostrar. Es un botón de tipo `button` con etiqueta accesible "Mostrar contraseña" u "Ocultar contraseña". Se usa en `CI_Login`, `CI_Cambiar_Contrasena` y `CI_Restablecer_Contrasena` |
 | `PantallaAcceso.tsx` | Bloque público de acceso (login y recuperación): logotipo VESTIGIO sobre fondo amarillo y tarjeta del mismo ancho, centrados en horizontal y en vertical |
-| `Tabla.tsx` | Tabla con líneas negras y cabecera en mayúsculas. Fila resaltada con `data-seleccionada="true"`. La propiedad opcional `clase` agrega reglas propias a una sola tabla, sin afectar a las demás: la usan los tres reportes nuevos con `TablaReporte.module.css` y la tabla de piezas del inventario con el CSS Module de `CI_Realizar_Inventario` |
+| `Tabla.tsx` | Tabla con líneas negras y cabecera en mayúsculas. Fila resaltada con `data-seleccionada="true"`. La propiedad opcional `clase` agrega reglas propias a una sola tabla, sin afectar a las demás: la usan los reportes de piezas, exposiciones y préstamos con `TablaReporte.module.css` y la tabla de piezas del inventario con el CSS Module de `CI_Realizar_Inventario` |
 | `BotonesReporte.tsx` | Fila de botones de los reportes: Generar Reporte, Limpiar y Volver a la izquierda, y las exportaciones a la derecha, que solo se ven con un reporte en pantalla. El PDF abre en una pestaña nueva y el Excel se descarga. La usan los reportes de piezas, de exposiciones y de préstamos. El reporte por categoría y estado arma la misma fila en su propia vista. Su CSS Module es `BotonesReporte.module.css` |
-| `FiltrosReporte.module.css` | Fila de filtros de los reportes de piezas, exposiciones y préstamos, con un ancho propio por filtro (`.amplio`, `.medio` y `.corto`, con anchos de variables globales). La clase `.medio` quedó sin uso: el reporte de piezas ahora usa clases propias para sus filtros |
-| `TablaReporte.module.css` | Reglas comunes de las tablas de los tres reportes nuevos: encabezados que pueden partirse en dos líneas, columnas ajustadas a su contenido (`.ajustada`), códigos, convenios, pólizas y fechas en una sola línea (`.linea`), columna centrada (`.centrada`) y texto secundario bajo un dato principal (`.debajo`) |
-| `Ventana.tsx` | Ventana emergente con título, contenido y pie, con un máximo de `--ancho-ventana` (960px). Versión angosta para diálogos. La propiedad `seleccion` usa `--ancho-ventana-seleccion` (960px) y la usan las ventanas de selección de piezas de exposiciones y préstamos. La propiedad `ancha` (hasta `--ancho-maximo`) quedó sin uso. La ventana de selección no tiene reglas propias para tablet y mobile: aplican las generales de `Ventana` |
-| `DialogoConfirmacion.tsx` | Ventana angosta con los botones Confirmar y Cancelar |
+| `FiltrosReporte.module.css` | Fila de filtros de los reportes de piezas, exposiciones y préstamos, con un ancho propio por filtro (`.amplio` y `.corto`, con anchos de variables globales) |
+| `TablaReporte.module.css` | Reglas comunes de las tablas de los reportes de piezas, exposiciones y préstamos: encabezados que pueden partirse en dos líneas, columnas ajustadas a su contenido (`.ajustada`), códigos, convenios, pólizas y fechas en una sola línea (`.linea`), columna centrada (`.centrada`) y texto secundario bajo un dato principal (`.debajo`) |
+| `Popup.tsx` | Popup base: título, contenido y pie con botones, sobre un velo. Se cierra con Escape, con un clic fuera o con el botón Cerrar, y declara `role="dialog"` y `aria-modal`. Ancho máximo `ancho-popup` (960px; 90vw en tablet y 100vw en mobile). La propiedad `angosto` usa `ancho-popup-angosto` (480px) para diálogos y `seleccion` usa `ancho-popup-seleccion` (960px) |
+| `PopupSeleccion.tsx` | `Popup` con el ancho de selección. Lo usan los popups de selección de piezas de exposiciones y de préstamos. No tiene reglas propias para tablet y mobile: aplican las generales de `Popup` |
+| `PopupConfirmacion.tsx` | `Popup` angosto con los botones Cancelar y Confirmar (el segundo se deshabilita mientras `procesando`). Lo usan las confirmaciones de desactivar, activar y cancelar |
 | `Mensaje.tsx` | Mensaje que queda visible dentro de la pantalla, con tres variantes: éxito (verde), error (rojo) y neutro (gris claro). Texto blanco en éxito y error, borde grueso del proyecto |
 | `BotonCopiar.tsx` | Botón "Copiar" que lleva un texto al portapapeles. Al copiar pasa a "Copiada" durante 2,5 segundos y vuelve a "Copiar". El éxito no lanza alerta. Si el navegador impide copiar, lanza una alerta de error. Se usa junto a la contraseña temporal en `CI_Formulario_Usuario` |
-| `ContenedorAlertas.tsx` | Monta el `Toaster` de Sonner (una sola vez, en `app/layout.tsx`) y fija su ancho. No define posición ni duración: usa los valores por defecto de Sonner, abajo a la derecha, con entrada desde abajo y 4 segundos de permanencia. Su CSS Module da el estilo: éxito en verde y error en rojo, ambos con texto blanco y borde grueso, con todas las medidas multiplicadas por `--escala-alertas` |
+| `ContenedorAlertas.tsx` | Monta el `Toaster` de Sonner (una sola vez, en `app/layout.tsx`) y fija su ancho. No define posición ni duración: usa los valores por defecto de Sonner, abajo a la derecha, con entrada desde abajo y 4 segundos de permanencia. Su CSS Module da el estilo: éxito en verde y error en rojo, ambos con texto blanco y borde grueso, con todas las medidas multiplicadas por `escala-alertas` |
 | `alertas.ts` | Helper con `alertaExito` y `alertaError`. Las pantallas no llaman a Sonner directamente. Cada alerta crea su propio id con un contador del módulo y descarta antes la anterior por su id: solo hay una vigente, la anterior hace su salida animada y la nueva entra con su animación |
-| `Menu.tsx` | Barra de navegación superior de celdas. El logotipo VESTIGIO tiene siempre fondo amarillo con texto negro, se invierte al pasar el cursor (fondo negro y texto amarillo) y nunca se marca como activo. La opción activa va en amarillo. El logotipo queda como bloque de marca aparte: un espacio con borde a ambos lados lo separa de la primera opción, de modo que no se funde con ella cuando está activa (en mobile ocupa toda la fila). "Cerrar sesión" pasa a fondo rojo con texto blanco al pasar el cursor. Las opciones salen de `lib/navegacion.ts` |
+| `Navbar.tsx` | Barra de navegación superior de celdas. El logotipo VESTIGIO tiene siempre fondo amarillo con texto negro, se invierte al pasar el cursor (fondo negro y texto amarillo) y nunca se marca como activo. La opción activa va en amarillo. Muestra la celda "Sesión" con el nombre de la persona y el botón "Cerrar sesión" (un formulario que llama a `cerrarSesionAccion`), que pasa a fondo rojo con texto blanco al pasar el cursor. Las opciones salen de `lib/navegacion.ts`. **Menú hamburguesa:** en pantallas compactas (hasta 1025px, `CONSULTA_MENU_COMPACTO`) las opciones van tras un botón con `aria-expanded` y `aria-controls`, con las etiquetas "Abrir menú" y "Cerrar menú". El menú se cierra con Escape, al navegar a otra ruta y al pasar a escritorio |
 | `Insignia.tsx` | Insignia rectangular para todos los estados (conservación, disponibilidad, exposición, préstamo, inventario, resultado de inventario, activo o inactivo y exhibición o almacén). Un único mapa de estado a color, con el borde grueso del proyecto: verde (Activo, Bueno, Disponible, Vigente, Encontrada, En exhibición), amarillo con texto negro (Regular, En préstamo, En curso, Con daño), rojo (Malo, Vencido, Cancelada, No encontrada, Pendiente de verificación), gris con texto negro (Inactivo, Finalizada, Cerrado, Devuelto, En almacén) y solo borde sin relleno (Programada). Un valor que no está en el mapa recibe el gris. El texto largo se parte en dos líneas (ancho máximo de 12em, texto centrado), así que "Pendiente de verificación" no ensancha su columna, y las de una línea no cambian |
-| `Miniatura.tsx` | Imagen cuadrada de una pieza, con recorte centrado y marcador si no tiene. Cinco tamaños: `pequena` (listas dentro de formularios), `seleccion` (ventanas de selección de piezas, de 5rem con `--ancho-miniatura-seleccion`), `lista` (catálogo, llena la celda de su columna), `grande` (historial, actualizar estado y vista previa del formulario) y `detalle` (pantalla de detalle). El marcador mide lo mismo que una imagen real |
+| `Miniatura.tsx` | Imagen cuadrada de una pieza, con recorte centrado y marcador si no tiene. Cinco tamaños: `pequena` (listas dentro de formularios), `seleccion` (ventanas de selección de piezas, de 5rem con `ancho-miniatura-seleccion`), `lista` (catálogo, llena la celda de su columna), `grande` (historial, actualizar estado y vista previa del formulario) y `detalle` (pantalla de detalle). El marcador mide lo mismo que una imagen real |
 | `BuscadorPiezas.tsx` | Buscador de piezas. Seis filtros en una fila (Código, Nombre, Categoría, Estado, Disponibilidad y Museo, sin Ubicación; con el museo fijo quedan cinco) y botones Buscar y Limpiar. La búsqueda se ejecuta al pulsar Buscar o Enter dentro de un campo de texto, no al cambiar un filtro. Limpiar vacía los filtros y vuelve a mostrar la lista completa. Sobre la tabla muestra "N piezas" (o "1 pieza") y, con filtros aplicados, "X de N piezas", y "No se encontraron piezas" si no hay coincidencias. El orden es por código (`compararCodigos`). Modos: catálogo (acciones por fila; parte de la lista cargada por la página), selección múltiple y selección única (ambos consultan al abrir). El catálogo tiene siete columnas: Imagen, Código (con el código anterior debajo, en texto secundario, solo si existe), Nombre (con la categoría debajo), Estado, Disponibilidad, Museo y Acciones. Ubicación y Situación pasan a la pantalla de detalle. La columna Acciones tiene cinco botones del mismo tamaño, apilados: Ver detalle, Editar, Actualizar estado de conservación, Ver historial y Generar ficha técnica. Los modos de selección (exposiciones y préstamos) tienen seis columnas: Elegir, Imagen, Código, Nombre con la categoría debajo (como en el catálogo), Estado y Disponibilidad, con la miniatura de 5rem en una columna de ancho fijo y el código en una sola línea. En la selección única (préstamos) los filtros son solo Código y Nombre, más Buscar y Limpiar, y la lista muestra solo las piezas con disponibilidad "disponible" de los museos de la persona: el filtro lo aplica el servidor con `soloDisponibles` en `buscarPiezas`, también en la carga inicial, y la línea de resultado cuenta solo esas piezas. La ventana de exposiciones y el catálogo conservan todos sus filtros. La línea de resultado sale de `lib/resultadoBusqueda.ts`. Si la página le entrega una lista inicial nueva (por ejemplo tras refrescar la ruta después de cancelar o modificar), actualiza el total y vuelve a consultar conservando los filtros aplicados. |
 | `BuscadorExposiciones.tsx` | Buscador de exposiciones, que funciona como el de piezas en sus dos modos (lista y ventana de selección única): filtros de Nombre, Vigencia y Museo, botones Buscar y Limpiar al final de la fila, búsqueda al pulsar Buscar o Enter dentro de un campo de texto (no al cambiar un filtro), y línea de resultado "N exposiciones", "1 exposición" o "X de N exposiciones" (N es el total visible para la persona), con "No se encontraron exposiciones" si no hay coincidencias. El orden es por fecha de inicio, de la más reciente a la más antigua, aplicado al final de `buscarExposiciones`. Si la página le entrega una lista inicial nueva (por ejemplo tras refrescar la ruta después de cancelar o modificar), actualiza el total y vuelve a consultar conservando los filtros aplicados. |
 | `Buscador.module.css` | Estilos compartidos de los dos buscadores y anchos de las columnas de la tabla de piezas |
@@ -421,79 +521,85 @@ El menú y las tarjetas de acceso del Inicio salen de la misma lista (`lib/naveg
 | Nuevo estado en `CI_Actualizar_Estado` | |
 | Estado al regresar en `CI_Devolucion_Prestamo` | |
 
+
 ## 6. Estilos
 
 - **Variables globales:** `app/globals.css`, en `:root`. Ahí están colores, tipografías, tamaños de texto, grosores de borde, espaciados, medidas y las medidas de las alertas. Ningún otro archivo define valores de diseño sueltos: los CSS Modules usan `var(...)`.
-- **Ancho del contenido:** `--ancho-maximo` vale 1400px (antes 1200px) y lo usa el contenedor de todas las vistas, con relleno lateral para que en pantallas menores ocupe el ancho disponible. El menú queda a todo el ancho. Las pantallas de acceso no cambian.
-- **Formularios:** la tarjeta de formulario (`Celda estrecha`) mantiene su ancho (`--ancho-formulario`) y queda centrada horizontalmente bajo el encabezado, resuelto en un solo punto, `Celda.module.css`. Los formularios de registrar y editar pieza usan `Celda ancha` (`--ancho-formulario-doble`) y dos columnas; en tablet y mobile la tarjeta vuelve al ancho estrecho y una columna.
-- **Página 404 y alto de pantalla:** la variable `--texto-codigo-error` (tamaño del 404) tiene valor de escritorio y se redefine dentro de las dos media queries existentes. Cambio global: el `body` pasó a ser una columna flex con `min-height: 100dvh` y `.contenedor` recibió `flex: 1`, para centrar el recuadro de la 404 en vertical con y sin menú. En las demás pantallas el contenido sigue arriba.
-- **Variables nuevas de medidas y tamaño de texto:** `--texto-destacado` (nombre de la pieza en el catálogo), `--ancho-columna-imagen` y `--ancho-columna-acciones` (columnas de la tabla de piezas), `--alto-boton-compacto` (botones de acciones), `--ancho-imagen-detalle` (imagen de la pantalla de detalle) y `--ancho-formulario-doble`. La miniatura del catálogo llena la celda de su columna y no tiene variable propia.
-- **Filtros y tablas de los reportes nuevos:** los anchos salen de variables de `app/globals.css`: `--ancho-filtro-amplio`, `--ancho-filtro-medio`, `--ancho-filtro-corto` y, para los filtros de Museo y de Disponibilidad del reporte de piezas, `--ancho-filtro-museo-piezas` y `--ancho-filtro-disponibilidad-piezas`, más `--crecimiento-filtro-principal` y `--crecimiento-filtro-fecha`, que reparten el espacio sobrante de la fila en proporción. Cada filtro tiene el ancho que necesita su contenido y la fila llena el ancho de la sección. En las tablas, cada columna toma su ancho de su contenido, los encabezados pueden partirse en dos líneas y los códigos, convenios, pólizas y fechas no se parten. En escritorio la tabla cabe sin desplazamiento horizontal, que queda como respaldo en pantallas menores (el contenedor de `Tabla` tiene `overflow-x: auto`).
-- **Fuentes:** `app/layout.tsx` carga Anton (títulos) e Inter (texto) con `next/font` y expone `--fuente-anton` y `--fuente-sans`, que `globals.css` usa en `--tipografia-titulos` y `--tipografia-texto`.
+- **Ancho del contenido:** `ancho-maximo` vale 1400px y lo usa el contenedor de todas las vistas, con relleno lateral para que en pantallas menores ocupe el ancho disponible. El menú queda a todo el ancho. Las pantallas de acceso no cambian.
+- **Formularios:** la tarjeta de formulario (`Celda estrecha`) mantiene su ancho (`ancho-formulario`) y queda centrada horizontalmente bajo el encabezado, resuelto en un solo punto, `Celda.module.css`. Los formularios de registrar y editar pieza usan `Celda ancha` (`ancho-formulario-doble`) y dos columnas; en tablet y mobile la tarjeta vuelve al ancho estrecho y una columna.
+- **Página 404 y alto de pantalla:** la variable `texto-codigo-error` (tamaño del 404) tiene valor de escritorio y se redefine dentro de las dos media queries existentes. Cambio global: el `body` pasó a ser una columna flex con `min-height: 100dvh` y `.contenedor` recibió `flex: 1`, para centrar el recuadro de la 404 en vertical con y sin menú. En las demás pantallas el contenido sigue arriba.
+- **Variables nuevas de medidas y tamaño de texto:** `texto-destacado` (nombre de la pieza en el catálogo), `ancho-columna-imagen` y `ancho-columna-acciones` (columnas de la tabla de piezas), `alto-boton-compacto` (botones de acciones), `ancho-imagen-detalle` (imagen de la pantalla de detalle) `ancho-formulario-doble` y las tres medidas de los popups (`ancho-popup`, `ancho-popup-seleccion` y `ancho-popup-angosto`). La miniatura del catálogo llena la celda de su columna y no tiene variable propia.
+- **Filtros y tablas de los reportes nuevos:** los anchos salen de variables de `app/globals.css`: `ancho-filtro-amplio`, `ancho-filtro-corto` y, para los filtros de Museo y de Disponibilidad del reporte de piezas, `ancho-filtro-museo-piezas` y `ancho-filtro-disponibilidad-piezas`, más `crecimiento-filtro-principal` y `crecimiento-filtro-fecha`, que reparten el espacio sobrante de la fila en proporción. Cada filtro tiene el ancho que necesita su contenido y la fila llena el ancho de la sección. En las tablas, cada columna toma su ancho de su contenido, los encabezados pueden partirse en dos líneas y los códigos, convenios, pólizas y fechas no se parten. En escritorio la tabla cabe sin desplazamiento horizontal, que queda como respaldo en pantallas menores (el contenedor de `Tabla` tiene `overflow-x: auto`).
+- **Transiciones y movimiento reducido:** un solo ritmo para toda la interfaz, definido en `:root`: `duracion-transicion` (250ms) y `curva-transicion` (ease-out) para los cambios de color, borde y fondo de botones, enlaces y campos, y `duracion-entrada` (250ms) y `desplazamiento-entrada` (8px) para la entrada animada de cada pantalla (`app/template.tsx`). Los CSS Modules no escriben duraciones sueltas: usan estas variables. Con `@media (prefers-reduced-motion: reduce)` ambas duraciones pasan a 0ms, así que se apagan todas las transiciones y la entrada sin tocar ningún componente. Esa media query no es un punto de quiebre de ancho.
+- **Fuentes:** `app/layout.tsx` carga Anton (títulos) e Inter (texto) con `next/font` y expone `fuente-anton` y `fuente-sans`, que `globals.css` usa en `tipografia-titulos` y `tipografia-texto`.
 - **CSS Modules:** cada componente tiene su `Nombre.module.css` al lado, con clases locales importadas como `estilos`.
 - **Dirección visual:** brutalista editorial de retícula. Fondo crema suave, texto negro, bordes negros gruesos y rectos, sin sombras ni esquinas redondeadas, un acento amarillo, un rojo para errores y un verde para éxitos.
-- **Alertas de Sonner:** 20 por ciento más grandes que el tamaño por defecto, con éxito en verde y error en rojo, ambos con texto blanco y el borde grueso del proyecto (que no se escala). Medidas base y escala en `:root`: `--escala-alertas` (1.2), `--alerta-ancho` (356px), `--alerta-texto` (13px), `--alerta-icono` (20px) y `--alerta-separacion` (6px).
+- **Alertas de Sonner:** 20 por ciento más grandes que el tamaño por defecto, con éxito en verde y error en rojo, ambos con texto blanco y el borde grueso del proyecto (que no se escala). Medidas base y escala en `:root`: `escala-alertas` (1.2), `alerta-ancho` (356px), `alerta-texto` (13px), `alerta-icono` (20px) y `alerta-separacion` (6px).
 - **Paleta (variables de `:root`):**
 
 | Variable | Valor | Dónde se usa |
 |-|-|-|
-| `--color-fondo` | `#f6f0e1` (crema suave, antes `#ffffff`) | Fondo del sitio, celdas y encabezados de página, tarjetas de acceso del Inicio, menú, tablas, campos (incluida la caja de contraseña), botones secundarios, cuerpo de las ventanas, alertas por defecto de Sonner y la insignia Programada. También es el color del texto del botón principal, de las etiquetas negras de las celdas y de la cabecera de las tablas |
-| `--color-texto` | `#000000` | Texto, bordes, botón principal, cabecera de tablas y texto de las insignias amarillas, grises y de solo borde |
-| `--color-acento` | `#ffe600` | Opción activa y logotipo del menú, logotipo de las pantallas de acceso, hover de botones, enlaces y tarjetas del Inicio, cabecera de ventanas, fila seleccionada, anillo de foco e insignias amarillas |
-| `--color-error` | `#e10600` | Mensaje y alerta de error, insignias rojas, texto de error por campo, hover de Cerrar sesión y botón de peligro (texto, borde y fondo al pasar el cursor) |
-| `--color-sobre-error` | `#ffffff` | Texto sobre el rojo (mensaje, alerta, insignias rojas y hover de Cerrar sesión y del botón de peligro) |
-| `--color-exito` | `#1a7f37` | Mensaje y alerta de éxito e insignias verdes |
-| `--color-sobre-exito` | `#ffffff` | Texto sobre el verde (mensaje, alerta e insignias verdes) |
-| `--color-gris` | `#d9d9d9` | Botón deshabilitado, miniaturas, fila de totales e insignias grises |
-| `--color-gris-claro` | `#f2f2f2` | Datos de solo lectura y Mensaje neutro |
-| `--color-resalte-fila` | `#fff7a8` | Hover de fila y de enlaces del menú, foco de campos |
-| `--color-velo` | `rgba(0, 0, 0, 0.6)` | Fondo detrás de las ventanas emergentes |
+| `color-fondo` | `#f6f0e1` (crema suave, antes `#ffffff`) | Fondo del sitio, celdas y encabezados de página, tarjetas de acceso del Inicio, menú, tablas, campos (incluida la caja de contraseña), botones secundarios, cuerpo de las ventanas, alertas por defecto de Sonner y la insignia Programada. También es el color del texto del botón principal, de las etiquetas negras de las celdas y de la cabecera de las tablas |
+| `color-texto` | `#000000` | Texto, bordes, botón principal, cabecera de tablas y texto de las insignias amarillas, grises y de solo borde |
+| `color-acento` | `#ffe600` | Opción activa y logotipo del menú, logotipo de las pantallas de acceso, hover de botones, enlaces y tarjetas del Inicio, cabecera de ventanas, fila seleccionada, anillo de foco e insignias amarillas |
+| `color-error` | `#e10600` | Mensaje y alerta de error, insignias rojas, texto de error por campo, hover de Cerrar sesión y botón de peligro (texto, borde y fondo al pasar el cursor) |
+| `color-sobre-error` | `#ffffff` | Texto sobre el rojo (mensaje, alerta, insignias rojas y hover de Cerrar sesión y del botón de peligro) |
+| `color-exito` | `#1a7f37` | Mensaje y alerta de éxito e insignias verdes |
+| `color-sobre-exito` | `#ffffff` | Texto sobre el verde (mensaje, alerta e insignias verdes) |
+| `color-gris` | `#d9d9d9` | Botón deshabilitado, miniaturas, fila de totales e insignias grises |
+| `color-gris-claro` | `#f2f2f2` | Datos de solo lectura y Mensaje neutro |
+| `color-resalte-fila` | `#fff7a8` | Hover de fila y de enlaces del menú, foco de campos |
+| `color-velo` | `rgba(0, 0, 0, 0.6)` | Fondo detrás de las ventanas emergentes |
 
-Esta paleta es la base vigente y puede ajustarse. El texto sobre rojo y sobre verde sigue siendo blanco puro porque usa sus propias variables (`--color-sobre-error` y `--color-sobre-exito`), que no cambian con `--color-fondo`.
+Esta paleta es la base vigente y puede ajustarse. El texto sobre rojo y sobre verde sigue siendo blanco puro porque usa sus propias variables (`color-sobre-error` y `color-sobre-exito`), que no cambian con `color-fondo`.
 
-- **Responsive, desktop first:** los estilos base son de escritorio y se adapta hacia abajo. Solo existen estas dos media queries, en los CSS Modules y en los estilos globales:
+- **Responsive, desktop first:** los estilos base son de escritorio y se adapta hacia abajo. Solo existen estas dos media queries de ancho, en los CSS Modules y en los estilos globales:
 
 | Variación | Media query |
 |-|-|
 | Tablet | `@media (max-width: 1025px)` |
 | Mobile | `@media (max-width: 768px)` |
 
-No se permiten otros puntos de quiebre ni otros valores.
+No se permiten otros puntos de quiebre ni otros valores. La única media query adicional es la de movimiento reducido, descrita arriba.
+
+Los nombres de las variables CSS se citan en este documento tal como se escriben en `app/globals.css`.
 
 ## 7. Reglas de negocio vigentes
 
 Implementadas en los controladores.
 
 **Permisos y aislamiento por organización**
-- Toda lectura y escritura se filtra por la organización de la persona en sesión (`lib/permisos.ts` y `lib/controllers/utilidades.ts`).
+- Toda lectura y escritura se filtra por la organización de la persona en sesión (`lib/controllers/acceso.ts` y la capa de datos, que recibe siempre `organizacionId`).
 - Administrador: ve todos los museos de su organización. Es el único que accede a Usuarios y a Museos. Un colaborador que abre esas rutas vuelve a `/`.
 - Colaborador: ve y modifica solo los museos que tiene asignados. Una pieza, exposición, préstamo o inventario de otro museo no se encuentra (404 o mensaje).
 - Los permisos se validan en los controladores, no solo en el menú. No hay registro público: las cuentas las crea el administrador.
 
 **Acceso**
 - El login valida por campo, tanto en la vista como en el controlador: correo vacío, correo con formato inválido y contraseña vacía. No valida la longitud ni otras reglas de contraseña. Las credenciales incorrectas y la cuenta desactivada muestran un mensaje general, sin indicar qué campo falló.
-- La recuperación de contraseña es solo interfaz: no envía correo, no consulta usuarios y no modifica contraseñas.
+- La sesión es la de Supabase Auth. Una cuenta desactivada no inicia sesión aunque su contraseña sea correcta, y si se desactiva con sesión abierta su siguiente petición queda sin sesión.
+- La recuperación de contraseña envía por correo, con Supabase Auth, un enlace a `/restablecer-contrasena`. La respuesta de la solicitud es siempre la misma, exista o no el correo. La nueva contraseña se define con la sesión de recuperación que deja el enlace, y después se vuelve a iniciar sesión.
 
 **Usuarios y museos**
-- El correo es único. Al crear una cuenta se genera una contraseña temporal de 10 caracteres, con `randomInt` de `node:crypto` y un alfabeto sin caracteres ambiguos (0, O, 1, l e I), que se muestra una sola vez junto a un botón "Copiar". La cuenta queda con cambio de contraseña obligatorio. Con contraseña temporal solo se permite `/cambiar-contrasena`.
-- La contraseña nueva, en el cambio de contraseña y en la pantalla de nueva contraseña, debe tener entre 10 y 15 caracteres, validado en la vista y en el controlador con las constantes de `lib/validaciones.ts`. La temporal y la de demostración (`Museos2026`) cumplen esa misma regla.
+- El correo es único. Al crear una cuenta se genera una contraseña temporal de 10 caracteres, con `randomInt` de `node:crypto` y un alfabeto sin caracteres ambiguos (0, O, 1, l e I), que se muestra una sola vez junto a un botón "Copiar". La cuenta de Auth se crea con el indicador de cambio de contraseña activo (`app_metadata`). Con contraseña temporal solo se permite `/cambiar-contrasena`.
+- La contraseña nueva, en el cambio de contraseña y en la pantalla de nueva contraseña, debe tener entre 10 y 15 caracteres, validado en la vista y en el controlador con las constantes de `lib/validaciones.ts`. La temporal cumple esa misma regla, y Auth rechaza además una contraseña igual a la actual o demasiado débil.
+- Editar el correo de un usuario cambia el de su fila de usuario, pero no el de su cuenta de Auth (pendiente, sección 11).
 - Todo usuario, de cualquier rol, necesita al menos un museo: `registrarUsuario` y `actualizarUsuario` devuelven "Selecciona al menos un museo" sin mirar el rol. Esa regla coincide con ECUS01, que pide seleccionar uno o más museos. Si no hay museos activos, el formulario muestra un `Mensaje` neutro con "No hay museos registrados. Registra un museo para poder asignarlo." y el botón "Registrar museo" hacia `/museos/nuevo`; mientras no exista un museo activo no se puede registrar ningún usuario.
 - Una cuenta desactivada no puede iniciar sesión, y si se desactiva con sesión abierta su siguiente petición queda sin sesión. Nadie puede desactivar su propia cuenta ni cambiar su propio rol.
 - Desactivar y activar usuarios y museos piden confirmación. Activar conserva los museos asignados y el historial.
 - Desactivar un museo no borra nada: deja de ofrecerse en las listas de selección de formularios nuevos, pero sus piezas y exposiciones siguen visibles. El nombre de un museo es único dentro de la organización. El tipo de colección es obligatorio y debe ser uno de los cinco valores.
 
 **Piezas**
-- El código lo asigna el sistema y es inmutable (prefijo del museo, guion y correlativo, sección 4). La persona no lo escribe y el formulario no tiene campo de código. El código anterior es opcional, de máximo 40 caracteres y único dentro del museo. La categoría se elige de las categorías de la organización. Una pieza nueva queda `disponible`.
+- El código lo asigna el sistema y es inmutable (prefijo del museo, guion y correlativo del contador del museo, sección 4). La persona no lo escribe y el formulario no tiene campo de código. El código anterior es opcional, de máximo 40 caracteres y único dentro del museo. La categoría se elige de las categorías de la organización. Una pieza nueva queda `disponible`.
 - El año es opcional y se valida con `validarAnio` en registrar, editar e importar: se recorta el texto, solo se acepta un signo menos opcional seguido de dígitos (sin decimales, notación científica, hexadecimales ni signo más), con "El año debe ser un número entero", y debe estar entre -10000 y el año actual, calculado en el servidor al validar, con "El año debe estar entre -10000 y el año actual". El campo de la vista lleva `min` y `max`, pero manda el controlador.
 - Registrar una pieza a mano no genera historial. Editarla genera un registro por cada campo que cambia (código anterior, nombre, categoría, descripción, año, material, ubicación física, imagen), y guardar sin cambios no genera registros. Tras guardar con éxito, registrar y editar vuelven al catálogo. El estado de conservación se cambia solo desde Actualizar estado y el museo de una pieza no se puede cambiar.
 - Actualizar estado rechaza el mismo estado actual ("El estado seleccionado es el mismo que el actual"), exige elegir un estado ("Selecciona el nuevo estado") y registra el cambio en el historial. Tras guardar con éxito vuelve al catálogo.
-- Imagen: PNG o JPG de máximo 1 MB, guardada como data URL en memoria. El formulario sugiere una imagen cuadrada de 800 x 800 px con un texto de ayuda, sin validar las dimensiones. En el catálogo y en el detalle la imagen se muestra cuadrada y con recorte centrado, y el marcador ocupa el mismo cuadrado que una imagen real.
+- Imagen: PNG o JPG de máximo 1 MB, guardada como data URL en la columna `imagen_url`. El formulario sugiere una imagen cuadrada de 800 x 800 px con un texto de ayuda, sin validar las dimensiones. En el catálogo y en el detalle la imagen se muestra cuadrada y con recorte centrado, y el marcador ocupa el mismo cuadrado que una imagen real.
 - La pantalla de detalle (`/piezas/[id]`) muestra la imagen grande y todos los datos: código, código anterior (solo si existe), nombre, categoría, descripción, año, material, estado de conservación, disponibilidad, situación (en exhibición o en almacén), ubicación física, museo y fecha de registro. Los opcionales vacíos se muestran con un guion simple. Tiene las acciones Editar, Actualizar estado de conservación, Ver historial, Generar ficha técnica y Volver al catálogo.
 - La situación "en exhibición" o "en almacén" se calcula por las exposiciones vigentes y es independiente de la disponibilidad.
 
 **Importación de piezas**
-- Solo .xlsx de máximo 5 MB y 500 filas, con los encabezados de la plantilla. Se valida fila por fila (obligatorios: nombre, categoría y estado; categoría existente; estado válido; año con la regla compartida de `validarAnio`; y, solo cuando la celda tiene valor, código anterior de máximo 40 caracteres, no registrado en el museo y no repetido en el archivo).
-- La pantalla muestra el campo "Museo de destino" con la ayuda "Todas las piezas del archivo se registrarán en este museo" y, bajo el campo de archivo, la ayuda "Solo archivos .xlsx, de máximo 5 MB y 500 filas", cuyos valores salen de `lib/limitesImportacion.ts`.
+- Solo .xlsx de máximo 4 MB y 500 filas, con los encabezados de la plantilla. Se valida fila por fila (obligatorios: nombre, categoría y estado; categoría existente; estado válido; año con la regla compartida de `validarAnio`; y, solo cuando la celda tiene valor, código anterior de máximo 40 caracteres, no registrado en el museo y no repetido en el archivo).
+- La pantalla muestra el campo "Museo de destino" con la ayuda "Todas las piezas del archivo se registrarán en este museo" y, bajo el campo de archivo, la ayuda "Solo archivos .xlsx, de máximo 4 MB y 500 filas", cuyos valores salen de `lib/importacion/limitesImportacion.ts`.
 - La plantilla tiene las columnas Nombre, Categoría, Descripción, Año, Material, Estado de conservación, Ubicación física y Código anterior (opcional). No tiene columna de código. La vista previa no muestra códigos.
 - El servidor vuelve a validar todo antes de insertar y asigna los códigos correlativos a las piezas válidas en el orden de las filas del archivo. Las piezas quedan `disponible` y cada una registra "alta por importación" en el historial.
 
@@ -532,15 +638,16 @@ Implementadas en los controladores.
 - El resultado se agrupa por categoría (orden alfabético en español, sin categorías vacías), con el conteo Bueno, Regular y Malo, el total de cada fila y una fila "Totales". Un error o un aviso se muestran como alerta y quitan el reporte mostrado.
 - La pantalla del reporte (`/reportes/categoria-estado`, `CI_Reporte_Categoria_Estado`) tiene el título "Reporte por categoría y estado", con la etiqueta "Reportes", la sección de filtros y, tras generar, la sección "Total de piezas por categoría y estado". Los botones de la izquierda son "Generar Reporte", "Limpiar" (vacía los filtros y quita el reporte mostrado) y "Volver" (lleva a `/reportes`).
 - Los botones "Exportar a PDF" y "Exportar a Excel" van a la derecha de la misma fila y solo se ven con un reporte en pantalla. Usan los filtros con los que se generó el reporte, no los valores actuales de los campos. El botón de PDF abre el archivo en una pestaña nueva y el de Excel lo descarga. Las rutas son `/reportes/categoria-estado/pdf` y `/reportes/categoria-estado/excel`, y la acción `exportarReporte` de `CC_Reporte` (formato y filtros) recalcula el reporte con `calcularReporte`, con la sesión y los museos visibles, sin confiar en los datos de la pantalla. Los filtros viajan como parámetros de la dirección (`lib/reporteParametros.ts`).
-- Ambos archivos llevan el título, la fecha y hora de generación (hora de Lima), la persona que lo generó, los filtros ("Todas", "Todos" o "Sin límite") y la tabla con la fila "Totales". El PDF se genera con `@react-pdf/renderer` y el Excel con ExcelJS (hoja "Reporte"), en `lib/exportacionReporte.tsx`. Los nombres son `reporte_categoria_estado_AAAA-MM-DD.pdf` y `.xlsx`, con el día de Lima. El PDF se responde inline con `respuestaPdf`, para verlo en el visor del navegador. Con filtros inválidos o sin resultados responden 400 con el texto del error y sin archivo, y sin sesión redirigen a `/login`.
+- Ambos archivos llevan el título, la fecha y hora de generación (hora de Lima), la persona que lo generó, los filtros ("Todas", "Todos" o "Sin límite") y la tabla con la fila "Totales". El PDF se genera con `@react-pdf/renderer` y el Excel con ExcelJS (hoja "Reporte"), en `lib/exportacion/exportacionReporte.tsx`. Los nombres son `reporte_categoria_estado_AAAA-MM-DD.pdf` y `.xlsx`, con el día de Lima. El PDF se responde inline con `respuestaPdf`, para verlo en el visor del navegador. Con filtros inválidos o sin resultados responden 400 con el texto del error y sin archivo, y sin sesión redirigen a `/login`.
 - **Reporte de piezas** (`/reportes/piezas`, `CI_Reporte_Piezas`). Filtros: Museo, Disponibilidad, y Desde y Hasta sobre la fecha de registro de la pieza (día de Lima, extremos incluidos). No filtra por categoría ni por estado de conservación, que son del reporte por categoría y estado. Columnas: Código, Nombre, Categoría, Estado, Disponibilidad, Museo, Ubicación y Fecha de registro, con el total de piezas ("Total de piezas"). Orden por nombre de museo y luego por código (`compararCodigos`). Título de resultados: "Listado de piezas por museo".
 - **Reporte de exposiciones** (`/reportes/exposiciones`, `CI_Reporte_Exposiciones`). Filtros: Museo, Estado (programada, vigente, finalizada o cancelada), y Desde y Hasta. El rango pedido incluye los dos extremos y se cruza con el de cada exposición con `rangosSeCruzan`, que usa la fecha de fin exclusiva (el extremo Hasta se pasa a su día siguiente con `diaSiguiente`). Una fila por exposición, con sus piezas en una columna (una pieza por línea). Columnas: Nombre, Museo, Estado, Inicio, Fin, Cantidad de piezas y Piezas. Total: "Total de exposiciones". Orden por fecha de inicio, de la más reciente a la más antigua.
 - **Reporte de préstamos** (`/reportes/prestamos`, `CI_Reporte_Prestamos`). Filtros: Museo (el de la pieza, por `PrestamoListado.museoId`), Situación (en préstamo, vencido o devuelto), Institución destino (`coincideTexto`, coincidencia parcial sin mayúsculas ni tildes) y Desde y Hasta sobre la fecha de salida, con los extremos incluidos. Once columnas: Pieza (el código y, debajo, el nombre), Museo, Institución destino, Responsable, Convenio, Póliza, Valor asegurado, Salida, Devolución prevista, Devolución real y Situación. Total: "Total de préstamos". Orden por fecha de salida, de la más reciente a la más antigua.
-- **Acciones de los tres reportes nuevos** (`CC_Reporte`): `cargarReportePiezas`, `generarReportePiezas`, `exportarReportePiezas`, `cargarReporteExposiciones`, `generarReporteExposiciones`, `exportarReporteExposiciones`, `cargarReportePrestamos`, `generarReportePrestamos` y `exportarReportePrestamos`. Cada `cargar*` devuelve los museos para el selector. Cada reporte comparte su cálculo entre `generar*` y `exportar*`.
-- **Seguridad y validación de los reportes nuevos.** Parten solo de `piezasVisibles`, `exposicionesVisibles` y `prestamosVisibles` (de `lib/controllers/utilidades.ts`), así que un colaborador solo ve los museos asignados. Orden de validación: sesión, acceso al museo ("No tienes acceso al museo seleccionado"), valores permitidos de estado, disponibilidad y situación ("Alguno de los filtros del reporte no es válido"), formato AAAA-MM-DD de las fechas ("Las fechas del reporte deben tener el formato AAAA-MM-DD"), rango de fechas (`MENSAJE_RANGO_FECHAS_INVALIDO`) y resultados (`MENSAJE_SIN_RESULTADOS`). Los dos últimos mensajes son constantes que usa también el reporte por categoría y estado. La exportación recalcula el reporte en el servidor, con la sesión y los filtros recibidos, sin confiar en los datos de la pantalla. Los selectores de museo muestran los museos visibles, incluidos los inactivos.
-- **Exportación de los tres reportes nuevos.** Cada uno tiene PDF y Excel en `/reportes/<reporte>/pdf` y `/reportes/<reporte>/excel`, con los nombres `reporte_piezas_AAAA-MM-DD`, `reporte_exposiciones_AAAA-MM-DD` y `reporte_prestamos_AAAA-MM-DD` (`.pdf` y `.xlsx`, con el día de Lima). Los filtros viajan como parámetros de la dirección (`mapaAParametros` y `parametrosAMapa` de `lib/reporteParametros.ts`). El archivo lleva título, fecha y hora de generación, la persona, los filtros ("Todos", "Todas" o "Sin límite") y la tabla con su total. Los genera `lib/exportacionTabla.tsx`: el PDF es apaisado, con el encabezado fijo en cada página y filas que no se parten, y el Excel tiene la hoja "Reporte" con el valor asegurado como número con 2 decimales. Las proporciones de las columnas coinciden con las de la pantalla (ancho relativo en el PDF y anchos en el Excel). Con filtros inválidos o sin resultados responden 400 con el texto del error y sin archivo.
+- **Acciones de los reportes de piezas, exposiciones y préstamos** (`CC_Reporte`): `cargarReportePiezas`, `generarReportePiezas`, `exportarReportePiezas`, `cargarReporteExposiciones`, `generarReporteExposiciones`, `exportarReporteExposiciones`, `cargarReportePrestamos`, `generarReportePrestamos` y `exportarReportePrestamos`. Cada `cargar*` devuelve los museos para el selector. Cada reporte comparte su cálculo entre `generar*` y `exportar*`.
+- **Seguridad y validación de los reportes nuevos.** Parten solo de `piezasVisibles`, `exposicionesVisibles` y `prestamosVisibles` (de `lib/controllers/acceso.ts`), así que un colaborador solo ve los museos asignados. Orden de validación: sesión, acceso al museo ("No tienes acceso al museo seleccionado"), valores permitidos de estado, disponibilidad y situación ("Alguno de los filtros del reporte no es válido"), formato AAAA-MM-DD de las fechas ("Las fechas del reporte deben tener el formato AAAA-MM-DD"), rango de fechas (`MENSAJE_RANGO_FECHAS_INVALIDO`) y resultados (`MENSAJE_SIN_RESULTADOS`). Los dos últimos mensajes son constantes que usa también el reporte por categoría y estado. La exportación recalcula el reporte en el servidor, con la sesión y los filtros recibidos, sin confiar en los datos de la pantalla. Los selectores de museo muestran los museos visibles, incluidos los inactivos.
+- **Exportación de los reportes de piezas, exposiciones y préstamos.** Cada uno tiene PDF y Excel en `/reportes/<reporte>/pdf` y `/reportes/<reporte>/excel`, con los nombres `reporte_piezas_AAAA-MM-DD`, `reporte_exposiciones_AAAA-MM-DD` y `reporte_prestamos_AAAA-MM-DD` (`.pdf` y `.xlsx`, con el día de Lima). Los filtros viajan como parámetros de la dirección (`mapaAParametros` y `parametrosAMapa` de `lib/reporteParametros.ts`). El archivo lleva título, fecha y hora de generación, la persona, los filtros ("Todos", "Todas" o "Sin límite") y la tabla con su total. Los genera `lib/exportacion/exportacionTabla.tsx`: el PDF es apaisado, con el encabezado fijo en cada página y filas que no se parten, y el Excel tiene la hoja "Reporte" con el valor asegurado como número con 2 decimales. Las proporciones de las columnas coinciden con las de la pantalla (ancho relativo en el PDF y anchos en el Excel). Con filtros inválidos o sin resultados responden 400 con el texto del error y sin archivo.
 - **Pantallas de los reportes nuevos.** Tienen la misma forma que la del reporte por categoría y estado: filtros, los botones Generar Reporte, Limpiar y Volver con las exportaciones a la derecha, y el resultado. Los filtros llenan el ancho de la fila, cada uno con el ancho de su contenido. La tabla de cada reporte usa `Tabla` con la propiedad `clase`.
 - La ficha técnica es un PDF de una página, que se responde inline con `respuestaPdf`. Incluye el código, el código anterior solo si existe, y la imagen solo si es un data URL PNG o JPG. Sin imagen dibuja un recuadro con el texto "Sin imagen".
+
 
 ## 8. Guía rápida
 
@@ -552,100 +659,123 @@ Implementadas en los controladores.
 | Valores fijos, etiquetas, roles o tipos de colección | `lib/constantes.ts` |
 | Las opciones del menú y las tarjetas del Inicio | `lib/navegacion.ts` |
 | Las validaciones de correo, contraseña y año compartidas | `lib/validaciones.ts` |
-| El prefijo del museo, el código de la pieza o su orden | `lib/codigos.ts` (y su uso en `lib/data/memoria/index.ts`) |
-| El ancho máximo del contenido | `--ancho-maximo` en `app/globals.css` |
+| El prefijo del museo, el código de la pieza o su orden | `lib/codigos.ts` (y su uso en `lib/data/prisma/catalogo.ts` y `lib/data/prisma/piezas.ts`) |
+| El ancho máximo del contenido | `ancho-maximo` en `app/globals.css` |
 | Los colores de alertas y mensajes, o el tamaño de las alertas | Variables de `:root` en `app/globals.css`, `components/ui/ContenedorAlertas.module.css` y `components/ui/Mensaje.module.css` |
 | El tratamiento del placeholder de los selectores | `Seleccion` en `components/ui/Campo.tsx` |
-| Las categorías | Datos de la organización: `lib/data/memoria/semilla.ts`. No hay pantalla para gestionarlas (y, más adelante, la tabla `categoria`) |
+| Las categorías | Datos de la organización: `scripts/datosCarga.ts` para la carga inicial o la tabla `categoria`. No hay pantalla para gestionarlas |
 | Un campo o tipo del modelo | `lib/tipos.ts` y `prisma/schema.prisma` |
-| Los datos de demostración o las cuentas | `lib/data/memoria/semilla.ts` y `README.md` |
+| Los datos de demostración o las cuentas | `scripts/datosCarga.ts` y `lib/datosDemo.ts` (y `scripts/cargaInicial.ts` para cómo se cargan) |
 | Una regla de negocio o un mensaje | El controlador del caso en `lib/controllers/CC_*.ts` |
 | Cómo se calcula el estado de una exposición, la situación de un préstamo o el cruce de fechas | `lib/fechas.ts` |
-| Quién puede ver qué museo | `lib/permisos.ts` y `lib/controllers/utilidades.ts` |
+| Quién puede ver qué museo | `lib/controllers/acceso.ts` |
 | Una pantalla (campos, botones, textos) | `components/CI_*/CI_*.tsx` y su CSS Module |
 | Un componente compartido (botón, tabla, ventana, alerta) | `components/ui/` |
 | Los filtros o columnas de los buscadores | `components/ui/BuscadorPiezas.tsx` o `BuscadorExposiciones.tsx`, y los anchos en `Buscador.module.css` |
 | Los campos o el orden del formulario de pieza | `components/CI_Formulario_Pieza/CI_Formulario_Pieza.tsx` |
-| El menú de navegación | `components/ui/Menu.tsx` y `Menu.module.css` |
-| La plantilla o la validación del Excel | `lib/importacion.ts` y `lib/controllers/CC_Importacion.ts` |
-| El diseño del PDF de la ficha técnica | `lib/ficha.tsx` |
+| El menú de navegación | `components/ui/Navbar.tsx` y `Navbar.module.css` |
+| La plantilla o la validación del Excel | `lib/importacion/importacion.ts` y `lib/controllers/CC_Importacion.ts` |
+| El diseño del PDF de la ficha técnica | `lib/exportacion/ficha.tsx` |
 | La lista de reportes del menú de reportes | `REPORTES` en `lib/navegacion.ts` y sus textos en `lib/constantes.ts` |
-| La lógica del reporte por categoría y estado o el contenido de sus archivos | `lib/controllers/CC_Reporte.ts` y `lib/exportacionReporte.tsx` |
+| La lógica del reporte por categoría y estado o el contenido de sus archivos | `lib/controllers/CC_Reporte.ts` y `lib/exportacion/exportacionReporte.tsx` |
 | Los reportes de piezas, exposiciones y préstamos: filtros, columnas, orden o validaciones | `lib/controllers/CC_Reporte.ts`, con sus textos y etiquetas en `lib/constantes.ts` |
-| El PDF y el Excel de esos tres reportes, o el ancho relativo de sus columnas | `lib/exportacionTabla.tsx` y las columnas de cada reporte en `lib/controllers/CC_Reporte.ts` |
-| Que un PDF se abra en el visor o se descargue | `lib/respuestaPdf.ts` y `BotonEnlace` en `components/ui/Boton.tsx` |
+| El PDF y el Excel de esos tres reportes, o el ancho relativo de sus columnas | `lib/exportacion/exportacionTabla.tsx` y las columnas de cada reporte en `lib/controllers/CC_Reporte.ts` |
+| Que un PDF se abra en el visor o se descargue | `lib/exportacion/respuestaPdf.ts` y `BotonEnlace` en `components/ui/Boton.tsx` |
 | Los anchos de filtros y de columnas de los reportes nuevos | Variables de ancho en `app/globals.css`, `components/ui/FiltrosReporte.module.css`, `components/ui/TablaReporte.module.css` y el CSS Module de cada reporte |
 | La zona horaria o cualquier cálculo y formato de fechas | `ZONA_HORARIA` en `lib/constantes.ts` y `lib/fechas.ts` |
 | El límite de tamaño de las Server Actions | `next.config.ts` |
 | Una ruta nueva | Carpeta nueva en `app/` con su `page.tsx`, que llama a un controlador y pasa los datos a una vista `CI_` |
-| Cómo funciona la sesión o el login | `lib/auth/session.ts` |
-| Una variable de entorno | `lib/config/env.ts`, `.env.example` y `.env.local` |
-| Pasar de memoria a base de datos | `lib/data/prisma/`, `lib/data/index.ts` y `docs/CONEXION.md` |
+| Cómo funciona la sesión o el login | `lib/auth/session.ts`, `lib/auth/cuentas.ts`, `proxy.ts` y `lib/supabase/` |
+| Una variable de entorno | `lib/config/env.ts`, `.env.example` y `.env.local` (y `prisma.config.ts` para `DIRECT_URL`) |
+| Una tabla, columna o restricción de la base | `prisma/sql/01_crear_tablas.sql` y `02_reglas_y_seguridad.sql`, y después `prisma/schema.prisma` y `lib/data/prisma/` |
+| Una operación de la capa de datos | `lib/data/contratos.ts` y su grupo en `lib/data/prisma/` |
+| El mensaje de un error de la base | `lib/data/errores.ts` |
+| La animación de entrada de las pantallas y las transiciones | `app/template.tsx` y las variables de transición de `app/globals.css` |
+| El desplegable de datos demo del login | `components/CI_Login/DesplegableDemo.tsx` y `lib/datosDemo.ts` |
 | El marcador de las piezas sin imagen | `public/piezas/sin-imagen.svg` y `IMAGEN_MARCADOR` en `lib/constantes.ts` |
+
 
 ## 9. Convenciones
 
 - **Prefijos:** `CI_` es una clase de interfaz (una pantalla) y `CC_` es una clase de control (la lógica de un caso). Las entidades no llevan prefijo. Estos nombres aparecen en el informe y no se cambian.
 - **Capas:** las vistas no leen ni escriben datos. Solo los controladores llaman a la capa de datos y a la sesión. Todas las funciones de controladores y de la capa de datos son asíncronas.
-- **Ids:** texto con formato uuid en todas las entidades. En la semilla son fijos y los registros nuevos usan `crypto.randomUUID()`. Rutas, cookie de sesión, formularios y controladores trabajan con texto, sin `parseInt` ni `Number` sobre ids.
+- **Ids:** texto con formato uuid en todas las entidades. En la base los genera `gen_random_uuid()` (el de `usuario` es el de su cuenta de Auth) y la capa de datos usa `randomUUID()` al insertar piezas en lote. Rutas, formularios y controladores trabajan con texto, sin `parseInt` ni `Number` sobre ids.
 - **Valores fijos:** se guardan en minúscula y se muestran con su etiqueta, que está centralizada en `lib/constantes.ts`.
 - **Alertas:** los mensajes de éxito y de error de las acciones se muestran como alertas con `alertaExito` y `alertaError` (Sonner). `Mensaje` se reserva para lo que debe quedar visible dentro de la pantalla, con su variante: éxito (la contraseña temporal y el resultado de la importación), error (la lista de piezas en conflicto, "No hay piezas válidas para importar" y "No existen préstamos vigentes") y neutro (el aviso de la recuperación de contraseña y el aviso del formulario de usuario sin museos). Las listas y buscadores vacíos usan una fila de tabla con texto simple, no `Mensaje`. Los errores de un campo concreto se muestran debajo del campo con la propiedad `error` de `Campo`. Iniciar y cerrar sesión no disparan alertas. Si una acción guarda y luego navega, la alerta se dispara antes de navegar. Solo hay una alerta vigente a la vez: cada alerta usa su propio id y descarta la anterior, de modo que la nueva entra con su animación. Copiar la contraseña con éxito no lanza alerta.
 - **Formularios:** una sola columna, salvo registrar y editar pieza, que usan dos columnas con la opción `dosColumnas` de `Formulario`; etiqueta encima, campos obligatorios con asterisco (`obligatorio`), y botón Cancelar o Volver. Las opciones de placeholder de los selectores empiezan con "Selecciona", que es lo que `Seleccion` reconoce.
 - **Navegación:** las opciones del menú y las tarjetas del Inicio salen de `lib/navegacion.ts`. El nombre VESTIGIO se usa en el logotipo del menú y de las pantallas de acceso.
 - **Listas:** las acciones que cambian datos revalidan sus rutas en el controlador y las vistas de lista leen sus propiedades, por lo que se actualizan al volver o al refrescar la ruta. Los buscadores `BuscadorPiezas` y `BuscadorExposiciones` guardan su lista en estado local, así que vuelven a consultar, conservando los filtros aplicados, cuando la página les entrega datos nuevos.
-- **Escritura:** en código, comentarios, textos de la interfaz y documentos no se usan dos guiones seguidos ni la raya larga. Se usan guion simple, guion bajo, comas, puntos o dos puntos. La única excepción son los nombres de variables CSS, que la sintaxis exige. Los comandos de terminal evitan las banderas de doble guion.
+- **Escritura:** en código, comentarios, textos de la interfaz y documentos no se usan dos guiones seguidos ni la raya larga. Se usan guion simple, guion bajo, comas, puntos o dos puntos. La única excepción son los nombres de variables CSS dentro del código, que la sintaxis exige: en los documentos se citan tal como están en `app/globals.css`. Los comandos de terminal evitan las banderas de doble guion.
 - **Zona horaria única:** todo día y toda hora que se calculan o se muestran salen de `ZONA_HORARIA` (America/Lima) con las funciones de `lib/fechas.ts`. Las marcas con hora se guardan en UTC y se convierten a esa zona; las fechas de solo día no se desplazan. Ningún cálculo depende de la zona del proceso, del servidor ni del navegador: para obtener un día o una hora se usan siempre las funciones de `lib/fechas.ts`.
 - **PDF:** toda respuesta de PDF usa `respuestaPdf` (inline, con el nombre del archivo) y los botones que lo abren usan `nuevaPestana`. Excel y la plantilla de importación se descargan.
-- **Variables de entorno:** se leen solo desde `lib/config/env.ts`. Nunca se escribe una llave, contraseña real o dirección de conexión en el código ni en la documentación.
+- **Variables de entorno:** se leen solo desde `lib/config/env.ts` (los scripts de `scripts/` y `prisma.config.ts` corren fuera de Next y cargan `.env.local` ellos mismos). Nunca se escribe una llave, contraseña real o dirección de conexión en el código ni en la documentación.
 - **Estilos:** CSS Modules propios, con todos los valores de diseño en variables globales y solo las dos media queries de la sección 6.
+- **Base de datos:** los cambios de estructura, restricciones y seguridad se escriben en `prisma/sql/`, que es la fuente de verdad. No se usan `prisma migrate`, `prisma db push` ni `prisma db pull`.
 - **Dependencias:** versiones exactas en `package.json`, sin rangos.
 - **Idioma:** la interfaz, los comentarios y los documentos están en español.
 
 ## 10. Estado de verificación
 
-Qué se verificó, con qué método, y qué queda sin verificar.
+Qué se verificó, con qué método, y qué queda sin verificar. Las cifras y los resultados son los del último cierre de cambios.
 
 **Verificado**
-- `npm run build` compila sin errores ni advertencias al cierre de cada bloque, y `npm run dev` arranca.
-- Rutas y permisos, con `curl` y cookies de sesión de las cuentas de demostración: redirección al login sin sesión, redirección de colaboradores desde `/usuarios` y `/museos`, 404 en piezas, exposiciones e inventarios de museos no asignados y 404 en exposiciones finalizadas o canceladas en edición. Descarga de la plantilla y generación del PDF con sus encabezados HTTP.
-- Acciones de los controladores, mediante rutas temporales que se eliminaron al terminar cada prueba: registrar y editar piezas con historial, actualizar estado, importar piezas (plantilla, lectura con ExcelJS, filas correctas e incorrectas, encabezados distintos, revalidación en el servidor), exposiciones (registrar, modificar, cancelar y conflictos), préstamos (crear y devolver con historial), inventarios (crear, marcar, cerrar y efectos), ficha técnica (con imagen PNG, con marcador SVG y sin imagen, una página en los tres casos), reporte y rol propio.
-- Consistencia de la semilla: un script temporal comprobó las 10 reglas de la sección 2.4 de `AJUSTES_CODIGO_V2.md` (con la precisión sobre la regla 5 que se indica en la sección 11) y se eliminó.
-- `@react-pdf/renderer` genera un PDF válido con Next.js 16.3.8, en desarrollo y en producción.
-- Con clics en el navegador: el login (validaciones por campo, botón de mostrar u ocultar contraseña y cuenta desactivada), el Inicio y el menú con la cuenta de administrador, el módulo de Museos completo (registrar, editar, nombre duplicado, desactivar y activar, y su efecto en los selectores de Piezas, Exposiciones e Inventarios) y los selectores con placeholder. Las insignias y la paleta nueva (fondo crema) se comprobaron visualmente en las listas del navegador. También las pantallas de recuperación de contraseña y de nueva contraseña (botón de mostrar u ocultar y validación del correo), el centrado de los formularios en escritorio, las alertas de Sonner de éxito y de error (tamaño y colores) y la cuadrícula de tarjetas del Inicio en escritorio con el administrador.
-- Con clics en el navegador, también: el módulo de reportes (el menú de reportes con la tarjeta conectada y las no conectadas; el reporte sin filtros, por categoría, por estado, combinado y con rangos de fechas; el rango inválido; el aviso de sin resultados; Limpiar; Volver; la exportación a PDF y a Excel con los filtros del reporte mostrado, sin tomar los valores nuevos de los campos; el título y la navegación).
-- Con clics en el navegador, también, con la cuenta de administrador: el módulo de Inventarios. La lista y sus acciones (Continuar y Ver); el inventario en curso de Casa Quiñones con sus cuatro piezas esperadas (sin la pieza en préstamo); el guardado automático al marcar y su persistencia al recargar; el rechazo de cerrar con piezas sin marcar; el selector de museo al crear un inventario (tres museos activos, con el botón de crear desactivado hasta elegir uno, así que el mensaje del servidor "Selecciona el museo del inventario" queda como respaldo); el rechazo de un segundo inventario en curso para el mismo museo; cerrar un inventario y verlo cerrado en solo lectura con su resumen; un inventario nuevo del Teatro con sus siete piezas esperadas; los efectos al cerrar (la pieza no encontrada pasa a pendiente de verificación, la pendiente que se encontró vuelve a disponible y la pieza con daño pasa a estado malo) con sus registros en el historial; los datos Iniciado por y Cerrado por en pantalla, incluido el cierre hecho por el administrador de un inventario iniciado por Lucía; y el código en una línea con la columna Guardado angosta.
-- Con rutas temporales, que se eliminaron al terminar: la persona de cierre con las cuentas de demostración (un inventario iniciado por Gabriela y cerrado por Marco guarda y devuelve ambos datos, el administrador cierra uno iniciado por un colaborador y un inventario en curso no tiene persona de cierre), el acceso ajeno rechazado con el mismo mensaje de siempre, cerrar un inventario ya cerrado y la equivalencia de los efectos sobre las piezas y el historial.
-- Con clics en el navegador, también: los tres reportes nuevos (de piezas, de exposiciones y de préstamos), con los filtros probados a mano, los listados, el conteo de 21 piezas del reporte de piezas sin filtros, y la maquetación de las pantallas y de los filtros. La exportación a PDF y a Excel del reporte de piezas, con sus 21 filas, y el PDF del reporte por categoría y estado abierto en una pestaña nueva con su nombre de archivo.
-- Con rutas temporales, que se eliminaron al terminar: los controladores de los tres reportes nuevos con el administrador, con Gabriela (dos museos) y con Marco (un museo), el rechazo de un museo ajeno y de valores inválidos, y la equivalencia de los resultados con el proceso en UTC y en America/Lima.
-- Con clics en el navegador, también: el módulo de préstamos (la lista y sus insignias; el formulario de nuevo préstamo con todas sus validaciones: campos vacíos y fechas invertidas con el aviso general, salida futura, valor asegurado inválido, devolución lejana y longitud de textos; el registro de un préstamo válido y sus efectos, con la pieza en préstamo y en el historial; el rechazo por cruce de fechas con una exposición en ambos sentidos, que con cruce lo rechaza y sin cruce lo registra; quitar la pieza elegida; la fecha de salida por defecto; la devolución con el estado vacío por defecto, el aviso al confirmar sin estado, el cambio de estado y de disponibilidad con su historial; el aviso "No existen préstamos vigentes"; y la ventana de selección simplificada).
-- Con clics en el navegador, también: el módulo de exposiciones (la lista y sus insignias, las validaciones al crear, crear con piezas desde la ventana de selección incluido el aviso de piezas con cruce de fechas, el buscador de piezas dentro de la ventana, la exigencia de al menos una pieza, el tope de fechas, modificar con cambio de nombre, fechas y piezas, el rechazo de exposiciones finalizadas y canceladas al modificar y al cancelar, cancelar con confirmación y sin confirmar, la liberación de piezas al cancelar, la actualización inmediata de la lista, los filtros y el buscador con Buscar y Limpiar).
-- Con clics en el navegador, también: el catálogo de piezas, los filtros combinados, la búsqueda sin tildes y por código anterior, registrar con código automático, el año (rango y formato), la imagen (peso y vista previa), editar, el detalle, la ficha técnica en PDF, el historial (incluidas las mayúsculas del nombre del campo y que guardar sin cambios no genera registros), actualizar estado de conservación (incluido el mensaje de estado igual al actual), las ventanas de selección de piezas y la importación desde Excel (archivo válido, archivo con errores, archivo sin formato de plantilla y archivo con todas las filas con error).
-- Con clics en el navegador, también: el módulo de Usuarios completo (lista, validaciones por campo, correo duplicado, registrar, copiar la contraseña temporal, editar, restricciones sobre la propia cuenta, desactivar y activar), el primer ingreso con contraseña temporal y las validaciones de longitud, el bloqueo de rutas con contraseña temporal pendiente, el menú que aparece sin recargar tras cambiar la contraseña, el Inicio con rol de colaborador, la sesión abierta de una cuenta desactivada, el aviso del formulario de usuario sin museos y el reemplazo de alertas (una sola vigente, de éxito y de error).
-- Con clics en el navegador, con cuentas de colaborador (una con dos museos y otra con uno): el menú de cinco opciones y las cinco tarjetas del Inicio; la redirección al Inicio al escribir las direcciones de Usuarios y de Museos; que cada colaborador ve solo las piezas, exposiciones, préstamos e inventarios de sus museos, con los totales esperados (14 piezas, 5 exposiciones y 3 préstamos con dos museos; 5 piezas, 1 exposición y 2 préstamos con uno); los cuatro reportes con los totales de sus museos y el PDF de piezas con 14 filas; los selectores de museo de reportes, de nuevo inventario y de importación limitados a sus museos; y la respuesta 404 al abrir, desde su sesión, la dirección de una pieza de otro museo, en el detalle y en editar.
-- Con clics en el navegador, con la cuenta de administrador: los límites de la importación (un archivo de 501 filas se rechaza con "El archivo supera el máximo de 500 filas" y uno de 5.4 MB con "El archivo supera el tamaño máximo de 5 MB"), un archivo sin la columna Categoría, con el aviso de que no tiene el formato de la plantilla, y la página 404 propia.
-- Reemplazo de dos cuentas de demostración por Gabriela Linares Ortega y Marco Aguirre Soto, con rutas temporales que se eliminaron al terminar: el ingreso con ambas y la contraseña de demostración, el rechazo de los correos anteriores, los totales de cada una (Gabriela: 14 piezas, 5 exposiciones y 3 préstamos; Marco: 8 piezas, 2 exposiciones y 2 préstamos) y, en el inventario cerrado del Teatro, Iniciado por Gabriela y Cerrado por Marco.
-- Retirada de los marcadores numerados de piezas y de la ruta `sin-imagen.svg` como valor guardado: se comprobó con `npm run build` y revisando el código de `Miniatura`, la ficha técnica, el registro, la edición y la importación. No se vio en el navegador.
-- Las validaciones de acceso y de recuperación (correo vacío o inválido, contraseña vacía, credenciales incorrectas, cuenta desactivada, mensaje neutro y reglas de la nueva contraseña) también se comprobaron llamando a los controladores desde una ruta temporal.
+- `npm run build` compila sin errores ni advertencias, con las 34 páginas, y `tsc` con las opciones de variables y parámetros sin uso no marca nada.
+- Construcción desde cero, como la haría Vercel: un clon del repositorio sin ningún archivo `.env`, `npm ci` con un valor de relleno de `DIRECT_URL` solo en el comando, el `postinstall` genera el cliente de Prisma y `npm run build` pasa sin ninguna variable de entorno. Sin `DIRECT_URL`, la instalación falla con el mensaje que explica qué falta. La prueba se hizo en la máquina de desarrollo (Windows), no en Vercel.
+- `npm run db:simular`: 4 usuarios, 9 asignaciones, las 12 tablas con las cantidades de la sección 4 y las 10 reglas de consistencia correctas. No se conecta a nada.
+- `npm run db:verificar`: 27 pruebas contra la base real de Supabase, todas correctas y con 0 fallos, y con la base idéntica antes y después. Escribe datos temporales ("Verificación temporal"), los borra al terminar y comprueba que las 12 tablas quedaron idénticas. Las pruebas son:
+  - **Datos cargados (6):** nombre de la organización, cantidades de cada tabla, 9 asignaciones, 15 detalles y 18 registros de historial, tipos convertidos (fechas de solo día en texto, marcas en ISO UTC y valor asegurado como número), correo en minúscula con búsqueda sin distinguir mayúsculas, y lo que ve cada persona según sus museos.
+  - **Aislamiento entre organizaciones (4), con una organización temporal:** la temporal no ve nada de la real, la real no ve lo temporal, las escrituras con otra organización no cambian nada y las creaciones con referencias de otra organización fallan.
+  - **Traducción de errores (2):** cada restricción con nombre propio da su mensaje en español, y un error desconocido da un mensaje genérico sin texto técnico.
+  - **Operaciones de escritura (8):** museos (prefijo, nombre duplicado, actualizar y desactivar), piezas (códigos correlativos, código anterior normalizado, nada a medias, actualizar, estado, disponibilidad y límites de la base), exposiciones (crear, cruces, modificar y cancelar), préstamos (disponibilidad, un solo préstamo abierto, devolución y límites), inventarios (uno en curso por museo, marcas, cierre con sus efectos y registros), historial y usuarios (reemplazar museos, activar y desactivar, y exigir la cuenta de Auth).
+  - **Operaciones simultáneas (7):** dos creaciones de pieza a la vez dan códigos distintos, dos museos con el mismo prefijo reciben prefijos distintos, dos museos con el mismo nombre dejan uno solo, dos préstamos de la misma pieza dejan uno solo, dos exposiciones con la misma pieza y fechas cruzadas dejan una sola, dos inventarios en el mismo museo dejan uno en curso y un doble cierre del mismo inventario se cierra una vez y sin historial duplicado.
+- Medición del 20 de octubre de 2026 con la base real, en producción local (`next start`) y con la sesión del administrador armada solo dentro del proceso de la prueba, sin guardarla: diez pantallas (Inicio, catálogo, detalle de pieza, exposiciones, préstamos, inventarios, menú de reportes, reporte de piezas, usuarios y museos) respondieron con estado 200. Esta medición es de latencia y no cuenta como prueba funcional de cada pantalla.
+- **Con clics en el navegador, con la base real de Supabase:**
+  - El login de las cuatro cuentas y los museos asignados a cada una: el administrador ve 4 museos y 21 piezas, Miguel ve Pinacoteca y Museo Amano, Gabriela ve Teatro y Pinacoteca, y Marco ve Teatro.
+  - El registro de un usuario con contraseña temporal y el cambio obligatorio de esa contraseña, con el rechazo de una contraseña corta y de una igual a la temporal.
+  - El rechazo de una cuenta desactivada, con su mensaje, y el de credenciales incorrectas.
+  - El registro de una pieza: recibe el código siguiente del museo (MMT-009) y la fecha de registro del día en hora de Lima.
+  - El catálogo de piezas y el historial.
+  - El reporte de piezas sin filtro y filtrado por museo, con su exportación a PDF.
+  - La ficha técnica.
+  - Las listas de exposiciones y de préstamos, con sus fechas.
+- **Con clics en el navegador, solo con la versión anterior** (que aún no usaba la base de datos, con las cuentas de demostración de ese momento): el resto de pantallas y las acciones de los otros roles. Son los módulos de Usuarios, Museos, Piezas (filtros, editar, estado, importación desde Excel con sus límites), Exposiciones, Préstamos, Inventarios y Reportes (los cuatro, con sus filtros y la exportación a PDF y Excel), las pantallas de consulta con cuentas de colaborador (que cada una ve solo sus museos y la respuesta 404 de una pieza de otro museo) y la página 404 propia. Quedan como verificadas con la versión anterior y cubiertas por `db:verificar` en la capa de datos.
+- Con rutas temporales, que se eliminaron al terminar, en esa misma etapa: las acciones de los controladores, la equivalencia de los resultados con el proceso en UTC y en America/Lima, y la exportación de los reportes.
 
 **No verificado**
-- Con clics en el navegador se probaron las acciones de Museos, de Usuarios, de Piezas, de Exposiciones, de Préstamos, de Reportes, de Inventarios (con la cuenta de administrador), la importación y el inicio de sesión, y las pantallas de consulta con cuentas de colaborador. Restablecer datos se ejercitó solo llamando al controlador desde una ruta temporal.
-- Tampoco se comprobó en el navegador la subida de un archivo que no sea imagen.
-- Tampoco se comprobaron en el navegador el cruce de una exposición con un préstamo abierto desde el registro de la exposición ni la ventana de selección de piezas en tablet y mobile.
-- No se comprobó el comportamiento ante un error inesperado (ver los puntos abiertos).
-- Con cuentas de colaborador no se comprobaron en el navegador las acciones que modifican datos (registrar, editar, marcar y cerrar inventarios y devoluciones), solo las pantallas de consulta. Tampoco se comprobó el comportamiento en tablet y mobile, incluidos los reportes nuevos, Inventarios y la página 404.
-- El esquema de Prisma solo se editó: no se ejecutó ni se comprobó contra una base de datos.
-- No se comprobó el comportamiento en un servidor con una zona horaria distinta a la de la máquina de desarrollo (Windows, en hora de Lima). El código no depende de esa zona, y la equivalencia con el proceso en UTC se comprobó, pero no se ejecutó en otro servidor.
-- No se ha comprobado visualmente el resto de la interfaz interactiva: reemplazo de imágenes, la permanencia de las alertas de Sonner tras navegar y el comportamiento responsive en tablet y mobile, incluidos el catálogo, el detalle y los formularios de dos columnas. Tampoco se comprobaron en el navegador la cuadrícula de tarjetas del Inicio en tablet y mobile ni el color verde de `Mensaje` en la contraseña temporal y en el resumen de importación. Tampoco se comprobaron el hover del botón de peligro ni el aspecto de las insignias en tablet y mobile.
-- Se comprobó la exportación a PDF del reporte de piezas y el PDF del reporte por categoría y estado en una pestaña nueva. No se abrieron en el visor los PDF de los reportes de exposiciones y de préstamos, ni se comprobó la maquetación visual de la ficha técnica: se comprobó que se generan, su número de páginas y si incrustan imagen, pero no su aspecto.
-- No hay conexión a Prisma, Supabase, Storage ni Vercel. No hay pruebas automáticas ni lint configurados.
+- El despliegue en Vercel: no se ha publicado. Tampoco la velocidad en producción real, la duración y la memoria de las funciones de PDF, Excel e importación, ni que Vercel conserve los encabezados de las respuestas de PDF.
+- La recuperación de contraseña con un correo real: el envío del correo, el enlace, el canje del código y la nueva contraseña no se han ejercitado de punta a punta.
+- Las imágenes de las piezas en Supabase Storage: no existe todavía. Hoy se guardan como data URL en la base.
+- Tablet y mobile en los reportes, y el comportamiento responsive del resto de la interfaz (catálogo, detalle, formularios de dos columnas, tarjetas del Inicio, insignias y popups). El menú hamburguesa, las transiciones, la entrada animada de las pantallas y el desplegable de datos demo no se han comprobado en dispositivos reales.
+- Las acciones de escritura de cada rol en producción. Con la base real en el navegador solo se ejercitaron las listadas arriba (registro de un usuario y de una pieza); registrar, editar, marcar y cerrar inventarios y devoluciones, y la gestión de usuarios con cuentas de colaborador, no.
+- La importación de Excel y las exportaciones de los reportes por categoría y estado, de exposiciones y de préstamos con la base real (de las exportaciones solo se ejercitó la del reporte de piezas).
+- La subida de un archivo que no sea imagen, el reemplazo de imágenes y la permanencia de las alertas de Sonner tras navegar.
+- El cruce de una exposición con un préstamo abierto desde el registro de la exposición, en el navegador.
+- El comportamiento ante un error inesperado en una pantalla de solo lectura (ver los pendientes): no existe pantalla de error propia.
+- Los PDF de los reportes de exposiciones y de préstamos en el visor, y la maquetación visual de la ficha técnica: se comprobó que se generan, su número de páginas y si incrustan imagen, pero no su aspecto.
+- El comportamiento en un servidor con una zona horaria distinta a la de la máquina de desarrollo (Windows, en hora de Lima). El código no depende de esa zona, y la equivalencia con el proceso en UTC se comprobó, pero no se ejecutó en otro servidor.
+- No hay pruebas automáticas ni lint configurados.
 
 ## 11. Puntos abiertos y textos que no están en el informe
+
+### Pendientes
+
+- **Publicación en Vercel.** No se ha desplegado. Lo que falta:
+  - **Variables de entorno.** Públicas: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Secretas, en ejecución: `DATABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`. `DIRECT_URL` (secreta) debe estar definida durante la instalación y el build, porque `postinstall` ejecuta `prisma generate`: sin ella la instalación falla. Opcionales, solo para mostrar el desplegable de datos demo: `MOSTRAR_DATOS_DEMO` y las tres variables `CARGA_`. Con `MOSTRAR_DATOS_DEMO` en true el login muestra la contraseña de demostración a cualquier visitante, así que conviene dejarla sin definir en un sitio público.
+  - **Región cercana a la base.** La latencia medida desde la máquina de desarrollo es de unos 175 ms por consulta, y cada pantalla encadena entre 2 y 7 consultas seguidas (de 0,35 a 1,2 s en `next start`). Además, el pool cierra sus conexiones tras 10 s sin uso, y la primera petición posterior paga la reapertura (cerca de 1,3 s más). Esa distancia desde Lima a la base explica la lentitud medida en desarrollo. Al publicar, el servidor de Vercel debe ir en la región más cercana a la base, que está en West US (Oregon).
+  - **Auth.** Agregar el dominio publicado a las URLs de redirección de Supabase Authentication (sección 4).
+  - **Límites de las funciones.** Revisar la duración y la memoria de la importación de 500 piezas, los PDF y los Excel, y que el límite de cuerpo de las Server Actions (4.25 MB, bajo el tope de 4.5 MB de Vercel) siga siendo coherente.
+- **Imágenes de las piezas en Supabase Storage.** Hoy se guardan como data URL en la columna `imagen_url`, y cada listado de piezas las trae todas. Plan: un bucket público `piezas`, subir la imagen desde el servidor con la clave de servicio al registrar o editar, y guardar su URL pública, con las mismas reglas de PNG o JPG y 1 MB. El marcador `sin-imagen.svg` no pasa por Storage. La ficha técnica solo incrusta data URL PNG o JPG: con URLs de Storage habrá que descargar la imagen en el servidor antes de generar el PDF.
+- **Editar el correo de un usuario no cambia el correo de su cuenta de Auth.** La fila de usuario queda con el correo nuevo, y la persona seguiría entrando con el anterior.
+- **Pantalla de error propia.** No existe `error.tsx` ni `global-error.tsx`: ante un error inesperado se ve la pantalla de error por defecto de Next.js.
+- **Acciones de solo lectura sin captura de errores.** 32 de las 68 funciones exportadas de los controladores (`cargar*`, `buscar*`, `listar*`, `consultar*`, `generarFichaTecnica`, `generarPlantilla`, `obtenerUsuarioActual` y `cerrarSesionAccion`) no pasan por `protegida`.
+- **Lecturas.** Las pantallas cargan listas completas y filtran en el servidor, y varias repiten lecturas (por ejemplo museos y categorías) o encadenan consultas que podrían ir en paralelo. La relación de un usuario con sus museos y la de una exposición con sus piezas se leen con dos consultas.
+- **Proyectos gratuitos.** Un proyecto gratuito de Supabase se pausa tras una semana sin uso y se restaura desde su panel.
 
 ### Puntos abiertos
 
 - Activar usuarios y museos desactivados es una mejora acordada que el informe no incluye. Si la asesora lo pide, se agrega a ECUS01 como sub flujo 3.
 - Diferencias entre el informe y el sistema en ECUS01: tras guardar un usuario nuevo, el sistema se queda en la pantalla para mostrar la contraseña temporal una sola vez, y el informe dice que retorna a la lista. Tampoco figuran en el informe la contraseña temporal con cambio obligatorio en el primer ingreso ni la regla de que nadie puede cambiar su propio rol.
-- Diferencias entre el informe y el sistema en ECUS04: el informe habla de "módulo de Colecciones" y el menú se llama "Piezas". Los límites de 5 MB y de 500 filas del archivo no figuran en el informe.
+- Diferencias entre el informe y el sistema en ECUS04: el informe habla de "módulo de Colecciones" y el menú se llama "Piezas". Los límites de 4 MB y de 500 filas del archivo no figuran en el informe.
 - Diferencias entre el informe y el sistema en ECUS05: el informe solo rechaza una fecha de fin anterior a la de inicio. El código usa dos mensajes: "La fecha de fin no puede ser anterior a la fecha de inicio" y "La fecha de fin debe ser posterior a la fecha de inicio", este último también para fechas iguales. Está por revisar si debe rechazarse también la fecha igual.
 - ECUS05 no menciona que se exija al menos una pieza ni el tope de 3 años en las fechas de una exposición.
 - El código rechaza fechas de inicio y de fin iguales, y el informe solo prohíbe una fecha de fin anterior a la de inicio.
@@ -658,56 +788,47 @@ Qué se verificó, con qué método, y qué queda sin verificar.
 - La ventana de selección de pieza del préstamo ofrece solo piezas disponibles y los filtros de Código y Nombre, mientras que ECUS06 invoca "Buscar Piezas por Criterios".
 - En la devolución, el estado de conservación se elige sin valor por defecto.
 - Registrar una pieza a mano no genera historial, pero importar sí.
-- Cambios del modelo respecto del informe: se suman `Museo.prefijo` y `Pieza.codigoAnterior`.
+- Cambios del modelo respecto del informe: se suman `Museo.prefijo` y `Pieza.codigoAnterior`, y la base guarda en cada museo un contador interno, `ultimo_correlativo`, para asignar los códigos.
 - La plantilla de importación cambia respecto de ECUS04: no tiene columna de código y suma la columna opcional Código anterior.
 - Registrar una pieza, el detalle de una pieza y la ficha técnica no tienen caso de uso en el informe.
 - El buscador de piezas tiene los botones Buscar y Limpiar, y la búsqueda ya no se ejecuta al cambiar un filtro.
 - En la pantalla Nueva exposición, el botón que abre la búsqueda de piezas se llama "Agregar piezas" y la ventana que abre, "Buscar piezas".
 - El controlador `actualizarEstado` devuelve un dato (`estadoActual`) que la vista ya no usa.
-- La propiedad `ancha` del componente `Ventana` quedó sin uso: las ventanas de selección usan `seleccion`.
 - El componente `Filtros` de `Campo.tsx` ya no lo usan los buscadores y solo lo usa `CI_Reporte_Categoria_Estado`.
 - Las categorías no se gestionan desde la aplicación: no hay pantalla ni operación del contrato para crearlas, editarlas o desactivarlas.
-- Las imágenes de pieza se guardan como data URL solo mientras el prototipo use memoria.
 - Una pieza sin imagen tiene `imagenUrl` vacío. El marcador `sin-imagen.svg` solo se muestra en pantalla (`Miniatura`) y la ficha técnica dibuja el recuadro "Sin imagen".
 - Los reportes de piezas, de exposiciones y de préstamos figuran en el informe como casos de uso propios, sin detallar, y el sistema los implementa. Sus filtros, columnas, orden y exportaciones se definieron fuera del informe.
-- ECUS02: el informe nombra el caso de uso con la palabra "Inventario"; el sistema usa "Reporte por categoría y estado" para no confundirlo con el módulo de Inventarios. El informe inicia mostrando directamente los filtros; el sistema pasa antes por el menú de reportes. El informe no incluye la exportación a PDF y Excel ni los botones Limpiar y Volver, y tampoco figuran en él para los tres reportes nuevos. El filtro de fechas usa la fecha de registro de la pieza, y el reporte por categoría y estado sigue sin filtro por museo.
-- Resuelto: el día del filtro de fechas del reporte por categoría y estado se calculaba en UTC mientras el resto del sistema usaba la fecha local del servidor. Ahora todo el sistema usa el día de America/Lima (`ZONA_HORARIA` y `lib/fechas.ts`), incluido ese filtro (`diaLocal`), así que este punto ya no está abierto.
-- La clase `.medio` de `components/ui/FiltrosReporte.module.css` quedó sin uso, porque solo la usaba el filtro de Disponibilidad del reporte de piezas, que ahora tiene clases propias. Se dejó para no tocar los anchos compartidos.
+- ECUS02: el informe nombra el caso de uso con la palabra "Inventario"; el sistema usa "Reporte por categoría y estado" para no confundirlo con el módulo de Inventarios. El informe inicia mostrando directamente los filtros; el sistema pasa antes por el menú de reportes. El informe no incluye la exportación a PDF y Excel ni los botones Limpiar y Volver, y tampoco figuran en él para los otros tres reportes. El filtro de fechas usa la fecha de registro de la pieza, y el reporte por categoría y estado sigue sin filtro por museo.
 - `BotonesReporte` lo usan los reportes de piezas, de exposiciones y de préstamos. El reporte por categoría y estado arma en su propia vista la misma fila de botones, sin usar ese componente.
 - No existe `error.tsx` ni `global-error.tsx`. Ante un error inesperado la persona ve la pantalla de error por defecto de Next.js, en inglés y sin el estilo del proyecto. Una página de error propia queda como mejora pendiente.
-- El proyecto aún no es un repositorio Git: no hay historial de cambios ni diferencias que consultar.
-- La regla 5 de consistencia de la semilla dice que toda pieza con préstamo cerrado está disponible. Con un préstamo posterior abierto sobre la misma pieza (MCQ-003) debe estar en préstamo. La comprobación se aplicó con esa precisión y el documento de ajustes no se modificó.
-- Cambios de la semilla respecto de lo que describía el documento de ajustes: la exposición "Libretos y bocetos" quedó sin la pieza 3 (regla 4); se agregaron las piezas MMT-007 y MMT-008 para el inventario del Teatro; la pieza MMT-005 se registró hace 220 días; MCQ-003 tiene un préstamo abierto, por lo que el inventario en curso de Casa Quiñones espera 4 piezas.
+- La regla 5 de consistencia de los datos de la carga dice que toda pieza con préstamo cerrado está disponible. Con un préstamo posterior abierto sobre la misma pieza (MA-003) debe estar en préstamo, y `db:simular` aplica la regla con esa precisión.
 - El sistema registra quién inició y quién cerró un inventario, pero no quién marcó cada pieza. Queda como mejora futura.
-- Al conectar Prisma, la columna `usuario_cierre_id` de `inventario` se incluye al recrear las 12 tablas (ver `docs/CONEXION.md`).
 - Inventarios no tiene caso de uso en el informe. El registro de quién inició y quién cerró un inventario se definió fuera del informe y no cambia ECUS01 a ECUS06.
 - Quedan cuatro operaciones del contrato de datos sin uso (`obtenerOrganizacion`, `obtenerExposicion`, `obtenerPrestamo`, `obtenerInventario`). Se conservan por ser parte del contrato mínimo.
 - Una exposición finalizada por fechas sigue contando para los cruces de fechas. Las canceladas no cuentan.
-- Los ids se crean con `crypto.randomUUID()` en memoria. En el esquema de Prisma los demás ids llevan `gen_random_uuid()` y el de `usuario` no lleva valor por defecto, porque será el de la cuenta de inicio de sesión.
-- `npm install` muestra avisos de `npm audit` por dependencias transitivas. No se aplicó `npm audit fix`.
-- La recuperación de contraseña es solo interfaz. Al conectar Supabase Auth se implementa por correo y reemplaza las dos pantallas actuales. Hoy no hay enlace hacia `/restablecer-contrasena`, y con datos válidos esa pantalla muestra su aviso como una alerta de error.
+- `npm install` y `npm ci` muestran avisos de `npm audit` (dos vulnerabilidades moderadas en dependencias transitivas) y de paquetes obsoletos. No se aplicó `npm audit fix`.
 - El criterio con que `Seleccion` reconoce el placeholder (valor vacío y texto que empieza con "Selecciona") es una convención de texto, con el límite descrito en la sección 5.
 - "No existen préstamos vigentes" es un aviso informativo de lista vacía y se muestra como `Mensaje` de error (rojo), a diferencia del resto de listas vacías, que usan una fila de tabla.
 - Las alertas de Sonner usan el borde grueso del proyecto, que no se escala con el 20 por ciento de las demás medidas.
 - Modo oscuro opcional, que se evaluará al cerrar la paleta. Consistiría en redefinir las variables de `:root` bajo `prefers-color-scheme`, con un botón para alternar y persistencia de la elección. En ese caso el crema pasaría a ser el modo claro.
 - Ajustar los colores en las filas donde coinciden el estado de conservación y la disponibilidad, que hoy muestran dos insignias de colores que pueden competir entre sí.
-- Propuestas de semilla menores, sin aplicar: Miguel solo ve un préstamo vencido y Lucía solo ve préstamos de una situación, por lo que no hay mezcla de situaciones en esas cuentas.
 
 ### Textos que no están en el informe
 
 Los textos de ECUS01 a ECUS06 son los del informe. Estos otros se definieron fuera de él.
 
-- **Definidos en el documento de ajustes (sección 7.10 y 7.7 y 7.8):** "La cuenta se encuentra desactivada. Comuníquese con el administrador.", "Pieza actualizada correctamente", "La imagen debe ser PNG o JPG de máximo 1 MB", "No es posible modificar esta exposición", "Usuario activado exitosamente", "Museo activado exitosamente", "Museo registrado exitosamente", "Museo actualizado exitosamente", "Museo desactivado exitosamente", "Ya existe un museo con ese nombre", "Ya existe un inventario en curso para este museo", "Debe marcar todas las piezas antes de cerrar el inventario" e "Inventario cerrado correctamente".
-- **Inicio de sesión y contraseña:** "Ingresa tu correo electrónico", "Ingresa un correo electrónico válido", "Ingresa tu contraseña", "Correo electrónico o contraseña incorrectos", "La contraseña debe tener al menos 10 caracteres", "La contraseña no puede tener más de 15 caracteres", "Las contraseñas no coinciden", "La nueva contraseña debe ser distinta de la actual" y "Datos de demostración restablecidos". Etiquetas del botón de contraseña: "Mostrar", "Ocultar", "Mostrar contraseña" y "Ocultar contraseña".
-- **Recuperación de contraseña:** "¿Olvidaste tu contraseña?", "Recuperar contraseña", "Enviar enlace", "Volver al inicio de sesión", "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña", "Nueva contraseña", "Guardar contraseña" y "Esta función se activará cuando se conecte la autenticación. Tu contraseña no se modificó".
+- **Cuentas, museos, piezas, exposiciones e inventarios:** "La cuenta se encuentra desactivada. Comuníquese con el administrador.", "Pieza actualizada correctamente", "La imagen debe ser PNG o JPG de máximo 1 MB", "No es posible modificar esta exposición", "Usuario activado exitosamente", "Museo activado exitosamente", "Museo registrado exitosamente", "Museo actualizado exitosamente", "Museo desactivado exitosamente", "Ya existe un museo con ese nombre", "Ya existe un inventario en curso para este museo", "Debe marcar todas las piezas antes de cerrar el inventario" e "Inventario cerrado correctamente".
+- **Inicio de sesión y contraseña:** "Ingresa tu correo electrónico", "Ingresa un correo electrónico válido", "Ingresa tu contraseña", "Correo electrónico o contraseña incorrectos", "La contraseña debe tener al menos 10 caracteres", "La contraseña no puede tener más de 15 caracteres", "Las contraseñas no coinciden", "La nueva contraseña debe ser distinta de la actual", "La contraseña no es lo bastante segura. Elige otra", "Ocurrió un error inesperado. Intenta de nuevo" y "No se pudo completar la operación. Intenta de nuevo". Etiquetas del botón de contraseña: "Mostrar", "Ocultar", "Mostrar contraseña" y "Ocultar contraseña".
+- **Recuperación de contraseña:** "¿Olvidaste tu contraseña?", "Recuperar contraseña", "Enviar enlace", "Volver al inicio de sesión", "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña", "Nueva contraseña" y "Guardar contraseña".
 - **Tarjetas de acceso del Inicio:** los detalles de Préstamos ("Registrar préstamos y devoluciones de piezas"), Inventarios ("Conteo físico de piezas por museo") y Museos ("Altas, ediciones y estado de los museos"). Los de Piezas, Exposiciones y Usuarios ya existían, y el de Reportes pasó a ser "Reportes de la colección".
 - **Usuarios y museos:** "Ingresa el nombre", "Ingresa un correo electrónico válido", "Selecciona un rol", "Selecciona al menos un museo", "No hay museos registrados. Registra un museo para poder asignarlo.", "Registrar museo", "Copiar", "Copiada", "No se pudo copiar al portapapeles", "No se encontró el usuario", "No puede cambiar su propio rol", "Ingresa el nombre del museo", "Selecciona el tipo de museo" y "No se encontró el museo". Las ventanas de confirmación de desactivar y activar tienen textos propios.
 - **Piezas:** "Ingresa el nombre de la pieza", "Selecciona una categoría", "El año debe ser un número entero", "El año debe estar entre -10000 y el año actual", "El código anterior no puede tener más de 40 caracteres", "Ya existe una pieza con ese código anterior en el museo", la ayuda "Imagen cuadrada recomendada de 800 x 800 px, en PNG o JPG, de máximo 1 MB", los botones "Ver detalle", "Buscar", "Limpiar" y "Volver al catálogo", la línea de resultado "N piezas" o "X de N piezas", "Detalle de la pieza", "Selecciona el estado de conservación", "Selecciona un museo", "No tienes acceso al museo seleccionado", "No se encontró la pieza" y "Selecciona el nuevo estado". En el historial, el cambio de imagen se guarda como "con imagen", "sin imagen" o "imagen reemplazada".
-- **Importación:** "El archivo supera el tamaño máximo de 5 MB", "El archivo supera el máximo de 500 filas", "Selecciona el archivo Excel a importar", "Selecciona el museo de destino", la etiqueta "Museo de destino", las ayudas "Todas las piezas del archivo se registrarán en este museo" y "Solo archivos .xlsx, de máximo 5 MB y 500 filas", y los motivos de error por fila ("Falta el nombre", "Falta la categoría", "Falta el estado de conservación", categoría o estado inexistente, los mensajes del año, "El código anterior no puede tener más de 40 caracteres", "El código anterior ya está registrado en el museo" y "El código anterior está repetido en el archivo"). Además, el total de piezas registradas y los listados de la vista previa.
+- **Importación:** "El archivo supera el tamaño máximo de 4 MB", "El archivo supera el máximo de 500 filas", "Selecciona el archivo Excel a importar", "Selecciona el museo de destino", la etiqueta "Museo de destino", las ayudas "Todas las piezas del archivo se registrarán en este museo" y "Solo archivos .xlsx, de máximo 4 MB y 500 filas", y los motivos de error por fila ("Falta el nombre", "Falta la categoría", "Falta el estado de conservación", categoría o estado inexistente, los mensajes del año, "El código anterior no puede tener más de 40 caracteres", "El código anterior ya está registrado en el museo" y "El código anterior está repetido en el archivo"). Además, el total de piezas registradas y los listados de la vista previa.
 - **Exposiciones:** "Ingresa el nombre de la exposición", "Selecciona el museo sede", "Ingresa la fecha de inicio", "Ingresa la fecha de fin", "La fecha de fin debe ser posterior a la fecha de inicio", "No se encontró la exposición", "Alguna de las piezas seleccionadas no existe o no está disponible", "Las siguientes piezas no pueden asignarse a la exposición", "Quítalas de la selección para continuar", "Agrega al menos una pieza a la exposición", "Las fechas no pueden superar los 3 años desde hoy", la línea de resultado "N exposiciones", "1 exposición" o "X de N exposiciones" y los motivos por pieza.
 - **Préstamos:** "Selecciona el estado de conservación de la pieza", "No se encontró el préstamo", "Quitar", "La fecha de salida no puede ser posterior a hoy", "La fecha de devolución no puede superar los 3 años desde hoy", "El valor asegurado debe ser un número mayor que cero, con hasta 2 decimales, y no superar 100 millones", "La institución destino no puede tener más de 100 caracteres", "El responsable no puede tener más de 100 caracteres", "El número de convenio no puede tener más de 40 caracteres" y "El número de póliza no puede tener más de 40 caracteres".
 - **Inventarios:** "Inventario iniciado", "Selecciona el museo del inventario", "Selecciona el resultado de la pieza", "La pieza no forma parte de este inventario", "No es posible modificar un inventario cerrado", "No se encontró el inventario" y "Este museo no tiene piezas para inventariar". Etiquetas de la pantalla del inventario: "Iniciado por" y "Cerrado por".
 - **Reportes y ficha técnica:** "La fecha desde no puede ser posterior a la fecha hasta", "No se encontraron resultados para los filtros aplicados", "No se encontró la pieza" (respuesta 404 de la ficha), y los textos del menú de reportes y de la pantalla del reporte: "Informes", "Reportes", "Reporte por categoría y estado", "Reporte de piezas", "Reporte de exposiciones", "Reporte de préstamos", "Total de piezas por categoría y estado", "Listado de piezas con sus datos", "Listado de exposiciones con sus piezas", "Listado de préstamos y devoluciones", "Próximamente", "Reportes de la colección", "Generar Reporte", "Limpiar", "Volver", "Exportar a PDF" y "Exportar a Excel". De los tres reportes nuevos: "Listado de piezas por museo", "Total de piezas", "Total de exposiciones", "Total de préstamos", "Todos", "Todas", "Sin límite", "Alguno de los filtros del reporte no es válido", "Las fechas del reporte deben tener el formato AAAA-MM-DD" y "No tienes acceso al museo seleccionado". Etiquetas de filtros: Museo, Disponibilidad, Estado, Situación, Institución destino, Desde y Hasta. Columnas del reporte de piezas: Código, Nombre, Categoría, Estado, Disponibilidad, Museo, Ubicación y Fecha de registro. Columnas del reporte de exposiciones: Nombre, Museo, Estado, Inicio, Fin, Cantidad de piezas y Piezas. Columnas del reporte de préstamos: Pieza, Museo, Institución destino, Responsable, Convenio, Póliza, Valor asegurado, Salida, Devolución prevista, Devolución real y Situación.
+- **Navegación y datos demo:** "Abrir menú", "Cerrar menú", "Sesión", "Cerrar sesión", "Cuentas de demostración", "Mostrar datos demo", "Ocultar datos demo", "Contraseña de todas las cuentas", "Museos", "Son datos de demostración, no cuentas reales." y "<museo> solo lo ve el administrador." (en plural, "<museos> solo los ve el administrador.").
 - **Página 404:** "404", "Esta página no se encontró" y "Volver al inicio". El mismo mensaje se usa para una dirección inexistente y para un recurso que el sistema no muestra, por ejemplo una pieza de un museo no asignado.
 - **Avisos de lista vacía:** cada lista y buscador tiene el suyo, por ejemplo "No se encontraron piezas", "No hay préstamos registrados" o "No hay inventarios registrados".
 
@@ -717,8 +838,7 @@ Archivos .md del repositorio y su función:
 
 | Archivo | Para qué sirve |
 |-|-|
-| `README.md` | Cómo correr el prototipo, cuentas de demostración, funciones y restablecer datos |
+| `README.md` | Qué es el sistema, cómo correrlo, scripts, estructura, librerías, cuentas de demostración, funciones y estado de verificación |
 | `MAPA.md` | Este mapa del proyecto |
-| `docs/CONEXION.md` | Guía para conectar Prisma, Supabase Auth, Storage y Vercel |
-| `lib/data/prisma/README.md` | Nota de que ahí irá la implementación con Prisma |
-| `AJUSTES_CODIGO_V2.md` | Documento de ajustes que describió la adaptación del código al diseño final. Solo se editaron sus menciones de la contraseña de demostración, que ahora es `Museos2026`. Contiene códigos de pieza y una longitud de contraseña temporal anteriores a los cambios actuales |
+
+La base de datos se documenta en los comentarios de `prisma/schema.prisma` y de los dos scripts de `prisma/sql/`, y las variables de entorno, en `.env.example`.

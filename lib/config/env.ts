@@ -7,7 +7,7 @@ function requerir(nombre: string, para: string): string {
   const valor = process.env[nombre];
   if (!valor) {
     throw new Error(
-      `Falta la variable de entorno ${nombre}, necesaria ${para}. Complétala en .env.local (ver docs/CONEXION.md).`,
+      `Falta la variable de entorno ${nombre}, necesaria ${para}. Complétala en .env.local (ver .env.example).`,
     );
   }
   return valor;

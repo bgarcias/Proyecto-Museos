@@ -401,7 +401,7 @@ function validarTablas(f: Filas): string[] {
   return errores;
 }
 
-/* Las 10 reglas de consistencia de la sección 2.4 de AJUSTES_CODIGO_V2.md, con la precisión sobre la regla 5 */
+/* Las 10 reglas de consistencia de los datos: relaciones entre piezas, préstamos, exposiciones, inventarios e historial. La regla 5 admite un préstamo posterior abierto sobre la misma pieza */
 
 type ResultadoRegla = { regla: number; descripcion: string; errores: string[] };
 
