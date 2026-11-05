@@ -237,6 +237,9 @@ export const CONSULTA_MENU_COMPACTO = "(max-width: 1025px)";
 export const MENSAJE_ERROR_INESPERADO = "Ocurrió un error inesperado. Intenta de nuevo";
 export const MENSAJE_CONTRASENA_DEBIL = "La contraseña no es lo bastante segura. Elige otra";
 
+/** Texto del botón de inicio de sesión mientras el ingreso está en curso. */
+export const BOTON_INGRESANDO = "Ingresando…";
+
 /** Desplegable de datos demo del inicio de sesión (solo con MOSTRAR_DATOS_DEMO en true). */
 export const TITULO_DATOS_DEMO = "Cuentas de demostración";
 export const BOTON_MOSTRAR_DEMO = "Mostrar datos demo";

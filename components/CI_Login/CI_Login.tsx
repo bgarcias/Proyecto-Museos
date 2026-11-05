@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ingresar } from "@/lib/controllers/CC_Usuario";
+import { BOTON_INGRESANDO } from "@/lib/constantes";
 import type { DatosDemo } from "@/lib/tipos";
 import { errorDeContrasenaIngreso, errorDeCorreo } from "@/lib/validaciones";
 import { alertaError } from "@/components/ui/alertas";
@@ -74,7 +75,7 @@ export default function CI_Login({ datosDemo }: { datosDemo?: DatosDemo | null }
             />
           </Campo>
           <Boton type="submit" disabled={enviando}>
-            Ingresar
+            {enviando ? BOTON_INGRESANDO : "Ingresar"}
           </Boton>
           <div className={estilos.enlaces}>
             <Link href="/recuperar-contrasena">¿Olvidaste tu contraseña?</Link>
