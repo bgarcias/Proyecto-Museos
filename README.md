@@ -1,17 +1,17 @@
 # Gestión de colecciones y exposiciones para museos
 
-Sistema web (VESTIGIO) para gestionar la colección de uno o varios museos: catálogo de piezas con su historial de cambios, exposiciones, préstamos a otras instituciones, inventarios físicos y reportes con exportación a PDF y Excel. Cada organización tiene sus museos, y cada persona ve y modifica solo los museos que se le asignaron. Los datos viven en PostgreSQL en Supabase, con Prisma, y el inicio de sesión es de Supabase Auth.
+Sistema web (VESTIGIO) para gestionar la colección de uno o varios museos: catálogo de piezas con su historial de cambios, exposiciones, préstamos a otras instituciones, inventarios físicos y reportes con exportación a PDF y Excel. Cada organización tiene sus museos, y cada persona ve y modifica solo los museos que se le asignaron. Los datos viven en PostgreSQL en Supabase, con Prisma, el inicio de sesión es de Supabase Auth y las imágenes de las piezas están en Supabase Storage.
 
 Publicado en: https://proyecto-museos.vercel.app
 
-Es un prototipo: todos los registros son de demostración, y los cuatro museos que trae se usan solo como ejemplo.
+Es un prototipo: todos los registros son de demostración, y los cuatro museos que trae se usan solo como ejemplo. Las imágenes de las piezas son ilustrativas, tomadas de internet, y se retirarán a pedido de sus titulares.
 
 Para el detalle de la estructura, las rutas, la capa de datos, las reglas de negocio y el estado de verificación, ver `MAPA.md`.
 
 ## Requisitos
 
 - Node.js 24.x
-- Un proyecto de Supabase (PostgreSQL y Auth)
+- Un proyecto de Supabase (PostgreSQL, Auth y Storage)
 - Conexión a internet: la primera compilación descarga las tipografías Anton e Inter desde Google Fonts
 
 ## Cómo correrlo
@@ -26,9 +26,9 @@ El orden importa: las variables de entorno van antes de instalar, porque la inst
    |-|-|-|
    | `DATABASE_URL` | Conexión con pool que usa la aplicación (en Supabase, la del pooler en modo transacción) | Secreta |
    | `DIRECT_URL` | Conexión directa o session pooler, para las herramientas de Prisma | Secreta |
-   | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto de Supabase | Pública |
+   | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto de Supabase. También arma las direcciones públicas de las imágenes | Pública |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anónima de Supabase | Pública |
-   | `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio, para crear y borrar cuentas desde el servidor | Secreta |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio, para crear y borrar cuentas y para subir y borrar imágenes desde el servidor | Secreta |
    | `CARGA_ADMIN_EMAIL` | Correo del administrador de los datos de demostración | Secreta |
    | `CARGA_COLABORADOR_EMAIL` | Correo de Miguel Zambrano Meléndez en los datos de demostración | Secreta |
    | `CARGA_CONTRASENA` | Contraseña que comparten las cuatro cuentas de demostración, de 10 a 15 caracteres | Secreta |
@@ -48,7 +48,9 @@ El orden importa: las variables de entorno van antes de instalar, porque la inst
 
 5. En el panel de Supabase (Authentication), configurar para la recuperación de contraseña: agregar `http://localhost:3000/restablecer-contrasena` a las URLs de redirección y fijar en 10 la longitud mínima de contraseña.
 
-6. Revisar y cargar los datos de demostración:
+6. En Supabase Storage, crear un bucket público llamado `piezas` y subir en él las imágenes de las piezas de demostración, con el nombre `CODIGO.jpg` (por ejemplo `MMT-001.jpg`). Son 19 archivos: todas las piezas menos MA-001 y MA-002, que quedan sin imagen. Conviene guardar la carpeta original con esos archivos, porque la carga no los sube. Más detalle en la sección "Imágenes de las piezas".
+
+7. Revisar y cargar los datos de demostración:
 
    ```
    npm run db:simular
@@ -57,15 +59,15 @@ El orden importa: las variables de entorno van antes de instalar, porque la inst
 
    El primero no se conecta a nada: construye los datos y comprueba sus reglas. El segundo pide escribir `CARGAR`, crea las cuatro cuentas en Supabase Auth y llena las 12 tablas.
 
-7. Opcional: `npm run db:verificar` comprueba la capa de datos contra la base cargada. Escribe datos temporales y los borra al terminar.
+8. Opcional: `npm run db:verificar` comprueba la capa de datos contra la base cargada. Escribe datos temporales y los borra al terminar.
 
-8. Iniciar el servidor de desarrollo:
+9. Iniciar el servidor de desarrollo:
 
    ```
    npm run dev
    ```
 
-9. Abrir http://localhost:3000. Sin sesión, la aplicación redirige a `/login`.
+10. Abrir http://localhost:3000. Sin sesión, la aplicación redirige a `/login`.
 
 Para comprobar que compila sin errores:
 
@@ -130,13 +132,15 @@ lib/
   data/               Contratos de la capa de datos, implementación con Prisma, traducción de errores de la base y el cliente generado
   auth/               Sesión de Supabase Auth y cuentas
   supabase/           Clientes de Supabase y renovación de la sesión en cada petición
+  almacenamiento.ts   Subida, movimiento y borrado de imágenes en Supabase Storage (solo servidor)
+  imagenes.ts         Dirección pública de la imagen de una pieza a partir de lo guardado en imagen_url
   config/             Variables de entorno
   exportacion/        PDF y Excel de los reportes y de la ficha técnica
   importacion/        Importación de piezas desde Excel y sus límites
-  (sueltos)           tipos, constantes, validaciones, fechas, codigos, formatos, navegacion, datosDemo, busquedaTexto, reporteParametros, resultadoBusqueda
+  (sueltos)           tipos, constantes, validaciones, fechas, codigos, formatos, navegacion, datosDemo, busquedaTexto, reporteParametros, resultadoBusqueda, y los dos de imágenes de arriba
 prisma/               Esquema para generar el cliente y, en sql/, los dos scripts que crean y protegen la base
 scripts/              Carga de los datos de demostración y verificación de la capa de datos
-public/               Archivos estáticos: el marcador de las piezas sin imagen
+public/               Archivos estáticos: el marcador de las piezas sin imagen (las imágenes de las piezas viven en Supabase Storage)
 proxy.ts              Renueva la sesión de Supabase Auth en cada petición
 ```
 
@@ -151,6 +155,8 @@ Las carpetas de `app/` son las direcciones web del sistema, y cada `page.tsx` so
 | Inicio | `components/CI_Inicio/CI_Inicio.tsx` | `CI_Inicio.module.css` | `lib/controllers/CC_Usuario.ts` y `lib/navegacion.ts` |
 | Catálogo de piezas | `components/CI_Catalogo_Piezas/CI_Catalogo_Piezas.tsx` y `components/ui/BuscadorPiezas.tsx` | `CI_Catalogo_Piezas.module.css`, `components/ui/Buscador.module.css` | `lib/controllers/CC_Pieza.ts` |
 | Formulario de pieza | `components/CI_Formulario_Pieza/CI_Formulario_Pieza.tsx` | `CI_Formulario_Pieza.module.css` | `lib/controllers/CC_Pieza.ts` y `lib/codigos.ts` |
+| Imágenes de las piezas | `components/ui/Miniatura.tsx` | `components/ui/Miniatura.module.css` | `lib/imagenes.ts`, `lib/almacenamiento.ts` y `lib/controllers/CC_Pieza.ts` |
+| Ficha técnica en PDF | No aplica | No aplica | `lib/exportacion/ficha.tsx` y `generarFichaTecnica` en `lib/controllers/CC_Pieza.ts` |
 | Reporte por categoría y estado | `components/CI_Reporte_Categoria_Estado/CI_Reporte_Categoria_Estado.tsx` | `CI_Reporte_Categoria_Estado.module.css` | `lib/controllers/CC_Reporte.ts` |
 | Reporte de piezas | `components/CI_Reporte_Piezas/CI_Reporte_Piezas.tsx` | `CI_Reporte_Piezas.module.css` | `lib/controllers/CC_Reporte.ts` |
 | Reporte de exposiciones | `components/CI_Reporte_Exposiciones/CI_Reporte_Exposiciones.tsx` | `CI_Reporte_Exposiciones.module.css` | `lib/controllers/CC_Reporte.ts` |
@@ -180,7 +186,7 @@ Las carpetas de `app/` son las direcciones web del sistema, y cada `page.tsx` so
 | TypeScript | 5.9.3 | Tipado de todo el código |
 | Prisma (`@prisma/client` y `prisma`) | 7.10.1 | Acceso a PostgreSQL. El cliente se genera con `prisma generate` en `lib/data/prisma/generado`, que no se versiona. La herramienta de línea de comandos solo se usa para generar y validar |
 | `@prisma/adapter-pg` y `pg` | 7.10.1 y 8.23.1 | Adaptador y controlador de PostgreSQL del cliente de Prisma |
-| `@supabase/supabase-js` | 2.118.0 | API de administración de Auth (crear y borrar cuentas) y scripts de carga |
+| `@supabase/supabase-js` | 2.118.0 | API de administración de Auth (crear y borrar cuentas), Storage para las imágenes de las piezas (con la clave de servicio, solo en el servidor) y scripts de carga |
 | `@supabase/ssr` | 0.12.7 | Sesión de Supabase Auth en cookies, para el servidor y el proxy |
 | Sonner | 2.0.8 | Alertas de éxito y de error (`components/ui/ContenedorAlertas.tsx` y `components/ui/alertas.ts`) |
 | ExcelJS | 4.4.0 | Plantilla de importación de piezas, lectura del Excel importado y exportación de los reportes a Excel |
@@ -212,10 +218,10 @@ Tres piezas del Museo Amano tienen código anterior para probar la función: MA-
 
 ## Funciones
 
-- **Acceso:** inicio de sesión con validación por campo (correo vacío, correo inválido y contraseña vacía), botón para mostrar u ocultar la contraseña y cambio de contraseña temporal. La recuperación de contraseña envía por correo, con Supabase Auth, un enlace que lleva a `/restablecer-contrasena`, donde se define la nueva contraseña (`/recuperar-contrasena` es la pantalla que lo solicita). Iniciar y cerrar sesión no muestran alertas. Con `MOSTRAR_DATOS_DEMO` en `true`, el login incluye el desplegable de datos demo.
+- **Acceso:** inicio de sesión con validación por campo (correo vacío, correo inválido y contraseña vacía), botón para mostrar u ocultar la contraseña y cambio de contraseña temporal. La recuperación de contraseña envía por correo, con Supabase Auth, un enlace que lleva a `/restablecer-contrasena`, donde se define la nueva contraseña (`/recuperar-contrasena` es la pantalla que lo solicita). Mientras el ingreso está en curso, el botón del login muestra "Ingresando…" y queda deshabilitado. Iniciar y cerrar sesión no muestran alertas. Con `MOSTRAR_DATOS_DEMO` en `true`, el login incluye el desplegable de datos demo.
 - **Usuarios** (solo administrador): lista, registrar, editar, desactivar y activar cuentas, con museos asignados. Todo usuario, de cualquier rol, necesita al menos un museo. Si no hay museos activos, el formulario muestra un aviso y el botón "Registrar museo", que lleva a `/museos/nuevo`. Nadie puede desactivar su propia cuenta ni cambiar su propio rol. Una cuenta desactivada no puede iniciar sesión.
 - **Museos** (solo administrador): lista, registrar, editar, desactivar y activar museos. Cada museo tiene un tipo de colección: arqueología, antropología o etnología; histórico; arte; ciencias naturales u otro. El prefijo lo calcula el sistema.
-- **Piezas:** catálogo con seis filtros combinados (código, nombre, categoría, estado, disponibilidad y museo; la búsqueda ignora mayúsculas y tildes y el filtro de código también mira el código anterior) que se aplican con los botones Buscar y Limpiar o con Enter, y con la lista ordenada por código. Cada fila muestra la imagen, el código, el nombre, el estado, la disponibilidad y el museo, con cinco acciones: ver detalle, editar, actualizar el estado de conservación, ver el historial y generar la ficha técnica en PDF. Registrar y editar piezas usa un formulario de dos columnas, con imagen PNG o JPG, cuadrada y recomendada de 800 x 800 px, de máximo 1 MB. El año debe ser un entero entre -10000 y el año actual. Registrar, editar y actualizar el estado vuelven al catálogo al guardar.
+- **Piezas:** catálogo con seis filtros combinados (código, nombre, categoría, estado, disponibilidad y museo; la búsqueda ignora mayúsculas y tildes y el filtro de código también mira el código anterior) que se aplican con los botones Buscar y Limpiar o con Enter, y con la lista ordenada por código. Cada fila muestra la imagen, el código, el nombre, el estado, la disponibilidad y el museo, con cinco acciones: ver detalle, editar, actualizar el estado de conservación, ver el historial y generar la ficha técnica en PDF. Registrar y editar piezas usa un formulario de dos columnas, con imagen PNG o JPG, cuadrada y recomendada de 800 x 800 px, de máximo 1 MB, que el servidor sube a Supabase Storage. El año debe ser un entero entre -10000 y el año actual. Registrar, editar y actualizar el estado vuelven al catálogo al guardar.
 - **Importar piezas:** descarga de la plantilla de Excel (sin columna de código y con la columna opcional Código anterior), validación fila por fila con vista previa e importación de las piezas válidas, al "Museo de destino" que se elige. El archivo debe ser .xlsx, de máximo 4 MB y 500 filas. Los códigos se asignan al importar, en el orden de las filas.
 - **Exposiciones:** registrar, modificar y cancelar exposiciones, y asignarles piezas. Toda exposición necesita al menos una pieza y ninguna de sus dos fechas puede superar los 3 años desde hoy. El estado (programada, vigente, finalizada o cancelada) se calcula por las fechas, y una exposición cuya fecha de fin ya pasó queda finalizada y no se puede modificar ni cancelar. La lista se ordena por fecha de inicio, de la más reciente a la más antigua, y tiene filtros con los botones Buscar y Limpiar, como el catálogo de piezas.
 - **Préstamos:** registrar préstamos de piezas a otras instituciones y registrar su devolución. Un préstamo admite una sola pieza, que se elige en un popup que solo ofrece piezas disponibles (con "Quitar" para deshacer la elección). La fecha de salida aparece con la de hoy y no puede ser posterior a hoy, la devolución prevista no puede superar los 3 años desde hoy, el valor asegurado debe ser mayor que cero con hasta 2 decimales y no superar 100 millones, y los textos tienen un máximo de 100 caracteres (institución y responsable) y de 40 (convenio y póliza). En la devolución, el estado de conservación al regresar se elige sin valor por defecto. La situación (en préstamo, vencido o devuelto) se calcula por las fechas.
@@ -246,6 +252,25 @@ Tres piezas del Museo Amano tienen código anterior para probar la función: MA-
 
 La lista completa de rutas, con su pantalla y su control, está en `MAPA.md`.
 
+## Imágenes de las piezas
+
+Las fotos viven en el bucket público `piezas` de Supabase Storage. La base guarda solo el nombre del archivo en `imagen_url` (vacío si la pieza no tiene imagen), por ejemplo `MMT-001.jpg`.
+
+- **Dirección pública:** `lib/imagenes.ts` (`urlImagenPieza`) arma la dirección con `NEXT_PUBLIC_SUPABASE_URL` y el nombre del bucket (`BUCKET_IMAGENES_PIEZAS` en `lib/constantes.ts`). Si el valor ya empieza con `data:` o `http`, lo devuelve tal cual, así las piezas con una imagen antigua guardada como data URL siguen mostrándose hasta que se reemplacen o se quiten.
+- **Subida desde el formulario:** el navegador valida que sea PNG o JPG de máximo 1 MB y la envía como data URL. `lib/controllers/CC_Pieza.ts` la decodifica, vuelve a validar el tipo por los primeros bytes y el tamaño, y `lib/almacenamiento.ts` la sube con la clave de servicio con el nombre `CODIGO-marcaDeTiempo.ext` (la marca de tiempo evita la caché del navegador). Al reemplazar o quitar la imagen, se borra la anterior del bucket si era un archivo del bucket. Si la subida falla, se muestra un error y la pieza no cambia. Si falla el guardado en la base, se borra la imagen recién subida. El historial conserva los textos "con imagen", "sin imagen" e "imagen reemplazada".
+- **Miniatura:** `components/ui/Miniatura.tsx` carga las imágenes de forma diferida (`loading="lazy"` y `decoding="async"`), con ancho y alto declarados para que el diseño no salte, y si una imagen falla muestra el marcador `sin-imagen.svg`.
+- **Ficha técnica en PDF:** el servidor descarga la imagen desde la dirección pública con un tope de 3 segundos y la incrusta. Si falla, tarda de más o no es PNG ni JPG, el PDF sale igual con el recuadro "Sin imagen".
+- **Carga inicial:** asigna `CODIGO.jpg` a todas las piezas menos MA-001 y MA-002, que quedan sin imagen. No sube archivos ni se conecta a Storage: los 19 archivos deben existir en el bucket, y conviene guardar la carpeta original con ellos.
+- **Limitación:** al ser un bucket público, las imágenes no respetan el acceso por museo: quien tenga la dirección de una imagen puede verla. En un caso real se usaría un bucket privado con enlaces temporales.
+- Las imágenes son ilustrativas, tomadas de internet, y se retirarán a pedido de sus titulares.
+
+## Cambios recientes
+
+- Las imágenes de las piezas pasaron de guardarse como data URL en la base a Supabase Storage (el antiguo pendiente de imágenes está resuelto).
+- Piezas y exposiciones de demostración renombradas con referencias al Perú: MMT-006 es un cajón peruano de utilería y MMT-001, una litografía de la tapada limeña.
+- El botón del login muestra "Ingresando…" mientras la acción está en curso.
+- La ficha técnica en PDF parte el texto largo en varias líneas y la imagen ya no tapa la columna de datos con una descripción larga; si el contenido supera la página, pasa a una segunda.
+
 ## Recargar los datos
 
 Para volver a los datos de demostración originales, ejecutar de nuevo `npm run db:cargar` y escribir `CARGAR`: vacía las 12 tablas, borra las cuentas de demostración anteriores de Auth y las crea otra vez. Las fechas de exposiciones, préstamos e inventarios se calculan a partir del día de la carga en la zona horaria de Lima, por lo que los estados siempre son coherentes. La aplicación no tiene un botón para restablecer datos.
@@ -257,8 +282,8 @@ Para volver a los datos de demostración originales, ejecutar de nuevo `npm run 
 - `lib/controllers/`: nueve controladores `CC_*.ts` (Server Actions) con la lógica, las reglas de negocio y los permisos, más `acceso.ts` y `errores.ts`.
 - `lib/data/`: el contrato de la capa de datos (`contratos.ts`), la implementación con Prisma por grupos de entidades (`prisma/`, diez archivos), las conversiones, las transacciones y la traducción de los errores de la base a mensajes en español (`errores.ts`). Toda función del contrato recibe `organizacionId` y filtra por organización.
 - `lib/auth/` y `lib/supabase/`: sesión de Supabase Auth, cuentas con la API de administración y renovación de la sesión en cada petición. `proxy.ts` es el proxy de Next que la invoca.
-- `lib/` (46 archivos en total): además, `navegacion.ts` (opciones del menú y de las tarjetas del Inicio), `validaciones.ts` (correo, contraseña y año), `codigos.ts` (prefijo del museo y código de la pieza), `datosDemo.ts` (las cuatro cuentas de demostración) y `config/env.ts` (lectura central de variables de entorno).
-- `lib/exportacion/` e `lib/importacion/`: Excel de importación, PDF de la ficha técnica, y PDF y Excel de los reportes (`exportacionTabla.tsx` es genérico por columnas, para piezas, exposiciones y préstamos). `respuestaPdf.ts` es la respuesta común de los PDF, que se abren en una pestaña nueva con el visor del navegador.
+- `lib/` (48 archivos en total): además, `imagenes.ts` (dirección pública de la imagen de una pieza), `almacenamiento.ts` (subida y borrado en Storage), `navegacion.ts` (opciones del menú y de las tarjetas del Inicio), `validaciones.ts` (correo, contraseña y año), `codigos.ts` (prefijo del museo y código de la pieza), `datosDemo.ts` (las cuatro cuentas de demostración) y `config/env.ts` (lectura central de variables de entorno).
+- `lib/exportacion/` e `lib/importacion/`: Excel de importación, PDF de la ficha técnica (con la imagen de la pieza si se descarga a tiempo), y PDF y Excel de los reportes (`exportacionTabla.tsx` es genérico por columnas, para piezas, exposiciones y préstamos). `respuestaPdf.ts` es la respuesta común de los PDF, que se abren en una pestaña nueva con el visor del navegador.
 - `lib/fechas.ts`: todo cálculo y formato de fechas, con una zona horaria única, America/Lima (`ZONA_HORARIA` en `lib/constantes.ts`). Las marcas con hora se guardan en UTC y el día y la hora que se muestran se convierten a esa zona. Ningún cálculo depende de la zona del servidor ni del navegador.
 - `prisma/`: `schema.prisma` (12 modelos, solo para generar el cliente) y `sql/` con los dos scripts que crean y protegen la base. Los scripts son la fuente de verdad: crean las restricciones, los índices únicos y la seguridad por fila activada sin políticas, con los permisos de `anon` y `authenticated` quitados. El proyecto de Supabase está en la región West US (Oregon).
 - `scripts/`: `datosCarga.ts` (los datos de demostración), `cargaInicial.ts` (`db:simular` y `db:cargar`) y `verificarCapaDatos.ts` (`db:verificar`).
@@ -266,8 +291,8 @@ Para volver a los datos de demostración originales, ejecutar de nuevo `npm run 
 
 ## Alcance y verificación
 
-Es un prototipo con datos de demostración. Se comprobó que compila sin errores (34 páginas), que se construye desde cero sin archivos `.env` generando el cliente de Prisma al instalar, que los datos de demostración cumplen sus 10 reglas de consistencia (`db:simular`) y que la capa de datos funciona contra la base real de Supabase (`db:verificar`: 27 pruebas, incluidas las de operaciones simultáneas). Con la base real y clics en el navegador se comprobaron el login de las cuatro cuentas con sus museos, el registro de un usuario con contraseña temporal y su cambio obligatorio (con rechazo de una contraseña corta), el rechazo de una cuenta desactivada y de credenciales incorrectas, el registro de una pieza (MMT-009, con fecha de registro en hora de Lima), el catálogo y el historial, el reporte de piezas con su PDF, la ficha técnica y las listas de exposiciones y de préstamos. En producción se comprobaron el login con la cuenta de administrador, el listado de piezas con los datos correctos, la generación de un reporte con filtro y la región de las funciones (cabecera `X-Vercel-Id`). El resto de pantallas y las acciones de los otros roles se probaron con la versión anterior, que aún no usaba la base de datos, y la capa de datos las cubre con `db:verificar`.
+Es un prototipo con datos de demostración. Se comprobó que compila sin errores (34 páginas), que se construye desde cero sin archivos `.env` generando el cliente de Prisma al instalar, que los datos de demostración cumplen sus 10 reglas de consistencia (`db:simular`) y que la capa de datos funciona contra la base real de Supabase (`db:verificar`: 27 pruebas, incluidas las de operaciones simultáneas). Con la base real y clics en el navegador se comprobaron el login de las cuatro cuentas con sus museos, el registro de un usuario con contraseña temporal y su cambio obligatorio (con rechazo de una contraseña corta), el rechazo de una cuenta desactivada y de credenciales incorrectas, el registro de una pieza (MMT-009, con fecha de registro en hora de Lima), el catálogo y el historial, el reporte de piezas con su PDF y las listas de exposiciones y de préstamos. En producción se comprobaron el login con la cuenta de administrador, el listado de piezas con los datos correctos, la generación de un reporte con filtro, la región de las funciones (cabecera `X-Vercel-Id`), el catálogo con imágenes, la subida de una foto desde el formulario (con su historial), editar una pieza sin tocar la foto (sin cambio de imagen en el historial), la ficha técnica con y sin descripción larga, y los tiempos de la ficha, entre 3 y 7 segundos según el arranque en frío. El resto de pantallas y las acciones de los otros roles se probaron con la versión anterior, que aún no usaba la base de datos, y la capa de datos las cubre con `db:verificar`.
 
-No se ha verificado: en producción, la recuperación de contraseña con correo real, la importación de Excel, las exportaciones a PDF y a Excel, la ficha técnica, las escrituras de cada rol, las cuentas de colaborador, y tablet y mobile (incluidos los reportes). Tampoco el tiempo del servidor en Vercel, las imágenes de las piezas en Supabase Storage, ni la importación de Excel y las exportaciones de los otros tres reportes con la base real.
+No se ha verificado: en producción, la recuperación de contraseña con correo real, la importación de Excel, las exportaciones a PDF y a Excel de los otros reportes, las escrituras de cada rol, las cuentas de colaborador, y tablet y mobile (incluidos los reportes). Tampoco el tiempo del servidor en Vercel, ni la importación de Excel y las exportaciones de los otros tres reportes con la base real.
 
-Pendientes: registrar la dirección publicada en Supabase Auth (Site URL y la URL de redirección `/restablecer-contrasena`), configurar un servidor de correo propio para probar la recuperación de contraseña, guardar las imágenes de las piezas en Supabase Storage (hoy ninguna pieza tiene imagen y se muestra el marcador), que editar el correo de un usuario también cambie el de su cuenta de Auth, una pantalla de error propia (hoy se ve la de Next.js por defecto, sin el estilo del proyecto) y capturar los errores de las acciones de solo lectura. Un proyecto gratuito de Supabase se pausa tras una semana sin uso y se restaura desde su panel. El detalle está en las secciones 10 y 11 de `MAPA.md`.
+Pendientes: registrar la dirección publicada en Supabase Auth (Site URL y la URL de redirección `/restablecer-contrasena`), configurar un servidor de correo propio para probar la recuperación de contraseña, que editar el correo de un usuario también cambie el de su cuenta de Auth, una pantalla de error propia (hoy se ve la de Next.js por defecto, sin el estilo del proyecto) y capturar los errores de las acciones de solo lectura. Un proyecto gratuito de Supabase se pausa tras una semana sin uso y se restaura desde su panel. El detalle está en las secciones 10 y 11 de `MAPA.md`.
