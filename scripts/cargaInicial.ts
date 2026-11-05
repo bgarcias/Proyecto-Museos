@@ -121,6 +121,7 @@ type FilaPieza = {
   material: string | null;
   estadoConservacion: string;
   ubicacionFisica: string;
+  imagenUrl: string | null;
   disponibilidad: string;
   fechaRegistro: string;
 };
@@ -204,11 +205,13 @@ function construir(idsUsuario: Record<string, string>, correos: Record<string, s
     const museo = museos.find((m) => m.id === idMuseo[p.museo])!;
     contador[p.museo] = (contador[p.museo] ?? 0) + 1;
     idPieza[p.clave] = randomUUID();
+    const codigo = formatearCodigo(museo.prefijo, contador[p.museo]);
     return {
       id: idPieza[p.clave],
       museoId: museo.id,
       categoriaId: categorias.find((c) => c.nombre === p.categoria)?.id ?? "",
-      codigo: formatearCodigo(museo.prefijo, contador[p.museo]),
+      codigo,
+      imagenUrl: datos.imagenDePieza(codigo),
       codigoAnterior: p.codigoAnterior ?? null,
       nombre: p.nombre,
       descripcion: p.descripcion ?? null,
@@ -349,6 +352,7 @@ function validarTablas(f: Filas): string[] {
     if (!(ESTADOS_CONSERVACION as readonly string[]).includes(p.estadoConservacion)) err(`pieza ${p.codigo}: estado no válido`);
     if (!(DISPONIBILIDADES as readonly string[]).includes(p.disponibilidad)) err(`pieza ${p.codigo}: disponibilidad no válida`);
     if (!p.nombre.trim()) err(`pieza ${p.codigo}: nombre vacío`);
+    if (p.imagenUrl !== datos.imagenDePieza(p.codigo)) err(`pieza ${p.codigo}: imagen distinta de la esperada`);
   }
   for (const e of f.exposiciones) {
     if (!(e.fechaFin > e.fechaInicio)) err(`exposicion ${e.nombre}: fin no posterior a inicio`);
@@ -785,7 +789,7 @@ async function cargar(correos: Correos): Promise<void> {
           material: p.material,
           estadoConservacion: p.estadoConservacion,
           ubicacionFisica: p.ubicacionFisica,
-          imagenUrl: null,
+          imagenUrl: p.imagenUrl,
           disponibilidad: p.disponibilidad,
           fechaRegistro: new Date(p.fechaRegistro),
         })),

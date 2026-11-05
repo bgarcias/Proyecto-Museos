@@ -26,6 +26,14 @@ export function obtenerSupabaseUrl(): string {
   return requerir("NEXT_PUBLIC_SUPABASE_URL", "para conectar con Supabase");
 }
 
+/**
+ * URL pública de Supabase para armar direcciones de imágenes, también desde el navegador. Sin valor devuelve undefined.
+ * Se lee con el nombre escrito completo porque Next solo incrusta así las variables NEXT_PUBLIC en el código del navegador.
+ */
+export function obtenerSupabaseUrlPublica(): string | undefined {
+  return process.env.NEXT_PUBLIC_SUPABASE_URL || undefined;
+}
+
 export function obtenerSupabaseAnonKey(): string {
   return requerir("NEXT_PUBLIC_SUPABASE_ANON_KEY", "para conectar con Supabase");
 }

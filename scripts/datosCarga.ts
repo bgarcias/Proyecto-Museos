@@ -46,6 +46,13 @@ export type DatoPieza = {
   descripcion?: string;
   codigoAnterior?: string;
 };
+/*
+ * Imagen de cada pieza: el archivo "CODIGO.jpg" del bucket público de Storage. Este script no sube archivos.
+ * Las piezas de esta lista quedan sin imagen.
+ */
+export const CODIGOS_SIN_IMAGEN = ["MA-001", "MA-002"];
+export const imagenDePieza = (codigo: string): string | null => (CODIGOS_SIN_IMAGEN.includes(codigo) ? null : `${codigo}.jpg`);
+
 /* El número del código sale del orden de cada museo en esta lista */
 export const PIEZAS: DatoPieza[] = [
   { clave: "T1", museo: "teatro", nombre: "Litografía de la tapada limeña", categoria: "Pintura", estado: "bueno", disponibilidad: "disponible", ubicacion: "Sala 1, Vitrina 1", registroHace: 200, anio: 1950, material: "Litografía sobre papel", descripcion: "Litografía que representa a una tapada limeña con saya y manto. Pieza de demostración." },

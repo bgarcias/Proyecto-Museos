@@ -199,7 +199,8 @@ async function lecturas(org: string): Promise<{ usuarios: Usuario[] }> {
     esperar(/^\d{4}-\d{2}-\d{2}T.*Z$/.test(piezas[0].fechaRegistro), "fecha de registro de la pieza", "ISO en UTC", piezas[0].fechaRegistro);
     esperar(typeof prestamos[0].valorAsegurado === "number", "valor asegurado");
     esperar(exposiciones.every((e) => e.piezaIds.length > 0), "piezaIds de las exposiciones");
-    esperar(piezas.every((p) => p.imagenUrl === undefined), "imagen vacía sin null");
+    // Con la carga inicial: "CODIGO.jpg" para cada pieza, y vacío (undefined, nunca null) para las que quedan sin imagen
+    esperar(piezas.every((p) => p.imagenUrl === (carga.imagenDePieza(p.codigo) ?? undefined)), "imagen de cada pieza según la carga inicial");
   });
   await prueba("correo en minúscula y búsqueda sin distinguir mayúsculas", async () => {
     const u = usuarios[0];

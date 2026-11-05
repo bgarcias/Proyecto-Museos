@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { exigirSesion } from "../auth/session";
@@ -17,6 +18,14 @@ import {
   MENSAJE_CODIGO_ANTERIOR_REPETIDO,
   compararCodigos,
 } from "../codigos";
+import {
+  borrarImagenPieza,
+  decodificarImagen,
+  moverImagenPieza,
+  nombreArchivoImagen,
+  subirImagenPieza,
+} from "../almacenamiento";
+import { esNombreDeArchivoDeImagen } from "../imagenes";
 import { obtenerDatos } from "../data";
 import { formatearFecha, formatearFechaHora } from "../fechas";
 import { renderizarFicha } from "../exportacion/ficha";
@@ -34,7 +43,8 @@ import { museosActivosVisibles, museosVisibles, piezasVisibles, puedeAccederAlMu
 import { protegida } from "./errores";
 
 const MENSAJE_IMAGEN = "La imagen debe ser PNG o JPG de máximo 1 MB";
-const MAXIMO_IMAGEN_BYTES = 1024 * 1024;
+const MENSAJE_SUBIDA_IMAGEN = "No se pudo subir la imagen. Intenta de nuevo";
+const MENSAJE_IMAGEN_NO_GUARDADA = "La pieza se registró, pero no se pudo guardar su imagen. Edítala para agregarla";
 
 /* Catálogo y búsqueda de piezas. El buscador se usa como página y como popup. */
 
@@ -109,13 +119,9 @@ type EntradaPieza = {
   imagen?: string | null;
 };
 
-/** La imagen se guarda como data URL (PNG o JPG, máximo 1 MB). */
+/** La imagen llega como data URL (PNG o JPG, máximo 1 MB) y se sube al bucket. En la base solo se guarda el nombre del archivo. */
 function imagenValida(imagen: string): boolean {
-  const m = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]+={0,2})$/.exec(imagen);
-  if (!m) return false;
-  const relleno = m[2].endsWith("==") ? 2 : m[2].endsWith("=") ? 1 : 0;
-  const bytes = Math.floor((m[2].length * 3) / 4) - relleno;
-  return bytes <= MAXIMO_IMAGEN_BYTES;
+  return decodificarImagen(imagen) !== null;
 }
 
 export async function registrarPieza(
@@ -155,19 +161,49 @@ async function registrarPiezaInterno(
     return { ok: false, error: MENSAJE_CODIGO_ANTERIOR_REPETIDO };
   }
 
+  // El código lo asigna el sistema al crear la pieza: la imagen se sube con un nombre temporal y luego se renombra
+  const imagen = entrada.imagen ? decodificarImagen(entrada.imagen) : null;
+  let temporal: string | undefined;
+  if (imagen) {
+    temporal = `temporal-${randomUUID()}.${imagen.extension}`;
+    if (!(await subirImagenPieza(temporal, imagen))) return { ok: false, error: MENSAJE_SUBIDA_IMAGEN };
+  }
+
   // Registrar una pieza a mano no genera historial.
-  await datos.crearPieza(usuario.organizacionId, {
-    codigoAnterior,
-    nombre,
-    categoriaId: entrada.categoriaId,
-    descripcion: entrada.descripcion.trim() || undefined,
-    anio,
-    material: entrada.material.trim() || undefined,
-    estadoConservacion: entrada.estadoConservacion as EstadoConservacion,
-    ubicacionFisica: entrada.ubicacionFisica.trim() || undefined,
-    imagenUrl: entrada.imagen || undefined,
-    museoId: entrada.museoId,
-  });
+  let creada;
+  try {
+    creada = await datos.crearPieza(usuario.organizacionId, {
+      codigoAnterior,
+      nombre,
+      categoriaId: entrada.categoriaId,
+      descripcion: entrada.descripcion.trim() || undefined,
+      anio,
+      material: entrada.material.trim() || undefined,
+      estadoConservacion: entrada.estadoConservacion as EstadoConservacion,
+      ubicacionFisica: entrada.ubicacionFisica.trim() || undefined,
+      imagenUrl: undefined,
+      museoId: entrada.museoId,
+    });
+  } catch (error) {
+    if (temporal) await borrarImagenPieza(temporal);
+    throw error;
+  }
+  if (imagen && temporal) {
+    const definitivo = nombreArchivoImagen(creada.codigo, imagen.extension);
+    if (!(await moverImagenPieza(temporal, definitivo))) {
+      await borrarImagenPieza(temporal);
+      revalidatePath("/piezas");
+      return { ok: false, error: MENSAJE_IMAGEN_NO_GUARDADA };
+    }
+    try {
+      await datos.actualizarPieza(usuario.organizacionId, creada.id, { imagenUrl: definitivo });
+    } catch (error) {
+      console.error("registrarPieza: no se guardó el nombre de la imagen", error);
+      await borrarImagenPieza(definitivo);
+      revalidatePath("/piezas");
+      return { ok: false, error: MENSAJE_IMAGEN_NO_GUARDADA };
+    }
+  }
   revalidatePath("/piezas");
   return { ok: true, mensaje: "Pieza registrada correctamente" };
 }
@@ -209,7 +245,19 @@ async function actualizarPiezaInterno(id: string, entrada: EntradaPieza): Promis
   const descripcion = entrada.descripcion.trim() || undefined;
   const material = entrada.material.trim() || undefined;
   const ubicacionFisica = entrada.ubicacionFisica.trim() || undefined;
-  const imagenUrl = entrada.imagen === undefined ? pieza.imagenUrl : entrada.imagen || undefined;
+  // La imagen nueva se sube antes de guardar nada: si falla, la pieza no cambia
+  let imagenUrl = pieza.imagenUrl;
+  let subida: string | undefined;
+  if (entrada.imagen !== undefined) {
+    const imagen = entrada.imagen ? decodificarImagen(entrada.imagen) : null;
+    if (imagen) {
+      subida = nombreArchivoImagen(pieza.codigo, imagen.extension);
+      if (!(await subirImagenPieza(subida, imagen))) return { ok: false, error: MENSAJE_SUBIDA_IMAGEN };
+      imagenUrl = subida;
+    } else {
+      imagenUrl = undefined;
+    }
+  }
   const categoriaAnterior = categorias.find((c) => c.id === pieza.categoriaId)?.nombre;
 
   // Campo modificado (en minúscula), valor anterior y valor nuevo, como texto libre
@@ -224,24 +272,35 @@ async function actualizarPiezaInterno(id: string, entrada: EntradaPieza): Promis
   comparar("año", pieza.anio?.toString(), anio?.toString());
   comparar("material", pieza.material, material);
   comparar("ubicación física", pieza.ubicacionFisica, ubicacionFisica);
-  if (imagenUrl !== pieza.imagenUrl) {
+  // Solo cuenta si había imagen antes y si hay después: un nombre de archivo nuevo no es por sí solo un cambio
+  const habiaImagen = Boolean(pieza.imagenUrl);
+  const hayImagen = Boolean(imagenUrl);
+  if (entrada.imagen !== undefined && (habiaImagen || hayImagen)) {
     cambios.push({
       campo: "imagen",
-      anterior: pieza.imagenUrl ? "con imagen" : "sin imagen",
-      nuevo: !imagenUrl ? "sin imagen" : pieza.imagenUrl ? "imagen reemplazada" : "con imagen",
+      anterior: habiaImagen ? "con imagen" : "sin imagen",
+      nuevo: !hayImagen ? "sin imagen" : habiaImagen ? "imagen reemplazada" : "con imagen",
     });
   }
 
-  await datos.actualizarPieza(usuario.organizacionId, id, {
-    codigoAnterior,
-    nombre,
-    categoriaId: categoria.id,
-    descripcion,
-    anio,
-    material,
-    ubicacionFisica,
-    imagenUrl,
-  });
+  try {
+    await datos.actualizarPieza(usuario.organizacionId, id, {
+      codigoAnterior,
+      nombre,
+      categoriaId: categoria.id,
+      descripcion,
+      anio,
+      material,
+      ubicacionFisica,
+      imagenUrl,
+    });
+  } catch (error) {
+    // Si no se guardó la pieza, la imagen recién subida sobra
+    if (subida) await borrarImagenPieza(subida);
+    throw error;
+  }
+  // La imagen anterior ya no se usa: se borra solo si era un archivo del bucket
+  if (imagenUrl !== pieza.imagenUrl && esNombreDeArchivoDeImagen(pieza.imagenUrl)) await borrarImagenPieza(pieza.imagenUrl);
   for (const c of cambios) {
     await datos.registrarCambio(usuario.organizacionId, {
       piezaId: id,

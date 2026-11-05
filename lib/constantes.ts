@@ -76,6 +76,12 @@ export const ETIQUETAS_SITUACION_PRESTAMO: Record<SituacionPrestamo, string> = {
 };
 
 export const IMAGEN_MARCADOR = "/piezas/sin-imagen.svg";
+/** Bucket público de Supabase Storage con las imágenes de las piezas. imagen_url guarda el nombre del archivo dentro de él. */
+export const BUCKET_IMAGENES_PIEZAS = "piezas";
+/** Tiempo máximo, en milisegundos, para descargar la imagen de una pieza al generar su ficha en PDF. */
+export const TIEMPO_MAXIMO_IMAGEN_FICHA_MS = 3000;
+/** Tamaño máximo, en bytes, de una imagen descargada para la ficha en PDF. */
+export const TAMANO_MAXIMO_IMAGEN_FICHA = 5 * 1024 * 1024;
 
 /** Límite de años desde hoy para las fechas de exposiciones y para la devolución prevista de un préstamo. */
 export const LIMITE_ANIOS_FECHAS = 3;

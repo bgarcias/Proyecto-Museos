@@ -5,7 +5,10 @@ import {
   ETIQUETA_ESTADO_CONSERVACION,
   ETIQUETA_FECHA_REGISTRO,
   ETIQUETA_UBICACION_FISICA,
+  TAMANO_MAXIMO_IMAGEN_FICHA,
+  TIEMPO_MAXIMO_IMAGEN_FICHA_MS,
 } from "../constantes";
+import { esNombreDeArchivoDeImagen, urlImagenPieza } from "../imagenes";
 
 /*
  * Ficha técnica de una pieza en PDF, una página, con la fuente por defecto de la librería.
@@ -18,7 +21,7 @@ export type DatosFicha = {
   codigo: string;
   /** Solo se muestra si existe. */
   codigoAnterior?: string;
-  /** Imagen de la pieza. Solo se incluye si es un data URL PNG o JPG. */
+  /** Lo guardado en imagen_url: nombre de archivo del bucket o data URL. Solo se incluye si resulta ser PNG o JPG. */
   imagenUrl?: string;
   categoria: string;
   descripcion?: string;
@@ -120,7 +123,42 @@ function FichaTecnica({ datos }: { datos: DatosFicha }) {
   );
 }
 
+/**
+ * Imagen lista para el PDF como data URL PNG o JPG, o undefined si no hay imagen utilizable.
+ * Un data URL se usa tal cual. Un nombre de archivo se descarga del bucket público con tiempo máximo.
+ * Nunca lanza: ante cualquier fallo devuelve undefined y la ficha lleva el recuadro "Sin imagen".
+ */
+async function prepararImagen(valor?: string): Promise<string | undefined> {
+  try {
+    if (!valor) return undefined;
+    if (valor.startsWith("data:")) return IMAGEN_ADMITIDA.test(valor) ? valor : undefined;
+    // Solo se descarga lo que sale del bucket propio. Una dirección http guardada no se visita desde el servidor.
+    if (!esNombreDeArchivoDeImagen(valor)) return undefined;
+    const direccion = urlImagenPieza(valor);
+    if (!direccion) return undefined;
+    const respuesta = await fetch(direccion, { signal: AbortSignal.timeout(TIEMPO_MAXIMO_IMAGEN_FICHA_MS), cache: "no-store" });
+    if (!respuesta.ok) return undefined;
+    const bytes = Buffer.from(await respuesta.arrayBuffer());
+    if (bytes.length === 0 || bytes.length > TAMANO_MAXIMO_IMAGEN_FICHA) return undefined;
+    // El formato se decide por los primeros bytes, no por lo que declare el servidor
+    const esPng = bytes.length > 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    const esJpg = bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    if (!esPng && !esJpg) return undefined;
+    return `data:image/${esPng ? "png" : "jpeg"};base64,${bytes.toString("base64")}`;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function renderizarFicha(datos: DatosFicha): Promise<Uint8Array> {
-  const buffer = await renderToBuffer(<FichaTecnica datos={datos} />);
+  const imagenUrl = await prepararImagen(datos.imagenUrl);
+  let buffer: Buffer;
+  try {
+    buffer = await renderToBuffer(<FichaTecnica datos={{ ...datos, imagenUrl }} />);
+  } catch (error) {
+    // Una imagen dañada que la librería no pueda leer no debe impedir la ficha: se reintenta sin imagen
+    if (!imagenUrl) throw error;
+    buffer = await renderToBuffer(<FichaTecnica datos={{ ...datos, imagenUrl: undefined }} />);
+  }
   return new Uint8Array(buffer);
 }

@@ -3,6 +3,8 @@
   background: var(--color-gris);
   object-fit: cover;
   aspect-ratio: 1 / 1;
+  /* El alto declarado en la etiqueta solo reserva espacio: la proporción cuadrada decide el alto real */
+  height: auto;
   flex: none;
 }
 
