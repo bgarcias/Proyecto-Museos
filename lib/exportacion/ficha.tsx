@@ -42,9 +42,10 @@ const estilos = StyleSheet.create({
   museo: { fontSize: 10, textTransform: "uppercase", letterSpacing: 1 },
   titulo: { fontSize: 22, fontFamily: "Helvetica-Bold", marginTop: 4 },
   codigo: { fontSize: 12, marginTop: 4 },
-  cuerpo: { flexDirection: "row", gap: 20 },
-  columnaImagen: { width: 200 },
-  imagen: { width: 200, height: 200, objectFit: "contain", borderWidth: 2, borderColor: "#000000" },
+  cuerpo: { flexDirection: "row", alignItems: "flex-start" },
+  // Ancho fijo que no crece ni se encoge, con margen para separarla de los datos
+  columnaImagen: { width: 200, minWidth: 200, maxWidth: 200, flexGrow: 0, flexShrink: 0, marginRight: 20 },
+  imagen: { width: 200, maxWidth: 200, height: 200, objectFit: "contain", borderWidth: 2, borderColor: "#000000" },
   sinImagen: {
     width: 200,
     height: 200,
@@ -55,10 +56,11 @@ const estilos = StyleSheet.create({
     justifyContent: "center",
   },
   textoSinImagen: { fontSize: 12, fontFamily: "Helvetica-Bold" },
-  columnaDatos: { flexGrow: 1, flexShrink: 1 },
-  dato: { marginBottom: 10 },
+  // Ocupa solo lo que sobra junto a la imagen y se encoge en lugar de salirse de la página
+  columnaDatos: { flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 },
+  dato: { marginBottom: 10, maxWidth: "100%" },
   etiqueta: { fontSize: 8, fontFamily: "Helvetica-Bold", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 },
-  valor: { fontSize: 11 },
+  valor: { fontSize: 11, maxWidth: "100%" },
   pie: {
     position: "absolute",
     left: 40,
