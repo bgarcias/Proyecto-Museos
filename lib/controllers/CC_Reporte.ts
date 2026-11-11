@@ -12,6 +12,7 @@ import {
   ETIQUETAS_ESTADO_EXPOSICION,
   ETIQUETAS_FILTROS_REPORTE,
   ETIQUETAS_SITUACION_PRESTAMO,
+  ETIQUETA_DEVUELTO_CON_DETERIORO,
   MENSAJE_FECHA_FORMATO,
   MENSAJE_FILTRO_INVALIDO,
   MENSAJE_SIN_ACCESO_MUSEO,
@@ -31,6 +32,7 @@ import {
   ETIQUETA_ESTADO_CONSERVACION,
 } from "../constantes";
 import { compararCodigos } from "../codigos";
+import { devueltoConDeterioro } from "../deterioro";
 import { obtenerDatos } from "../data";
 import { generarExcelReporte, generarPdfReporte } from "../exportacion/exportacionReporte";
 import { generarExcelTabla, generarPdfTabla, type DatosTabla } from "../exportacion/exportacionTabla";
@@ -453,6 +455,7 @@ async function calcularReportePrestamos(
       fechaDevolucionPrevista: p.fechaDevolucionPrevista,
       fechaDevolucionReal: p.fechaDevolucionReal,
       situacion: p.situacion,
+      conDeterioro: p.situacion === "devuelto" && devueltoConDeterioro(p),
     }));
   return { ok: true, datos: { filas, total: filas.length } };
 }
@@ -494,17 +497,17 @@ async function exportarReportePrestamosInterno(
       [l.hasta, textoDeFecha(filtros.hasta)],
     ],
     columnas: [
-      { etiqueta: c.pieza, ancho: 3 },
-      { etiqueta: c.museo, ancho: 3 },
-      { etiqueta: c.institucion, ancho: 2.1 },
-      { etiqueta: c.responsable, ancho: 2.1 },
-      { etiqueta: c.convenio, ancho: 1.5 },
-      { etiqueta: c.poliza, ancho: 1.3 },
-      { etiqueta: c.valor, ancho: 1.3 },
+      { etiqueta: c.pieza, ancho: 2.4 },
+      { etiqueta: c.museo, ancho: 2.4 },
+      { etiqueta: c.institucion, ancho: 1.8 },
+      { etiqueta: c.responsable, ancho: 1.8 },
+      { etiqueta: c.convenio, ancho: 1.9, partirEnGuiones: true },
+      { etiqueta: c.poliza, ancho: 1.7, partirEnGuiones: true },
+      { etiqueta: c.valor, ancho: 1.5 },
       { etiqueta: c.salida, ancho: 1.2 },
       { etiqueta: c.devolucionPrevista, ancho: 1.2 },
       { etiqueta: c.devolucionReal, ancho: 1.2 },
-      { etiqueta: c.situacion, ancho: 1.2 },
+      { etiqueta: c.situacion, ancho: 1.9 },
     ],
     columnasMonto: [6],
     filas: resultado.datos.filas.map((f) => [
@@ -518,7 +521,7 @@ async function exportarReportePrestamosInterno(
       formatearFecha(f.fechaSalida),
       formatearFecha(f.fechaDevolucionPrevista),
       f.fechaDevolucionReal ? formatearFecha(f.fechaDevolucionReal) : "-",
-      ETIQUETAS_SITUACION_PRESTAMO[f.situacion],
+      f.conDeterioro ? ETIQUETA_DEVUELTO_CON_DETERIORO : ETIQUETAS_SITUACION_PRESTAMO[f.situacion],
     ]),
     total: { etiqueta: TOTAL_PRESTAMOS, valor: resultado.datos.total },
     orientacion: "horizontal",

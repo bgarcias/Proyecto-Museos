@@ -257,6 +257,8 @@ export type FilaReportePrestamos = {
   fechaDevolucionPrevista: string;
   fechaDevolucionReal?: string;
   situacion: SituacionPrestamo;
+  /** Devuelto con deterioro (lib/deterioro.ts). Solo cambia el texto de la situación. */
+  conDeterioro: boolean;
 };
 
 export type ReportePrestamos = { filas: FilaReportePrestamos[]; total: number };

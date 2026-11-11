@@ -9,6 +9,7 @@ import type {
   TipoColeccion,
   Vigencia,
 } from "./tipos";
+import { formatearMonto } from "./formatos";
 
 /*
  * Valores fijos (en minúscula, como se guardan) y sus etiquetas para la interfaz.
@@ -75,6 +76,17 @@ export const ETIQUETAS_SITUACION_PRESTAMO: Record<SituacionPrestamo, string> = {
   devuelto: "Devuelto",
 };
 
+/* Devolución con deterioro: regla en lib/deterioro.ts */
+export const ETIQUETA_DEVUELTO_CON_DETERIORO = "Devuelto con deterioro";
+export const ETIQUETA_CON_DETERIORO = "Con deterioro";
+export function textoReclamoPoliza(salida: EstadoConservacion, devolucion: EstadoConservacion, poliza: string, valor: number): string {
+  return `De ${ETIQUETAS_ESTADO_CONSERVACION[salida]} a ${ETIQUETAS_ESTADO_CONSERVACION[devolucion]}. Evaluar reclamo a la póliza N° ${poliza} por S/ ${formatearMonto(valor)}.`;
+}
+export const TEXTO_EVALUAR_RECLAMO_POLIZA = "Evaluar reclamo a la póliza";
+export function textoValorAseguradoSoles(valor: number): string {
+  return `Valor asegurado: S/ ${formatearMonto(valor)}`;
+}
+
 export const IMAGEN_MARCADOR = "/piezas/sin-imagen.svg";
 /** Bucket público de Supabase Storage con las imágenes de las piezas. imagen_url guarda el nombre del archivo dentro de él. */
 export const BUCKET_IMAGENES_PIEZAS = "piezas";
@@ -88,6 +100,7 @@ export const LIMITE_ANIOS_FECHAS = 3;
 
 /* Préstamos: validación compartida por la vista y el controlador */
 export const MENSAJE_PRESTAMO_ESTADO_DEVOLUCION = "Selecciona el estado de conservación de la pieza";
+export const MENSAJE_PRESTAMO_DEVOLUCION_MEJOR = "El estado al regresar no puede ser mejor que el estado de salida";
 export const MENSAJE_PRESTAMO_SALIDA_FUTURA = "La fecha de salida no puede ser posterior a hoy";
 export const MENSAJE_PRESTAMO_DEVOLUCION_LIMITE = `La fecha de devolución no puede superar los ${LIMITE_ANIOS_FECHAS} años desde hoy`;
 export const MAXIMO_INSTITUCION_DESTINO = 100;

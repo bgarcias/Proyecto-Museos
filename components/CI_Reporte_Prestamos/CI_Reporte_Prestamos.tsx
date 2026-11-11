@@ -4,6 +4,7 @@ import { useState } from "react";
 import { generarReportePrestamos } from "@/lib/controllers/CC_Reporte";
 import {
   COLUMNAS_REPORTE_PRESTAMOS,
+  ETIQUETA_DEVUELTO_CON_DETERIORO,
   ETIQUETAS_FILTROS_REPORTE,
   ETIQUETAS_SITUACION_PRESTAMO,
   TEXTO_TODAS,
@@ -168,7 +169,7 @@ export function TablaReportePrestamos({ reporte }: { reporte: ReportePrestamos }
               {f.fechaDevolucionReal ? formatearFecha(f.fechaDevolucionReal) : "-"}
             </td>
             <td className={t.ajustada}>
-              <Insignia valor={ETIQUETAS_SITUACION_PRESTAMO[f.situacion]} />
+              <Insignia valor={f.conDeterioro ? ETIQUETA_DEVUELTO_CON_DETERIORO : ETIQUETAS_SITUACION_PRESTAMO[f.situacion]} />
             </td>
           </tr>
         ))}

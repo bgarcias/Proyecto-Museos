@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { registrarDevolucionPrestamo } from "@/lib/controllers/CC_Prestamo";
 import {
-  ESTADOS_CONSERVACION,
+  ETIQUETA_DEVUELTO_CON_DETERIORO,
   ETIQUETAS_ESTADO_CONSERVACION,
   ETIQUETAS_SITUACION_PRESTAMO,
   MENSAJE_PRESTAMO_ESTADO_DEVOLUCION,
 } from "@/lib/constantes";
+import { estadosDevolucionPermitidos, textoDeterioro } from "@/lib/deterioro";
 import { formatearFecha } from "@/lib/fechas";
 import type { PrestamoListado } from "@/lib/tipos";
 import { alertaError, alertaExito } from "@/components/ui/alertas";
@@ -66,6 +67,8 @@ export default function CI_Devolucion_Prestamo({ prestamos }: { prestamos: Prest
       </div>
     );
   }
+
+  const textoReclamo = elegido ? textoDeterioro({ ...elegido, estadoConservacionDevolucion: estado }) : undefined;
 
   return (
     <div className={estilos.pagina}>
@@ -143,13 +146,19 @@ export default function CI_Devolucion_Prestamo({ prestamos }: { prestamos: Prest
             <Campo etiqueta="Estado de conservación al regresar" htmlFor="estado" obligatorio>
               <Seleccion id="estado" value={estado} onChange={(e) => setEstado(e.target.value)}>
                 <option value="">{MENSAJE_PRESTAMO_ESTADO_DEVOLUCION}</option>
-                {ESTADOS_CONSERVACION.map((s) => (
+                {estadosDevolucionPermitidos(elegido.estadoConservacionSalida).map((s) => (
                   <option key={s} value={s}>
                     {ETIQUETAS_ESTADO_CONSERVACION[s]}
                   </option>
                 ))}
               </Seleccion>
             </Campo>
+            {textoReclamo && (
+              <div className={estilos.deterioro} role="status">
+                <Insignia valor={ETIQUETA_DEVUELTO_CON_DETERIORO} />
+                <p className={estilos.reclamo}>{textoReclamo}</p>
+              </div>
+            )}
             <Acciones>
               <Boton type="submit" disabled={enviando}>
                 Confirmar devolución

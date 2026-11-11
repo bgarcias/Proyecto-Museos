@@ -1,4 +1,5 @@
 import { Document, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import "./pdfSinGuiones";
 import ExcelJS from "exceljs";
 import { formatearMonto } from "../formatos";
 
@@ -14,6 +15,8 @@ export type ColumnaTabla = {
   /** Ancho relativo de la columna respecto de las demás. */
   ancho: number;
   alineacion?: "izquierda" | "derecha" | "centro";
+  /** Columna de códigos: en el PDF la línea solo se corta tras un guion que el código ya contiene, sin agregar ni quitar guiones. */
+  partirEnGuiones?: boolean;
 };
 
 /** Una celda es texto, un número (con `monto` se muestra con 2 decimales) o varias líneas de texto. */
@@ -57,6 +60,7 @@ const estilos = StyleSheet.create({
   fila: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#000000" },
   total: { flexDirection: "row", backgroundColor: "#D9D9D9", borderTopWidth: 2, borderTopColor: "#000000", padding: 5 },
   celda: { padding: 4 },
+  tramos: { flexDirection: "row", flexWrap: "wrap", alignContent: "flex-start" },
   negrita: { fontFamily: "Helvetica-Bold" },
   pie: { position: "absolute", left: 36, right: 36, bottom: 18, fontSize: 8, textAlign: "right" },
 });
@@ -96,11 +100,21 @@ function DocumentoTabla({ datos }: { datos: DatosTabla }) {
         </View>
         {datos.filas.map((fila, n) => (
           <View key={n} style={estilos.fila} wrap={false}>
-            {fila.map((celda, i) => (
-              <Text key={i} style={estiloCelda(i)}>
-                {textoDeCelda(celda, monto.has(i))}
-              </Text>
-            ))}
+            {fila.map((celda, i) =>
+              datos.columnas[i].partirEnGuiones ? (
+                <View key={i} style={[estiloCelda(i), estilos.tramos]}>
+                  {textoDeCelda(celda, false)
+                    .split(/(?<=-)/)
+                    .map((tramo, t) => (
+                      <Text key={t}>{tramo}</Text>
+                    ))}
+                </View>
+              ) : (
+                <Text key={i} style={estiloCelda(i)}>
+                  {textoDeCelda(celda, monto.has(i))}
+                </Text>
+              ),
+            )}
           </View>
         ))}
         <View style={estilos.total} wrap={false}>

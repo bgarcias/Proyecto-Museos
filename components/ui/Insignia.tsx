@@ -26,6 +26,8 @@ const COLORES: Record<string, Color> = {
   cancelada: "rojo",
   "no encontrada": "rojo",
   "pendiente de verificación": "rojo",
+  "con deterioro": "rojo",
+  "devuelto con deterioro": "rojo",
   // gris
   inactivo: "gris",
   finalizada: "gris",

@@ -12,6 +12,7 @@ import {
   MAXIMO_RESPONSABLE_RECEPTOR,
   MENSAJE_CONVENIO_LARGO,
   MENSAJE_PRESTAMO_ESTADO_DEVOLUCION,
+  MENSAJE_PRESTAMO_DEVOLUCION_MEJOR,
   MENSAJE_INSTITUCION_LARGA,
   MENSAJE_POLIZA_LARGA,
   MENSAJE_PRESTAMO_DEVOLUCION_LIMITE,
@@ -20,6 +21,7 @@ import {
   MENSAJE_PIEZA_NO_ENCONTRADA,
 } from "../constantes";
 import { obtenerDatos } from "../data";
+import { estadosDevolucionPermitidos } from "../deterioro";
 import { fechaLimite, hoyISO, rangoExposicion, rangosSeCruzan } from "../fechas";
 import { validarValorAsegurado } from "../validaciones";
 import type { Categoria, EstadoConservacion, Museo, PrestamoListado, Resultado } from "../tipos";
@@ -180,6 +182,9 @@ async function registrarDevolucionPrestamoInterno(prestamoId: string, estado: st
     return { ok: false, error: MENSAJE_PRESTAMO_ESTADO_DEVOLUCION };
   }
   const estadoDevolucion = estado as EstadoConservacion;
+  if (!estadosDevolucionPermitidos(prestamo.estadoConservacionSalida).includes(estadoDevolucion)) {
+    return { ok: false, error: MENSAJE_PRESTAMO_DEVOLUCION_MEJOR };
+  }
 
   const pieza = await datos.obtenerPieza(usuario.organizacionId, prestamo.piezaId);
   if (!pieza) return { ok: false, error: MENSAJE_PIEZA_NO_ENCONTRADA };

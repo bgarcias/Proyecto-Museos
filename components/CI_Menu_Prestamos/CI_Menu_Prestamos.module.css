@@ -3,3 +3,36 @@
   flex-direction: column;
   gap: var(--espacio-4);
 }
+
+/* Insignias y líneas de texto una sobre otra, al mismo borde izquierdo */
+.pila {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espacio-1);
+}
+
+.linea {
+  margin: 0;
+}
+
+/* Anchos relativos de las columnas: la fecha prevista es más ancha para que su título quepa en dos líneas */
+.pieza {
+  width: 28%;
+}
+
+.institucion {
+  width: 20%;
+}
+
+.fecha {
+  width: 9%;
+}
+
+.fechaPrevista {
+  width: 14%;
+}
+
+.situacion {
+  width: 20%;
+}

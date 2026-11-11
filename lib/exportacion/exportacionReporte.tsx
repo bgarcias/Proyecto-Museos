@@ -1,4 +1,5 @@
 import { Document, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import "./pdfSinGuiones";
 import ExcelJS from "exceljs";
 import { ETIQUETAS_ESTADO_CONSERVACION, TITULO_REPORTE, ETIQUETA_CATEGORIA } from "../constantes";
 import type { Reporte } from "../tipos";

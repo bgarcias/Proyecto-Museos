@@ -1,4 +1,5 @@
 import { Document, Image, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
+import "./pdfSinGuiones";
 import {
   ETIQUETA_CATEGORIA,
   ETIQUETA_DISPONIBILIDAD,
