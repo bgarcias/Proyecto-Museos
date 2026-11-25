@@ -19,3 +19,7 @@ next-env.d.ts
 # sistema y registros
 .DS_Store
 npm-debug.log*
+
+# documentos internos: solo se sube el README corto
+*.md
+!README.md
